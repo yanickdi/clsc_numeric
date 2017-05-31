@@ -26,7 +26,11 @@ class ModelNormalNumericalSolver:
         
         #case 1:
         dec_vars_case_1 = self._optimize_case_one(const_args)
-        return dec_vars_case_1
+        if dec_vars_case_1['roh'] < 1:
+            # TODO: we are in case 2 now
+            raise NotImplementedError()
+        else:
+            return dec_vars_case_1
     
     def _optimize_case_one(self, const_args):
         """
@@ -52,6 +56,7 @@ def check_args(args):
     assert s <= cn <= 1
     assert 0 <= s <= cn
     assert s <= cn
+    
     
 def build_args(tau, a, s, cn):
     args =  {
