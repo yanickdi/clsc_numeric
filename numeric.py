@@ -10,7 +10,6 @@ class ModelNormalNumericalSolver:
     
     def profit_manufacturer(self, dec_vars, const_args):
         """ Returns the numeric result of the profit of the manufacturer having set all decision variables"""
-        print(dec_vars)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         wn, pn, roh, qn = dec_vars['wn'], dec_vars['pn'], dec_vars['roh'], dec_vars['qn']
         return qn * (wn * (1- tau/roh) - cn + (tau/roh) * s)
@@ -43,7 +42,7 @@ class ModelNormalNumericalSolver:
         opt = scipy.optimize.fsolve(__manufacturer_derivation_case_1, x0=0.5, full_output=True)
         wn = opt[0][0]
         pn = (1 + wn) / 2
-        roh = (1-wn) * (1/2) * (tau/a)**2
+        roh = (1-wn) * (1/2) * (tau/a)**(1/2)
         return {'wn' : wn, 'pn' : pn, 'roh' : roh, 'qn' : 1 - pn}
     
 def check_args(args):
