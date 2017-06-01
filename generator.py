@@ -23,12 +23,12 @@ class Generator:
         model_solver = solver.ModelOneNumericalSolver() #TODO: Switch here between different models
         for const_args in self.__model_one_cons_generator():
             dec_vars = model_solver.optimize(const_args)
-            print(dec_vars)
+            print(const_args, dec_vars)
     
     def __model_one_cons_generator(self):
         """ Helper generator for yielding all combinations of input data """
         for tau in drange(0, 1, 0.1):
-            for a in drange(0, 0.1, 0.01):
+            for a in drange(0.01, 0.1, 0.01):
                 for s in drange(0, 1, .1):
                     for cn in drange(s, 1, .1):
                         yield {'tau' : tau, 'a' : a, 's' : s, 'cn' : cn}
