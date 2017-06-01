@@ -20,8 +20,10 @@ class Generator:
         
     def generate(self):
         """ Do se generation """
+        model_solver = solver.ModelOneNumericalSolver() #TODO: Switch here between different models
         for const_args in self.__model_one_cons_generator():
-            print(const_args)
+            dec_vars = model_solver.optimize(const_args)
+            print(dec_vars)
     
     def __model_one_cons_generator(self):
         """ Helper generator for yielding all combinations of input data """
