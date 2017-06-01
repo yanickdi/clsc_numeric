@@ -13,7 +13,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         self.assertTrue(cn <= 1 - 4*(1-tau/2)*(a/tau)**(1/2))
         
         analyitcal_profit_manufacturer = ((1-cn)**2 / 8) - (1/2)*(1+cn-2*s) * (tau*a)**(1/2) + (1/2)*a*tau
-        profit_solver_manufacturer = solver.profit_manufacturer(solver.optimize(const_args), const_args)
+        profit_solver_manufacturer,_ = solver.calc_profits(solver.optimize(const_args), const_args)
         self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
         
     def test_case_a_dec_vars(self):
@@ -40,7 +40,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         self.assertTrue(cn > 1 - 4*(1-tau/2)*(a/tau)**(1/2))
         
         analyitcal_profit_manufacturer = ((1-cn-tau+s*tau)**2)/(8*(1-tau))
-        profit_solver_manufacturer = solver.profit_manufacturer(solver.optimize(const_args), const_args)
+        profit_solver_manufacturer,_ = solver.calc_profits(solver.optimize(const_args), const_args)
         self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
         
     def test_case_b_dec_vars(self):

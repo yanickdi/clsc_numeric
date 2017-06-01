@@ -8,11 +8,16 @@ class ModelOneNumericalSolver:
     def __init__(self):
         pass
     
-    def profit_manufacturer(self, dec_vars, const_args):
-        """ Returns the numeric result of the profit of the manufacturer having set all decision variables"""
+    def calc_profits(self, dec_vars, const_args):
+        """
+            Returns the numeric result of the profit of the manufacturer and the retailer (a tuple containing first manufacturer, second retailer)
+            having set all decision variables
+        """
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         wn, pn, roh, qn = dec_vars['wn'], dec_vars['pn'], dec_vars['roh'], dec_vars['qn']
-        return qn * (wn * (1- tau/roh) - cn + (tau/roh) * s)
+        manu_profit = qn * (wn * (1- tau/roh) - cn + (tau/roh) * s)
+        retailer_profit = qn * (pn - wn) * (1 - tau/roh) - a * roh
+        return manu_profit, retailer_profit
     
     def optimize(self, const_args):
         """
