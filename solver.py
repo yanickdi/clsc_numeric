@@ -1,7 +1,7 @@
 import scipy.optimize
 import sys
 
-class ModelNormalNumericalSolver:
+class ModelOneNumericalSolver:
     """
         This class offers methods to solve Model 1 (Without Online Store of the Manufacturer) numerically
     """
@@ -88,5 +88,5 @@ def build_args(tau, a, s, cn):
     
 if __name__ == '__main__':
     print('You cannot call this file directly')
-    solver = ModelNormalNumericalSolver()
+    solver = ModelOneNumericalSolver()
     pass

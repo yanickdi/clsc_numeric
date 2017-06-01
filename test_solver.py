@@ -1,11 +1,11 @@
 import unittest
 
-from solver import build_args, check_args, ModelNormalNumericalSolver
+from solver import build_args, check_args, ModelOneNumericalSolver
 
-class TestModelNormalNumericalSolver(unittest.TestCase):
+class TestModelOneNumericalSolver(unittest.TestCase):
 
     def test_case_a(self):
-        solver = ModelNormalNumericalSolver()
+        solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
         const_args = build_args(tau=0.1, a=0.005, s=0.0005, cn=0.01)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
@@ -17,7 +17,7 @@ class TestModelNormalNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
         
     def test_case_a_dec_vars(self):
-        solver = ModelNormalNumericalSolver()
+        solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
         const_args = build_args(tau=0.1, a=0.005, s=0.0005, cn=0.01)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
@@ -31,7 +31,7 @@ class TestModelNormalNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(solver_dec_vars['roh'], tau/2 + (1-cn)/4 * (tau/a)**(1/2), msg='roh not the same')
 
     def test_case_b(self):
-        solver = ModelNormalNumericalSolver()
+        solver = ModelOneNumericalSolver()
         # this args should lead to case two (roh is equal to 1)
         const_args = build_args(tau=0.1, a=0.006, s=0.005, cn=0.3)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
@@ -44,7 +44,7 @@ class TestModelNormalNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
         
     def test_case_b_dec_vars(self):
-        solver = ModelNormalNumericalSolver()
+        solver = ModelOneNumericalSolver()
         # this args should lead to case two (roh is equal to 1)
         const_args = build_args(tau=0.1, a=0.006, s=0.005, cn=0.3)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
@@ -58,7 +58,7 @@ class TestModelNormalNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(solver_dec_vars['roh'], 1.0, msg='roh not the same')
     
     def test_qn(self):
-        solver = ModelNormalNumericalSolver()
+        solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
         const_args = build_args(tau=0.1, a=0.005, s=0.0005, cn=0.01)
         dec_vars = solver.optimize(const_args)
