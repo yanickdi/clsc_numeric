@@ -20,7 +20,10 @@ class Generator:
             self.file_writer = StdoutFile()
         else:
             suffix = output_file.split('.')[-1]
-            raise RuntimeError('other output files than stdout not implemented yet.')
+            if suffix == 'csv':
+                self.file_writer = CsvOutputFile(output_file)
+            else:
+                raise RuntimeError('other output files than stdout not implemented yet.')
         assert model_nr == 1 #TODO: Implement model 2
         
     def generate(self):
@@ -29,8 +32,7 @@ class Generator:
         self.file_writer.open()
         for const_args in self.__model_one_const_generator():
             dec_vars = model_solver.optimize(const_args)
-            manu_profit, ret_profit = model_solver.calc_profits(const_args, dec_vars) #TODO: HERE
-            print(manu_profit)
+            manu_profit, ret_profit = model_solver.calc_profits(const_args, dec_vars)
             self.file_writer.writeSolution(const_args, dec_vars, manu_profit, ret_profit) #TODO: add manufacturer and retailer profit here
         self.file_writer.close()
     
@@ -74,26 +76,28 @@ class StdoutFile(AbstractOutputFile):
     
     def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
         self.sol_nr += 1
-        line = '{}: {}, {}'.format(self.sol_nr, const_args, profit_man)
+        line = '{}: {}, {}, profit of manufacturer: {}, profit or retailer: {}'.format(self.sol_nr, const_args, dec_vars, profit_man, profit_ret)
         print(line)
 
         
 class CsvOutputFile(AbstractOutputFile):
     """ This class writes an comma separated, text based file """
     
-    def __init__(self, output_file):
-        self.output_file = output_file
-        self.line_nr = 0
+    def __init__(self, file_name):
+        self.file_name = file_name
     
     def open(self):
-        self.file = sys.stdout
+        self.file = open(self.file_name, 'w') # overrides file if exists
+        self.file.write('tau;a;s;cn;pn;wn;roh;qn;manufacturer profit;retailer profit\n')
         
     def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
-        self.line_nr += 1
-        line = '{}: {}, {}'.format(self.line_nr, const_args, profit_man)
+        const_str = '{};{};{};{}'.format(const_args['tau'], const_args['a'], const_args['s'], const_args['cn']) #TODO: This code doesnt support model 2
+        dec_str =   '{};{};{};{}'.format(dec_vars['pn'], dec_vars['wn'], dec_vars['roh'], dec_vars['qn'])
+        line = '{};{};{};{}'.format(const_str, dec_str, profit_man, profit_ret)
+        self.file.write(line + '\n')
         
     def close(self):
-        pass
+        self.file.close()
     
     
 def __parser_model_one_or_two(string):
