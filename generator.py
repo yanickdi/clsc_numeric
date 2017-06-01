@@ -16,33 +16,31 @@ class Generator:
     def __init__(self, model_nr, output_file):
         self.model_nr = model_nr
         self.output_file = output_file
+        if output_file == 'stdout':
+            self.file_writer = StdoutFile()
+        else:
+            suffix = output_file.split('.')[-1]
+            raise RuntimeError('other output files than stdout not implemented yet.')
         assert model_nr == 1 #TODO: Implement model 2
         
     def generate(self):
         """ Do se generation """
         model_solver = solver.ModelOneNumericalSolver() #TODO: Switch here between different models
-        for const_args in self.__model_one_cons_generator():
+        self.file_writer.open()
+        for const_args in self.__model_one_const_generator():
             dec_vars = model_solver.optimize(const_args)
-            print(const_args, dec_vars)
+            manu_profit, ret_profit = model_solver.calc_profits(const_args, dec_vars) #TODO: HERE
+            print(manu_profit)
+            self.file_writer.writeSolution(const_args, dec_vars, manu_profit, ret_profit) #TODO: add manufacturer and retailer profit here
+        self.file_writer.close()
     
-    def __model_one_cons_generator(self):
+    def __model_one_const_generator(self):
         """ Helper generator for yielding all combinations of input data """
         for tau in drange(0, 1, 0.1):
             for a in drange(0.01, 0.1, 0.01):
                 for s in drange(0, 1, .1):
                     for cn in drange(s, 1, .1):
-                        yield {'tau' : tau, 'a' : a, 's' : s, 'cn' : cn}
-                        
-                        
-def build_args(tau, a, s, cn):
-    args =  {
-        'tau' : tau,
-        'a'   : a,
-        's'   : s,
-        'cn'  : cn
-    }
-    check_args(args)
-    return args
+                        yield {'tau' : round(tau, 1), 'a' : round(a, 2), 's' : round(s, 1), 'cn' : round(cn, 1)}
     
 def drange(start, end, step_size):
     """ A floating point range from [start, end] with step size step_size"""
@@ -50,9 +48,37 @@ def drange(start, end, step_size):
     while r <= end:
         yield r
         r += step_size
+        
+        
+class AbstractOutputFile:
+    """ This is the abstract base class of all output classes """
+    
+    def open(self):
+        raise NotImplementedError()
+        
+    def close(self):
+        raise NotImplementedError()
+    
+    def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
+        raise NotImplementedError()
+        
+class StdoutFile(AbstractOutputFile):
+    """ This class writes the output to stdout """
+    def __init__(self):
+        self.sol_nr = 0
+        
+    def open(self):
+        pass
+    def close(self):
+        pass
+    
+    def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
+        self.sol_nr += 1
+        line = '{}: {}, {}'.format(self.sol_nr, const_args, profit_man)
+        print(line)
 
         
-class CsvOutputFile:
+class CsvOutputFile(AbstractOutputFile):
     """ This class writes an comma separated, text based file """
     
     def __init__(self, output_file):
@@ -66,7 +92,7 @@ class CsvOutputFile:
         self.line_nr += 1
         line = '{}: {}, {}'.format(self.line_nr, const_args, profit_man)
         
-    def close():
+    def close(self):
         pass
     
     
@@ -79,6 +105,8 @@ def __parser_model_one_or_two(string):
     raise argparse.ArgumentTypeError('model has to be either \'one\' or \'two\' (or 1/2)')
     
 def __parser_file(string):
+    if string == 'stdout':
+        return string
     if len(string.split('.')) <= 1:
         raise argparse.ArgumentTypeError('The output file has to have an suffix.')
     suffix = string.split('.')[-1]

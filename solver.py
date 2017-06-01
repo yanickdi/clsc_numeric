@@ -8,7 +8,7 @@ class ModelOneNumericalSolver:
     def __init__(self):
         pass
     
-    def calc_profits(self, dec_vars, const_args):
+    def calc_profits(self, const_args, dec_vars):
         """
             Returns the numeric result of the profit of the manufacturer and the retailer (a tuple containing first manufacturer, second retailer)
             having set all decision variables
