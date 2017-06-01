@@ -27,14 +27,14 @@ class ModelNormalNumericalSolver:
         #case 1:
         dec_vars_case_1 = self._optimize_case_one(const_args)
         if dec_vars_case_1['roh'] < 1:
-            # TODO: we are in case 2 now
-            raise NotImplementedError()
+            # we are in case 2 now
+            return self._optimize_case_two(const_args)
         else:
             return dec_vars_case_1
     
     def _optimize_case_one(self, const_args):
         """
-        Returns a dec_vars dict having wn,pn and roh stored
+        Returns a dec_vars dict having wn,pn,roh and qn stored
         """
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         
@@ -47,6 +47,23 @@ class ModelNormalNumericalSolver:
         wn = opt[0][0]
         pn = (1 + wn) / 2
         roh = (1-wn) * (1/2) * (tau/a)**(1/2)
+        return {'wn' : wn, 'pn' : pn, 'roh' : roh, 'qn' : 1 - pn}
+        
+    def _optimize_case_two(self, const_args):
+        """
+        Returns a dec_vars dict having wn,pn,roh and qn stored
+        """
+        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
+        
+        #helper function
+        def __manufacturer_derivation_case_2(wn):
+            return (1/2) * (-1 -cn -2*wn * (-1 + tau) + tau + s*tau)
+        
+        # hello scipy:
+        opt = scipy.optimize.fsolve(__manufacturer_derivation_case_2, x0=0.5, full_output=True)
+        wn = opt[0][0]
+        pn = (1 + wn) / 2
+        roh = 1
         return {'wn' : wn, 'pn' : pn, 'roh' : roh, 'qn' : 1 - pn}
     
 def check_args(args):
