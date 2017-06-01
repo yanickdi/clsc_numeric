@@ -1,6 +1,6 @@
 import unittest
 
-from numeric import build_args, check_args, ModelNormalNumericalSolver
+from solver import build_args, check_args, ModelNormalNumericalSolver
 
 class TestModelNormalNumericalSolver(unittest.TestCase):
 

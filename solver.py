@@ -87,21 +87,6 @@ def build_args(tau, a, s, cn):
     
     
 if __name__ == '__main__':
+    print('You cannot call this file directly')
     solver = ModelNormalNumericalSolver()
-    const_args = build_args(tau=0.1, a=0.005, s=0.0005, cn=0.01)
-    dec_vars = solver.optimize(const_args)
-    print(solver.profit_manufacturer(dec_vars, const_args))
-    sys.exit()
-    
-    tau, a, s, cn = args['tau'], args['a'], args['s'], args['cn']
-    if cn <= 1 - 4*(1-tau/2)*(a/tau)**(1/2):
-        print('case 1(a): p >= 1')
-        wn = (1+cn)/2 - (a*tau)**(1/2)
-        print('optimales wn muesste sein:', wn)
-        print('anaL ', (1/2) * (1+cn - 2*a * (tau/a)**(1/2)))
-    else:
-        print('case 2(a): p == 1')
-    # this one could be done analyitcal
-    opt = scipy.optimize.fsolve(manufacturer_derivation_case_1, x0=0.5, args=args, full_output=True)
-    print(opt[0])
-    #print(opt)
+    pass
