@@ -1,6 +1,8 @@
 import scipy.optimize
 import sys
 
+_CASE_ONE, _CASE_TWO = 1, 2
+
 class ModelOneNumericalSolver:
     """
         This class offers methods to solve Model 1 (Without Online Store of the Manufacturer) numerically
@@ -29,13 +31,22 @@ class ModelOneNumericalSolver:
         #       case 1 - roh is >= 1
         #       case 2 - roh is == 1
         
-        #case 1:
         dec_vars_case_1 = self._optimize_case_one(const_args)
+        prof_man_case_1, prof_man_ret_1 = self.calc_profits(const_args, dec_vars_case_1)
+        dec_vars_case_2 = self._optimize_case_two(const_args)
+        prof_man_case_2, prof_man_ret_2 = self.calc_profits(const_args, dec_vars_case_2)
+        
+        
+        case = None
+        
         if dec_vars_case_1['roh'] < 1:
-            # we are in case 2 now
-            return self._optimize_case_two(const_args)
+            case = _CASE_ONE
         else:
-            return dec_vars_case_1
+            # roh is greater than 1, we can decide between both
+            # the manufacturer decides:
+            case = _CASE_ONE if prof_man_case_1 >= prof_man_case_2 else _CASE_TWO
+        
+        return dec_vars_case_1 if case == _CASE_ONE else dec_vars_case_2
     
     def _optimize_case_one(self, const_args):
         """
