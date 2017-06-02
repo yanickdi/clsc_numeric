@@ -17,12 +17,6 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         profit_solver_manufacturer,_ = solver.calc_profits(const_args, solver.optimize(const_args))
         self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
         
-    def __input_is_in_case_1(self, const_args):
-        return const_args['cn'] <= 1 - 4*(1-const_args['tau']/2)*(const_args['a']/const_args['tau'])**(1/2)
-        
-    def __input_is_in_case_2(self, const_args):
-        return const_args['cn'] >= 1 - const_args['tau']*(1-const_args['s']) - 4*(1-const_args['tau']) * sqrt(const_args['a']/const_args['tau'])
-        
     def test_case_1a_dec_vars(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
@@ -30,7 +24,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking the test input variables..
         # if the following condition is true, it must lead to a case a optimization
-        self.assertTrue(self.__input_is_in_case_1(const_args))
+        self.assertTrue(self.__input_is_in_case_1(const_args) and not self.__input_is_in_case_2(const_args))
         
         solver_dec_vars = solver.optimize(const_args)
         self.assertAlmostEqual(solver_dec_vars['pn'], (3+cn)/4 - (1/2)*(a*tau)**(1/2), msg='pn not the same')
@@ -44,7 +38,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking the test input variables..
         # if the following condition is true, it must lead to a case b optimization
-        self.assertTrue(self.__input_is_in_case_2(const_args))
+        self.assertTrue(self.__input_is_in_case_2(const_args) and not self.__input_is_in_case_1(const_args))
         
         analyitcal_profit_manufacturer = ((1-cn-tau+s*tau)**2)/(8*(1-tau))
         profit_solver_manufacturer,_ = solver.calc_profits(const_args, solver.optimize(const_args))
@@ -56,8 +50,10 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         const_args = build_args(tau=0.3, a=0.01, s=0, cn=0.3)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking if input vars not in case 1 and not in case 2:
-        self.assertTrue(self.__input_is_in_case_1(const_args))
-        #self.assertFalse(self.__input_is_in_case_2(const_args))
+        self.assertTrue(self.__input_is_in_case_1(const_args) and self.__input_is_in_case_2(const_args))
+        prof_solver_man, prof_solver_ret = solver.calc_profits(const_args, solver.optimize(const_args))
+        self.assertAlmostEqual(prof_solver_ret, 0.00428571) # would be case 2 solution, because is higher than case 1 solution
+        self.assertAlmostEqual(prof_solver_man, 0.02857143) 
         
     def test_case_2_dec_vars(self):
         solver = ModelOneNumericalSolver()
@@ -80,6 +76,12 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         dec_vars = solver.optimize(const_args)
         self.assertAlmostEqual(dec_vars['qn'], 1 - dec_vars['pn'])
         # TODO: also test a case leading to roh == 1
+        
+    def __input_is_in_case_1(self, const_args):
+        return const_args['cn'] <= 1 - 4*(1-const_args['tau']/2)*(const_args['a']/const_args['tau'])**(1/2)
+        
+    def __input_is_in_case_2(self, const_args):
+        return const_args['cn'] >= 1 - const_args['tau']*(1-const_args['s']) - 4*(1-const_args['tau']) * sqrt(const_args['a']/const_args['tau'])
         
 class TestGenerator(unittest.TestCase):
     def inactive_test_model_1_compare_analytical(self):
