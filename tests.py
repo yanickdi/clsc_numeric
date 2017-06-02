@@ -62,10 +62,10 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking the test input variables..
         # if the following condition is true, it must lead to a case b optimization
-        self.assertTrue(cn > 1 - 4*(1-tau/2)*(a/tau)**(1/2))
+        self.assertTrue(self.__input_is_in_case_2(const_args))
         
         solver_dec_vars = solver.optimize(const_args)
-        self.assertAlmostEqual(solver_dec_vars['pn'], (1/(1-tau)) * ((3+cn)/4 - (tau*(3+s))/4), msg='pn not the same')
+        self.assertAlmostEqual(solver_dec_vars['pn'], 0.83319444, msg='pn not the same')
         self.assertAlmostEqual(solver_dec_vars['wn'], (1/(1-tau)) * ((1+cn)/2 - (tau*(1+s))/2), msg='wn not the same')
         self.assertAlmostEqual(solver_dec_vars['roh'], 1.0, msg='roh not the same')
     

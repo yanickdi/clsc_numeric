@@ -40,7 +40,7 @@ class ModelOneNumericalSolver:
         case = None
         
         if dec_vars_case_1['roh'] < 1:
-            case = _CASE_ONE
+            case = _CASE_TWO
         else:
             # roh is greater than 1, we can decide between both
             # the manufacturer decides:
