@@ -32,21 +32,31 @@ class ModelOneNumericalSolver:
         #       case 2 - roh is == 1
         
         dec_vars_case_1 = self._optimize_case_one(const_args)
-        prof_man_case_1, prof_man_ret_1 = self.calc_profits(const_args, dec_vars_case_1)
+        prof_man_case_1, prof_ret_case_1 = self.calc_profits(const_args, dec_vars_case_1)
         dec_vars_case_2 = self._optimize_case_two(const_args)
-        prof_man_case_2, prof_man_ret_2 = self.calc_profits(const_args, dec_vars_case_2)
+        prof_man_case_2, prof_ret_case_2 = self.calc_profits(const_args, dec_vars_case_2)
         
         
         case = None
         
-        if dec_vars_case_1['roh'] < 1:
+        if dec_vars_case_1['roh'] < 1 and prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
             case = _CASE_TWO
         else:
-            # roh is greater than 1, we can decide between both
+            # roh is greater than 1, we have to check both -
             # the manufacturer decides:
-            case = _CASE_ONE if prof_man_case_1 >= prof_man_case_2 else _CASE_TWO
-        
-        return dec_vars_case_1 if case == _CASE_ONE else dec_vars_case_2
+            if prof_man_case_1 >= 0 and prof_ret_case_1 >= 0 and prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
+                # both possible
+                case = _CASE_ONE if prof_man_case_1 >= prof_man_case_2 else _CASE_TWO
+            else:
+                if prof_man_case_1 >= 0 and prof_ret_case_1 >= 0:
+                    case = _CASE_ONE
+                if prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
+                    case = _CASE_TWO
+
+        if case == None:
+            return None
+        else:
+            return dec_vars_case_1 if case == _CASE_ONE else dec_vars_case_2
     
     def _optimize_case_one(self, const_args):
         """

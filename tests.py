@@ -77,6 +77,12 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec_vars['qn'], 1 - dec_vars['pn'])
         # TODO: also test a case leading to roh == 1
         
+    def test_sol_not_possible(self):
+        solver = ModelOneNumericalSolver()
+        const_args = build_args(tau=1, a=0.01, s=0, cn=0.8)
+        const_args['blub'] = 'blub'
+        self.assertIsNone(solver.optimize(const_args))
+        
     def __input_is_in_case_1(self, const_args):
         return const_args['cn'] <= 1 - 4*(1-const_args['tau']/2)*(const_args['a']/const_args['tau'])**(1/2)
         
@@ -97,8 +103,8 @@ class TestGenerator(unittest.TestCase):
         
             dec_vars, prof_man, prof_ret = ana_solver.calcModelOne(const_args)
             if round(solver_dec_vars['pn'], 7) != round(dec_vars['pn'], 7):
-                print(solver_dec_vars['pn'])
-                print(dec_vars['pn'])
+                print(solver_dec_vars)
+                print(dec_vars)
                 print(const_args)
                 
             self.assertAlmostEqual(solver_dec_vars['pn'], dec_vars['pn'])
@@ -128,27 +134,40 @@ class AnalyticalSolver:
             case_1_prof_man = case_1_qn * ( case_1_wn * (1- tau/case_1_roh) - cn + (tau/case_1_roh)*s)
             case_1_prof_ret = case_1_qn * (case_1_pn - case_1_wn)*(1- tau/case_1_roh) - a*case_1_roh
         
-        case_2_pn  = (1/(1-tau)) * ( (3+cn)/(4) - (tau*(3+s)/(4)))
-        case_2_wn  = (1/(1-tau)) * ((1+cn)/(2) - (tau*(1+s))/(2) )
-        case_2_roh = 1
-        case_2_qn  = (1/(1-tau)) * ( (1-cn)/(4) - (tau*(1-s))/(4) )
-        case_2_prof_man = case_2_qn * ( case_2_wn * (1- tau/case_2_roh) - cn + (tau/case_2_roh)*s)
-        case_2_prof_ret = case_2_qn * (case_2_pn - case_2_wn)*(1- tau/case_2_roh) - a*case_2_roh
+        if tau != 1:
+            case_2_pn  = (1/(1-tau)) * ( (3+cn)/(4) - (tau*(3+s)/(4)))
+            case_2_wn  = (1/(1-tau)) * ((1+cn)/(2) - (tau*(1+s))/(2) )
+            case_2_roh = 1
+            case_2_qn  = (1/(1-tau)) * ( (1-cn)/(4) - (tau*(1-s))/(4) )
+            case_2_prof_man = case_2_qn * ( case_2_wn * (1- tau/case_2_roh) - cn + (tau/case_2_roh)*s)
+            case_2_prof_ret = case_2_qn * (case_2_pn - case_2_wn)*(1- tau/case_2_roh) - a*case_2_roh
+        else:
+            # tau == 1 leads to division by zero
+            pass
         
-        if case_1_roh >= 1:
+        if round(case_1_roh, 7) >= 1:
             # i can take both solutions
-            if case_2_prof_man > case_1_prof_man:
+            if tau != 1 and case_2_prof_man > case_1_prof_man:
                 sol = 'CASE_2'
             else:
                 sol = 'CASE_1'
         else:
+            if tau == 1:
+                # no solution possible
+                print(const_args)
+                print(case_1_roh)
+                print('blub')
             # have to fall back on case 2
             sol = 'CASE_2'
         
         if sol == 'CASE_1':
-            return ({'pn' : case_1_pn, 'wn' : case_1_wn, 'roh' : case_1_roh, 'qn' : case_1_qn}, case_1_prof_man, case_1_prof_ret)
+            ret_val = ({'pn' : case_1_pn, 'wn' : case_1_wn, 'roh' : case_1_roh, 'qn' : case_1_qn}, case_1_prof_man, case_1_prof_ret)
         else:
-            return ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
+            ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
+        
+        if ret_val[2] < 0 or ret_val[1] < 0:
+            assert ret_val[2] < 0 and ret[1] < 0  # this would be interesting..
+            return None
         
 if __name__ == '__main__':
     unittest.main()
