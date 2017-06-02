@@ -7,6 +7,8 @@ except:
     sys.exit('Failed: You have to install the python scipy package.')
     
 import solver
+
+MODEL_1, MODEL_2 = 1, 2
     
 class Generator:
     """
@@ -16,7 +18,7 @@ class Generator:
     def __init__(self, model_nr, output_file):
         self.model_nr = model_nr
         self.output_file = output_file
-        if type(output_file) is AbstractOutputFile:
+        if issubclass(type(output_file), MemoryOutputFile):
             self.file_writer = output_file
         elif output_file == 'stdout':
             self.file_writer = StdoutFile()
@@ -26,7 +28,7 @@ class Generator:
                 self.file_writer = CsvOutputFile(output_file)
             else:
                 raise RuntimeError('other output files than stdout not implemented yet.')
-        assert model_nr == 1 #TODO: Implement model 2
+        assert model_nr == MODEL_1 #TODO: Implement model 2
         
     def generate(self):
         """ Do se generation """
@@ -82,6 +84,8 @@ class MemoryOutputFile:
         """
         This method will return all stored solutions so far
         Do not call this method *before* the open() call
+        
+        The list contains dictionaries with const_args, dec_vars, profit_man, profit_ret
         """
         return self._list
         

@@ -4,7 +4,7 @@ This project is part of my master's thesis. The goal is to create a full factori
 
 ### Installation
 
-You can download this project by clicking *Clone or download* and *Download as ZIP* or directly cloning it via [git](https://try.github.io/levels/1/challenges/).
+You can download this project by clicking *Clone or download* and *Download as ZIP* or directly cloning it via [git](https://try.github.io/levels/1/challenges/1).
 
 ##### Software requirements
 This solver requires [Python3](https://www.python.org/) and [SciPy](https://www.scipy.org/) to run.
@@ -30,7 +30,7 @@ $ cd clsc_numeric-master
 #
 #
 # and start my test cases:
-$ python3 test_solver.py
+$ python3 tests.py
 #
 #
 # or print out some numeric results:
