@@ -85,7 +85,7 @@ class MemoryOutputFile:
         This method will return all stored solutions so far
         Do not call this method *before* the open() call
         
-        The list contains dictionaries with const_args, dec_vars, profit_man, profit_ret
+        The list contains dictionaries with the following keywords: const_args, dec_vars, profit_man, profit_ret
         """
         return self._list
         
