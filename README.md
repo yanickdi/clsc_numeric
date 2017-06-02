@@ -25,8 +25,14 @@ If you want to check whether the solver is working - just open a terminal, chang
 # change to your Downloads folder and unzip the downloaded package:
 $ cd ~/Downloads/
 $ unzip clsc_numeric-master.zip
+# now change to our unpacked project folder:
+$ cd clsc_numeric-master
+#
+#
 # and start my test cases:
 $ python3 test_solver.py
+#
+#
 # or print out some numeric results:
 $ python3 generator.py --model 1 --output stdout
 # or create a .csv file of some numeric results:
