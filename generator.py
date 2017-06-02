@@ -16,7 +16,9 @@ class Generator:
     def __init__(self, model_nr, output_file):
         self.model_nr = model_nr
         self.output_file = output_file
-        if output_file == 'stdout':
+        if type(output_file) is AbstractOutputFile:
+            self.file_writer = output_file
+        elif output_file == 'stdout':
             self.file_writer = StdoutFile()
         else:
             suffix = output_file.split('.')[-1]
@@ -63,6 +65,26 @@ class AbstractOutputFile:
     
     def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
         raise NotImplementedError()
+        
+class MemoryOutputFile:
+    """ This class is used to test and store the outcome of the Generator Object """
+    
+    def open(self):
+        self._list = []
+    
+    def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
+        self._list.append({'const_args' : const_args, 'dec_vars' : dec_vars, 'profit_man' : profit_man, 'profit_ret' : profit_ret})
+    
+    def close(self):
+        pass
+        
+    def getSolutions(self):
+        """
+        This method will return all stored solutions so far
+        Do not call this method *before* the open() call
+        """
+        return self._list
+        
         
 class StdoutFile(AbstractOutputFile):
     """ This class writes the output to stdout """
