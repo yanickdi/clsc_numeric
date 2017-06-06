@@ -43,11 +43,14 @@ class ModelOneNumericalSolver:
         dec_vars_case_2 = self._optimize_case_two(const_args)
         prof_man_case_2, prof_ret_case_2 = self.calc_profits(const_args, dec_vars_case_2)
         
-        
         case = None
         
-        if dec_vars_case_1['roh'] < 1 and prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
-            case = _CASE_TWO
+        if dec_vars_case_1['roh'] < 1:
+            if prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
+                case = _CASE_TWO
+            else:
+                # case one and two not possible
+                return None
         else:
             # roh is greater than 1, we have to check both -
             # the manufacturer decides:
@@ -59,6 +62,10 @@ class ModelOneNumericalSolver:
                     case = _CASE_ONE
                 if prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
                     case = _CASE_TWO
+                    
+        if const_args['tau'] == 0.1 and const_args['a'] == 0.01 and const_args['s'] == 0.2 and const_args['cn'] == 0.6:
+            print(dec_vars_case_1['roh'])
+            print(case)
 
         if case == None:
             return None
