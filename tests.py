@@ -105,9 +105,11 @@ class TestGenerator(unittest.TestCase):
                 self.assertIsNone(prof_man)
                 self.assertIsNone(prof_ret)
                 if solver_dec_vars != None:
+                    print('blub')
                     print(const_args)
                     print(solver_prof_man)
                     print(solver_prof_ret)
+                    print('blub')
                 self.assertIsNone(solver_dec_vars)
                 self.assertIsNone(solver_prof_man)
                 self.assertIsNone(solver_prof_ret)
@@ -158,10 +160,14 @@ class AnalyticalSolver:
         else:
             # tau == 1 leads to division by zero
             pass
+            
+        #if const_args['tau'] == 0.4 and const_args['a'] == 0.01 and const_args['s'] == 0 and const_args['cn'] == 0.4:
+        #    print('debug 1')
+        #    print(case_2_roh)
         
         if round(case_1_roh, 7) >= 1:
             # i can take both solutions
-            if tau != 1 and case_2_prof_man > case_1_prof_man:
+            if tau != 1 and case_2_prof_man > case_1_prof_man and case_2_prof_man >= 0 and case_2_prof_ret >= 0:
                 sol = 'CASE_2'
             else:
                 sol = 'CASE_1'
@@ -170,7 +176,7 @@ class AnalyticalSolver:
                 # no solution possible
                 print(const_args)
                 print(case_1_roh)
-                print('blub')
+                print('no analytical sol 1 possible')
             # have to fall back on case 2
             sol = 'CASE_2'
         
@@ -178,12 +184,14 @@ class AnalyticalSolver:
             ret_val = ({'pn' : case_1_pn, 'wn' : case_1_wn, 'roh' : case_1_roh, 'qn' : case_1_qn}, case_1_prof_man, case_1_prof_ret)
         else:
             ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
+            
         
         if ret_val[2] < 0 or ret_val[1] < 0:
             if ret_val[2] >= 0 or ret_val[1] >= 0:
                 #print(const_args) # this may be interesting
                 pass
             return (None, None, None)
+            
         return ret_val
         
 if __name__ == '__main__':

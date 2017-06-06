@@ -63,9 +63,10 @@ class ModelOneNumericalSolver:
                 if prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
                     case = _CASE_TWO
                     
-        if const_args['tau'] == 0.1 and const_args['a'] == 0.01 and const_args['s'] == 0.2 and const_args['cn'] == 0.6:
-            print(dec_vars_case_1['roh'])
-            print(case)
+        #if const_args['tau'] == 0.4 and const_args['a'] == 0.01 and const_args['s'] == 0 and const_args['cn'] == 0.4:
+        #    print('yeah')
+        #    print(dec_vars_case_2['roh'])
+        #    print(case)
 
         if case == None:
             return None
