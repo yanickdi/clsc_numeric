@@ -170,13 +170,17 @@ class AnalyticalSolver:
             else:
                 sol = 'CASE_1'
         else:
+            # only case two would be possible
             if tau == 1:
-                # no solution possible
-                print(const_args)
-                print(case_1_roh)
-                print('no analytical sol 1 possible')
+                # no analytical solution possible:
+                #raise RuntimeError('no analytical solution possible')
+                return (None, None, None)
             # have to fall back on case 2
-            sol = 'CASE_2'
+            else:
+                # only case 2 analytical is possible:
+                ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
+                if is_prof_pos(ret_val[1]) and is_prof_pos(ret_val[2]): return ret_val
+                else: return (None, None, None)
         
         if sol == 'CASE_1':
             ret_val = ({'pn' : case_1_pn, 'wn' : case_1_wn, 'roh' : case_1_roh, 'qn' : case_1_qn}, case_1_prof_man, case_1_prof_ret)
