@@ -2,11 +2,11 @@
 
 This project is part of my master's thesis. The goal is to create a full factorial analysis of some (new) mathematical  closed-loop supply chain models.
 
-### Installation
+## Installation
 
 You can download this project by clicking *Clone or download* and *Download as ZIP* or directly cloning it via [git](https://try.github.io/levels/1/challenges/1).
 
-##### Download via git
+### Download via git (recommended)
 First, you have to install git:
 ```sh
 $ sudo apt-get install git
@@ -22,7 +22,19 @@ $ cd clsc_numeric
 $ git pull
 ```
 
-##### Software requirements
+### Download via direct zip download
+Just download and unpack the zip folder, you can use your terminal:
+```sh
+# change to your Downloads folder:
+$ cd ~/Downloads/
+# download the zip file using wget
+$ wget https://github.com/yanickdi/clsc_numeric/archive/master.zip
+# and unzip the downloaded package:
+$ unzip clsc_numeric-master.zip
+$ mv clsc_numeric-master clsc_numeric
+```
+
+### Software requirements
 This solver requires [Python3](https://www.python.org/) and [SciPy](https://www.scipy.org/) to run.
 
 On Unix environments this may will work:
@@ -38,14 +50,10 @@ documentation in progress.
 If you want to check whether the solver is working - just open a terminal, change to your downloaded folder and start *generator.py* like:
 
 ```sh
-# change to your Downloads folder and unzip the downloaded package:
-$ cd ~/Downloads/
-$ unzip clsc_numeric-master.zip
-# now change to our unpacked project folder:
-$ cd clsc_numeric-master
+# change to your project folder:
+$ cd clsc_numeric
 #
-#
-# and start my test cases:
+# start all test cases:
 $ python3 tests.py
 #
 #
