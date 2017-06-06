@@ -1,7 +1,7 @@
 import unittest
 from math import sqrt
 
-from solver import build_args, check_args, ModelOneNumericalSolver
+from solver import build_args, check_args, ModelOneNumericalSolver, is_prof_pos
 from generator import Generator, MemoryOutputFile, MODEL_1, MODEL_2
 
 class TestModelOneNumericalSolver(unittest.TestCase):
@@ -101,18 +101,20 @@ class TestGenerator(unittest.TestCase):
             solver_prof_man, solver_prof_ret = solution['profit_man'], solution['profit_ret']
             assert const_args != None
             dec_vars, prof_man, prof_ret = ana_solver.calcModelOne(const_args)
-            if (dec_vars == None):
+            if dec_vars == None:
                 self.assertIsNone(prof_man)
                 self.assertIsNone(prof_ret)
-                if solver_dec_vars != None:
-                    print('blub')
-                    print(const_args)
-                    print(solver_prof_man)
-                    print(solver_prof_ret)
-                    print('blub')
                 self.assertIsNone(solver_dec_vars)
                 self.assertIsNone(solver_prof_man)
                 self.assertIsNone(solver_prof_ret)
+            elif solver_dec_vars == None:
+                self.assertIsNone(solver_prof_man)
+                self.assertIsNone(solver_prof_ret)
+                if dec_vars != None:
+                    print(const_args)
+                self.assertIsNone(dec_vars)
+                self.assertIsNone(prof_man)
+                self.assertIsNone(prof_ret)
             else:
                 if round(solver_dec_vars['pn'], 7) != round(dec_vars['pn'], 7):
                     print(solver_dec_vars)
@@ -181,7 +183,7 @@ class AnalyticalSolver:
         else:
             ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
             
-        if round(ret_val[2], 10) < 0 or round(ret_val[1], 0) < 0:
+        if not is_prof_pos(ret_val[2]) or not is_prof_pos(ret_val[1]):
             if ret_val[2] >= 0 or ret_val[1] >= 0:
                 #print(const_args) # this may be interesting
                 pass

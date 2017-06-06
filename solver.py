@@ -2,6 +2,11 @@ import scipy.optimize
 import sys
 
 _CASE_ONE, _CASE_TWO = 1, 2
+DECIMALS_ALLOW_NN = 15
+
+def is_prof_pos(prof):
+    """ checks whether a given profit is positive - it allows also a -.1*10^15 as positive! """
+    return round(prof, 15) >= 0
 
 class ModelOneNumericalSolver:
     """
@@ -46,7 +51,7 @@ class ModelOneNumericalSolver:
         case = None
         
         if dec_vars_case_1['roh'] < 1:
-            if prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
+            if is_prof_pos(prof_man_case_2) and is_prof_pos(prof_ret_case_2):
                 case = _CASE_TWO
             else:
                 # case one and two not possible
@@ -54,18 +59,18 @@ class ModelOneNumericalSolver:
         else:
             # roh is greater than 1, we have to check both -
             # the manufacturer decides:
-            if prof_man_case_1 >= 0 and prof_ret_case_1 >= 0 and prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
+            if is_prof_pos(prof_man_case_1) and is_prof_pos(prof_ret_case_1) and is_prof_pos(prof_man_case_2) and is_prof_pos(prof_ret_case_2):
                 # both possible
                 case = _CASE_ONE if prof_man_case_1 >= prof_man_case_2 else _CASE_TWO
             else:
-                if prof_man_case_1 >= 0 and prof_ret_case_1 >= 0:
+                if is_prof_pos(prof_man_case_1) and is_prof_pos(prof_ret_case_1):
                     case = _CASE_ONE
-                if prof_man_case_2 >= 0 and prof_ret_case_2 >= 0:
+                if is_prof_pos(prof_man_case_2) and is_prof_pos(prof_ret_case_2):
                     case = _CASE_TWO
                     
-        #if const_args['tau'] == 0.4 and const_args['a'] == 0.01 and const_args['s'] == 0 and const_args['cn'] == 0.4:
+        #if const_args['tau'] == 0 and const_args['a'] == 0.01 and const_args['s'] == 0 and const_args['cn'] == 0.6:
         #    print('yeah')
-        #    print(dec_vars_case_2['roh'])
+        #    print(prof_ret_case_2)
         #    print(case)
 
         if case == None:
