@@ -160,10 +160,6 @@ class AnalyticalSolver:
         else:
             # tau == 1 leads to division by zero
             pass
-            
-        #if const_args['tau'] == 0.4 and const_args['a'] == 0.01 and const_args['s'] == 0 and const_args['cn'] == 0.4:
-        #    print('debug 1')
-        #    print(case_2_roh)
         
         if round(case_1_roh, 7) >= 1:
             # i can take both solutions
@@ -185,8 +181,7 @@ class AnalyticalSolver:
         else:
             ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
             
-        
-        if ret_val[2] < 0 or ret_val[1] < 0:
+        if round(ret_val[2], 10) < 0 or round(ret_val[1], 0) < 0:
             if ret_val[2] >= 0 or ret_val[1] >= 0:
                 #print(const_args) # this may be interesting
                 pass
