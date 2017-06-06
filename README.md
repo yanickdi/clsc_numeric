@@ -18,7 +18,6 @@ $ sudo apt-get install python3 python-scipy
 Windows Users are encouraged to download the [Anaconda Installer](https://www.continuum.io/downloads) - This will automatically install Python3 and a lot of scientific stuff on your PC.
 
 # Usage
-update: generator.py currently not working - but tests.py works (unit test is not testing the generator yet)
 documentation in progress.
 If you want to check whether the solver is working - just open a terminal, change to your downloaded folder and start *generator.py* like:
 

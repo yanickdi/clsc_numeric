@@ -118,9 +118,14 @@ class CsvOutputFile(AbstractOutputFile):
         
     def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
         const_str = '{};{};{};{}'.format(const_args['tau'], const_args['a'], const_args['s'], const_args['cn']) #TODO: This code doesnt support model 2
-        dec_str =   '{};{};{};{}'.format(dec_vars['pn'], dec_vars['wn'], dec_vars['roh'], dec_vars['qn'])
-        line = '{};{};{};{}'.format(const_str, dec_str, profit_man, profit_ret)
-        self.file.write(line + '\n')
+        if dec_vars == None:
+            dec_str = '{};{};{};{}'.format(None, None, None, None)
+            profit_man = -1.0
+            profit_ret = -1.0
+        else:
+            dec_str =   '{};{};{};{}'.format(dec_vars['pn'], dec_vars['wn'], dec_vars['roh'], dec_vars['qn'])
+        line = '{};{};{:.5f};{:.5f}'.format(const_str, dec_str, profit_man, profit_ret)
+        self.file.write(line.replace('.',',') + '\n')
         
     def close(self):
         self.file.close()

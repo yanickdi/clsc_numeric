@@ -1,5 +1,7 @@
 # Generator Output Files
 *.csv
+# Excel Files
+*.xlsx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
