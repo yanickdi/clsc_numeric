@@ -101,17 +101,28 @@ class TestGenerator(unittest.TestCase):
             solver_prof_man, solver_prof_ret = solution['profit_man'], solution['profit_ret']
             assert const_args != None
             dec_vars, prof_man, prof_ret = ana_solver.calcModelOne(const_args)
-            if round(solver_dec_vars['pn'], 7) != round(dec_vars['pn'], 7):
-                print(solver_dec_vars)
-                print(dec_vars)
-                print(const_args)
-                
-            self.assertAlmostEqual(solver_dec_vars['pn'], dec_vars['pn'])
-            self.assertAlmostEqual(solver_dec_vars['wn'], dec_vars['wn'])
-            self.assertAlmostEqual(solver_dec_vars['roh'], dec_vars['roh'])
-            self.assertAlmostEqual(solver_dec_vars['qn'], dec_vars['qn'])
-            self.assertAlmostEqual(solver_prof_man, prof_man)
-            self.assertAlmostEqual(solver_prof_ret, prof_ret)
+            if (dec_vars == None):
+                self.assertIsNone(prof_man)
+                self.assertIsNone(prof_ret)
+                if solver_dec_vars != None:
+                    print(const_args)
+                    print(solver_prof_man)
+                    print(solver_prof_ret)
+                self.assertIsNone(solver_dec_vars)
+                self.assertIsNone(solver_prof_man)
+                self.assertIsNone(solver_prof_ret)
+            else:
+                if round(solver_dec_vars['pn'], 7) != round(dec_vars['pn'], 7):
+                    print(solver_dec_vars)
+                    print(dec_vars)
+                    print(const_args)
+                    
+                self.assertAlmostEqual(solver_dec_vars['pn'], dec_vars['pn'])
+                self.assertAlmostEqual(solver_dec_vars['wn'], dec_vars['wn'])
+                self.assertAlmostEqual(solver_dec_vars['roh'], dec_vars['roh'])
+                self.assertAlmostEqual(solver_dec_vars['qn'], dec_vars['qn'])
+                self.assertAlmostEqual(solver_prof_man, prof_man)
+                self.assertAlmostEqual(solver_prof_ret, prof_ret)
         
 
 class AnalyticalSolver:
@@ -169,9 +180,9 @@ class AnalyticalSolver:
             ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
         
         if ret_val[2] < 0 or ret_val[1] < 0:
-            if ret_val[2] >= 0 or ret_val[1] >= 0:  # this would be interesting..
-                print(const_args)
-                self.assertTrue(False)
+            if ret_val[2] >= 0 or ret_val[1] >= 0:
+                #print(const_args) # this may be interesting
+                pass
             return (None, None, None)
         return ret_val
         
