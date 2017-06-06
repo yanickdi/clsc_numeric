@@ -37,7 +37,7 @@ class Generator:
         for const_args in self.__model_one_const_generator():
             dec_vars = model_solver.optimize(const_args)
             manu_profit, ret_profit = model_solver.calc_profits(const_args, dec_vars)
-            self.file_writer.writeSolution(const_args, dec_vars, manu_profit, ret_profit) #TODO: add manufacturer and retailer profit here
+            self.file_writer.writeSolution(const_args, dec_vars, manu_profit, ret_profit)
         self.file_writer.close()
     
     def __model_one_const_generator(self):

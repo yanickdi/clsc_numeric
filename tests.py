@@ -80,7 +80,6 @@ class TestModelOneNumericalSolver(unittest.TestCase):
     def test_sol_not_possible(self):
         solver = ModelOneNumericalSolver()
         const_args = build_args(tau=1, a=0.01, s=0, cn=0.8)
-        const_args['blub'] = 'blub'
         self.assertIsNone(solver.optimize(const_args))
         
     def __input_is_in_case_1(self, const_args):
@@ -90,7 +89,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         return const_args['cn'] >= 1 - const_args['tau']*(1-const_args['s']) - 4*(1-const_args['tau']) * sqrt(const_args['a']/const_args['tau'])
         
 class TestGenerator(unittest.TestCase):
-    def inactive_test_model_1_compare_analytical(self):
+    def test_model_1_compare_analytical(self):
         mof = MemoryOutputFile()
         generator = Generator(MODEL_1, mof)
         solver = ModelOneNumericalSolver()
@@ -100,7 +99,7 @@ class TestGenerator(unittest.TestCase):
         for solution in mof.getSolutions():
             const_args, solver_dec_vars = solution['const_args'], solution['dec_vars']
             solver_prof_man, solver_prof_ret = solution['profit_man'], solution['profit_ret']
-        
+            assert const_args != None
             dec_vars, prof_man, prof_ret = ana_solver.calcModelOne(const_args)
             if round(solver_dec_vars['pn'], 7) != round(dec_vars['pn'], 7):
                 print(solver_dec_vars)
@@ -122,7 +121,11 @@ class AnalyticalSolver:
     """
     
     def calcModelOne(self, const_args):
-        """ Returns a tuple (dec_vars, profit_manufacturer, profit_retailer) """
+        """
+        Returns a tuple (dec_vars, profit_manufacturer, profit_retailer)
+        
+        If the solution isnt possible, this method will return a tuple of (None, None, None)
+        """
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         
         case_1_pn  = (3+cn)/4 - (1/2)*(a*tau)**(1/2)
@@ -166,8 +169,11 @@ class AnalyticalSolver:
             ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
         
         if ret_val[2] < 0 or ret_val[1] < 0:
-            assert ret_val[2] < 0 and ret[1] < 0  # this would be interesting..
-            return None
+            if ret_val[2] >= 0 or ret_val[1] >= 0:  # this would be interesting..
+                print(const_args)
+                self.assertTrue(False)
+            return (None, None, None)
+        return ret_val
         
 if __name__ == '__main__':
     unittest.main()

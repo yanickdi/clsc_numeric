@@ -14,7 +14,11 @@ class ModelOneNumericalSolver:
         """
             Returns the numeric result of the profit of the manufacturer and the retailer (a tuple containing first manufacturer, second retailer)
             having set all decision variables
+            
+            This method checks whether `dec_vars` is not None. If its None - It will return a tuple of (None, None)
         """
+        if dec_vars == None:
+            return (None, None)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         wn, pn, roh, qn = dec_vars['wn'], dec_vars['pn'], dec_vars['roh'], dec_vars['qn']
         manu_profit = qn * (wn * (1- tau/roh) - cn + (tau/roh) * s)
@@ -26,6 +30,9 @@ class ModelOneNumericalSolver:
         This is the core method of this class. It will return all four
         decision variables to maximize the retailer's profit (with
         respect to the profit maximization condition of the retailer)
+        
+        Returns:
+        A dictionary of decision_vars {wn, pn, roh and qn} or None if the solution is not possible
         """
         ## test two cases:
         #       case 1 - roh is >= 1
