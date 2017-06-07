@@ -10,16 +10,22 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      5378,        190]
-NotebookOptionsPosition[      4810,        165]
-NotebookOutlinePosition[      5184,        181]
-CellTagsIndexPosition[      5141,        178]
+NotebookDataLength[      5660,        197]
+NotebookOptionsPosition[      5056,        171]
+NotebookOutlinePosition[      5430,        187]
+CellTagsIndexPosition[      5387,        184]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
+Cell[BoxData[
+ RowBox[{"TODO", ":", " ", 
+  RowBox[{
+  "make", " ", "more", " ", "like", " ", "model_", "2.", "nb"}]}]], "Input",
+ CellChangeTimes->{{3.705843348889218*^9, 3.705843367585415*^9}}],
 
 Cell[CellGroupData[{
+
 Cell[BoxData[
  RowBox[{
   RowBox[{"D", "[", 
@@ -70,7 +76,7 @@ Cell[BoxData[
       RowBox[{"-", "1"}], "+", "\[Delta]"}], ")"}], " ", 
     "\[Rho]"}]]}]], "Output",
  CellChangeTimes->{{3.705741155142098*^9, 3.705741163061794*^9}, 
-   3.705744433282511*^9}]
+   3.705744433282511*^9, {3.705843330932018*^9, 3.7058433358390756`*^9}}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -180,17 +186,18 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
+Cell[558, 20, 195, 4, 54, "Input"],
 Cell[CellGroupData[{
-Cell[580, 22, 1034, 29, 110, "Input"],
-Cell[1617, 53, 573, 19, 79, "Output"]
+Cell[778, 28, 1034, 29, 110, "Input"],
+Cell[1815, 59, 621, 19, 79, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[2227, 77, 918, 28, 110, "Input"],
-Cell[3148, 107, 611, 19, 82, "Output"]
+Cell[2473, 83, 918, 28, 110, "Input"],
+Cell[3394, 113, 611, 19, 82, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[3796, 131, 874, 27, 110, "Input"],
-Cell[4673, 160, 121, 2, 87, "Output"]
+Cell[4042, 137, 874, 27, 110, "Input"],
+Cell[4919, 166, 121, 2, 54, "Output"]
 }, Open  ]]
 }
 ]
