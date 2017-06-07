@@ -1,0 +1,131 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      3576,        123]
+NotebookOptionsPosition[      3180,        106]
+NotebookOutlinePosition[      3554,        122]
+CellTagsIndexPosition[      3511,        119]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"-", 
+    RowBox[{"(", 
+     RowBox[{"1", "-", 
+      FractionBox[
+       RowBox[{
+        SubscriptBox["p", "n"], "-", 
+        SubscriptBox["p", "r"]}], 
+       RowBox[{"1", "-", "\[Delta]"}]]}], ")"}]}], "*", 
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{
+      SubscriptBox["w", "n"], "*", 
+      RowBox[{"(", 
+       RowBox[{"1", "-", 
+        FractionBox["\[Tau]", "\[Rho]"]}], ")"}]}], "-", 
+     SubscriptBox["c", "n"]}], ")"}]}], "-", 
+  RowBox[{
+   SubscriptBox["q", "r"], "*", 
+   RowBox[{"(", 
+    RowBox[{
+     SubscriptBox["p", "r"], "-", 
+     SubscriptBox["c", "r"]}], ")"}]}], "-", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{
+      FractionBox["\[Tau]", "\[Rho]"], "*", 
+      SubscriptBox["q", "n"]}], "-", 
+     SubscriptBox["q", "r"]}], ")"}], "*", "s"}], "+", 
+  RowBox[{
+   SubscriptBox["\[Lambda]", "1"], "*", 
+   RowBox[{"(", 
+    RowBox[{"-", 
+     SubscriptBox["q", "r"]}], ")"}]}], "+", 
+  RowBox[{
+   SubscriptBox["\[Lambda]", "2"], "*", 
+   RowBox[{"(", 
+    RowBox[{
+     SubscriptBox["q", "r"], "-", 
+     RowBox[{
+      FractionBox["\[Tau]", "\[Rho]"], "*", 
+      SubscriptBox["q", "n"]}]}], ")"}]}]}]], "Input",
+ CellChangeTimes->{{3.705750700039543*^9, 3.7057507711481624`*^9}, {
+  3.7057508323451624`*^9, 3.7057509298691626`*^9}, {3.7057510223741627`*^9, 
+  3.7057510765951624`*^9}, {3.705751121512162*^9, 3.7057511992441626`*^9}, {
+  3.7057512540971622`*^9, 3.7057513023591623`*^9}, {3.705751338646407*^9, 
+  3.7057513483913813`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"fall", " ", "roh"}], " ", "\[GreaterEqual]", " ", "1"}], 
+  ":"}]], "Input",
+ CellChangeTimes->{{3.7057513602195635`*^9, 3.7057513658081226`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  SubscriptBox["p", "n"], " ", ":", "  ", 
+  RowBox[{
+   FractionBox["1", "2"], "*", 
+   RowBox[{"(", 
+    RowBox[{"1", "+", 
+     SubscriptBox["w", "n"], "-", "\[Delta]", "+", 
+     SubscriptBox["p", "r"]}], ")"}]}]}], "\[IndentingNewLine]", 
+ RowBox[{"\[Rho]", "   ", ":", " ", 
+  RowBox[{
+   FractionBox["1", "2"], "*", 
+   RowBox[{"(", 
+    RowBox[{"1", "-", "\[Delta]", "+", 
+     SubscriptBox["p", "r"], "-", 
+     SubscriptBox["w", "n"]}], ")"}], "*", 
+   SqrtBox[
+    FractionBox["\[Tau]", 
+     RowBox[{"a", "*", 
+      RowBox[{"(", 
+       RowBox[{"1", "-", "\[Delta]"}]}]}]]]}]}]}], "Input",
+ CellChangeTimes->{{3.705751367844326*^9, 3.7057513690954514`*^9}, {
+  3.7057515024707875`*^9, 3.705751591091649*^9}, {3.705751655701109*^9, 
+  3.7057517346445713`*^9}}],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.705750917460162*^9, 3.705750917493162*^9}}]
+},
+WindowSize->{1132, 815},
+WindowMargins->{{217, Automatic}, {71, Automatic}},
+Magnification:>2.4 Inherited,
+FrontEndVersion->"11.0 for Microsoft Windows (64-bit) (July 28, 2016)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 1527, 49, 232, "Input"],
+Cell[2088, 71, 193, 5, 103, "Input"],
+Cell[2284, 78, 797, 23, 224, "Input"],
+Cell[3084, 103, 92, 1, 73, InheritFromParent]
+}
+]
+*)
+
