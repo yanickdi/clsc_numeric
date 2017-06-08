@@ -5,10 +5,9 @@ try:
     import scipy
 except:
     sys.exit('Failed: You have to install the python scipy package.')
-    
-import solver
 
-MODEL_1, MODEL_2 = 1, 2
+from solver import MODEL_1, MODEL_2
+import solver
     
 class Generator:
     """

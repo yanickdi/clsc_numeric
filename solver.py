@@ -1,6 +1,8 @@
 import scipy.optimize
 import sys
 
+
+MODEL_1, MODEL_2 = 1, 2
 _CASE_ONE, _CASE_TWO = 1, 2
 DECIMALS_ALLOW_NN = 15
 
@@ -138,23 +140,39 @@ class ModelOneNumericalSolver:
         roh = 1
         return {'wn' : wn, 'pn' : pn, 'roh' : roh, 'qn' : 1 - pn}
     
-def check_args(args):
-    tau, a, s, cn = args['tau'], args['a'], args['s'], args['cn']
-    assert 0 <= tau <= 1
-    assert 0 <= 0.01
-    assert s <= cn <= 1
-    assert 0 <= s <= cn
-    assert s <= cn
+def check_args(model, args):
+    if model == MODEL_1:
+        tau, a, s, cn = args['tau'], args['a'], args['s'], args['cn']
+        assert 0 <= tau <= 1
+        assert 0 <= 0.01
+        assert s <= cn <= 1
+        assert 0 <= s <= cn
+        assert s <= cn
+    else:
+        #TODO check model 2
+        pass
     
     
-def build_args(tau, a, s, cn):
-    args =  {
-        'tau' : tau,
-        'a'   : a,
-        's'   : s,
-        'cn'  : cn
-    }
-    check_args(args)
+def build_args(model, tau=None, a=None, s=None, cr=None, cn=None, delta=None):
+    if model == MODEL_1:
+        args =  {
+            'tau' : tau,
+            'a'   : a,
+            's'   : s,
+            'cn'  : cn
+        }
+    elif model == Model_2:
+        args =  {
+            'tau' : tau,
+            'a'   : a,
+            's'   : s,
+            'cr'  : cr,
+            'cn'  : cn,
+            'delta' : delta
+        }
+    else:
+        raise RuntimeError(str(model) + ' not allowed.')
+    check_args(model, args)
     return args
     
     

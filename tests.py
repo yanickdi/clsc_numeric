@@ -1,14 +1,14 @@
 import unittest
 from math import sqrt
 
-from solver import build_args, check_args, ModelOneNumericalSolver, is_prof_pos
-from generator import Generator, MemoryOutputFile, MODEL_1, MODEL_2
+from solver import build_args, check_args, ModelOneNumericalSolver, is_prof_pos, MODEL_1, MODEL_2
+from generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_1a(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
-        const_args = build_args(tau=0.1, a=0.005, s=0.0005, cn=0.01)
+        const_args = build_args(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking the my test input variables..
         self.assertTrue(self.__input_is_in_case_1(const_args))
@@ -20,7 +20,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_1a_dec_vars(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
-        const_args = build_args(tau=0.1, a=0.005, s=0.0005, cn=0.01)
+        const_args = build_args(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking the test input variables..
         # if the following condition is true, it must lead to a case a optimization
@@ -34,7 +34,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_2a(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case two (roh is equal to 1)
-        const_args = build_args(tau=0.1, a=0.006, s=0.005, cn=0.3)
+        const_args = build_args(MODEL_1, tau=0.1, a=0.006, s=0.005, cn=0.3)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking the test input variables..
         # if the following condition is true, it must lead to a case b optimization
@@ -47,7 +47,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         
     def test_case_1_or_2(self):
         solver = ModelOneNumericalSolver()
-        const_args = build_args(tau=0.3, a=0.01, s=0, cn=0.3)
+        const_args = build_args(MODEL_1, tau=0.3, a=0.01, s=0, cn=0.3)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking if input vars not in case 1 and not in case 2:
         self.assertTrue(self.__input_is_in_case_1(const_args) and self.__input_is_in_case_2(const_args))
@@ -58,7 +58,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_2_dec_vars(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case two (roh is equal to 1)
-        const_args = build_args(tau=0.1, a=0.006, s=0.005, cn=0.3)
+        const_args = build_args(MODEL_1, tau=0.1, a=0.006, s=0.005, cn=0.3)
         tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         # self checking the test input variables..
         # if the following condition is true, it must lead to a case b optimization
@@ -72,14 +72,14 @@ class TestModelOneNumericalSolver(unittest.TestCase):
     def test_qn(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
-        const_args = build_args(tau=0.1, a=0.005, s=0.0005, cn=0.01)
+        const_args = build_args(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
         dec_vars = solver.optimize(const_args)
         self.assertAlmostEqual(dec_vars['qn'], 1 - dec_vars['pn'])
         # TODO: also test a case leading to roh == 1
         
     def test_sol_not_possible(self):
         solver = ModelOneNumericalSolver()
-        const_args = build_args(tau=1, a=0.01, s=0, cn=0.8)
+        const_args = build_args(MODEL_1, tau=1, a=0.01, s=0, cn=0.8)
         self.assertIsNone(solver.optimize(const_args))
         
     def __input_is_in_case_1(self, const_args):
