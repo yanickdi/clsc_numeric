@@ -12,14 +12,18 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
     def test_case_one_a(self):
         solver = ModelTwoNumericalSolver()
         # i dont know whether this parms lead to case one (a), but i will check the output anyway
-        const_args = build_args(tau=0.5, a=0.01, s=0.1, cr=0.2, cn=0.3, delta=0.4)
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
-        # self checking the my test input variables..
-        self.assertTrue(self.__input_is_in_case_1(const_args))
+        const_args = build_args(MODEL_2, tau=.5, a=.01, s=.1, cr=.2, cn=.3, delta=.4)
+        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
+        # TODO, check the case
+        #self.assertTrue(self.__input_is_in_case_1(const_args))
+        dec_vars = solver._optimize_case_one_a(const_args)
+        profit_man,_ = solver.calc_profits(const_args, dec_vars)
         
-        analyitcal_profit_manufacturer = ((1-cn)**2 / 8) - (1/2)*(1+cn-2*s) * (tau*a)**(1/2) + (1/2)*a*tau
-        profit_solver_manufacturer,_ = solver.calc_profits(const_args, solver.optimize(const_args))
-        self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
+        self.assertAlmostEqual(dec_vars['wn'], .5769703256659778)
+        self.assertAlmostEqual(dec_vars['pr'], .29424258141649456)
+        self.assertAlmostEqual(dec_vars['qr'], .0)
+        self.assertAlmostEqual(profit_man, .029687932228693096)
+        #TODO: test retailer profit
         
 if __name__ == '__main__':
     unittest.main()

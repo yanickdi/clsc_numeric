@@ -1,5 +1,6 @@
-import scipy.optimize
 import sys
+from math import sqrt
+import scipy.optimize
 
 
 MODEL_1, MODEL_2 = 1, 2
@@ -32,15 +33,51 @@ class ModelTwoNumericalSolver:
                   The dictionary also contains a key named `_dbg` where some calculation info is stored to test this method
         """
         raise NotImplementedError()
-        
+    
+    def calc_profits(self, const_args, dec_vars):
+        """
+            Returns the numeric result of the profit of the manufacturer and the retailer (a tuple containing first manufacturer, second retailer)
+            having set all decision variables
+            
+            This method checks whether `dec_vars` is not None. If its None - It will return a tuple of (None, None)
+        """
+        if dec_vars == None:
+            return (None, None)
+        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
+        wn, pn, roh, qn, qr, pr = dec_vars['wn'], dec_vars['pn'], dec_vars['roh'], dec_vars['qn'], dec_vars['qr'], dec_vars['pr']
+        manu_profit = qn * (wn * (1- tau/roh) - cn) + qr*(pr-cr) + ((tau/roh)*qn-qr)*s
+        retailer_profit = None
+        return manu_profit, retailer_profit
         
     def _optimize_case_one_a(self, const_args):
         """ helper function that solves the case roh >= 1 and qr = 0 """
-        raise NotImplementedError()
+        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
+        dec = {
+            'wn' : (cn+1)/2 - ((2-delta)/2) * sqrt((a*tau) / (1-delta)),
+            'pr'  : ( delta*(-2*sqrt(tau*a*(1-delta))+ delta*(sqrt(tau*a*(1-delta))+2*delta-5) - cn*delta+cn+3 ) ) / (2*(delta-2)*(delta-1))
+        }
         
+        dec['roh'] = self.__roh_case_one(dec['wn'], delta, dec['pr'], tau, a)
+        dec['pn'] = self.__pn_case_one(dec['pr'], delta, dec['pr'])
+        dec['qn'] = self.__qn_case_one(dec['wn'], delta, dec['pr'])
+        dec['qr'] = self.__qr_case_one(dec['wn'], delta, dec['pr'])
+        return dec
+        
+    def __qn_case_one(self, wn, delta, pr):
+        return 1 - (self.__pn_case_one(wn, delta, pr) - pr)/(1-delta)
+        
+    def __qr(self, pn, pr, delta):
+        return (pn-pr)/(1-delta) - pr/delta
+        
+    def __qr_case_one(self, wn, delta, pr):
+        return self.__qr(self.__pn_case_one(wn, delta, pr), pr, delta)
+        
+    def __roh_case_one(self, wn, delta, pr, tau, a):
+        return .5 * (1-delta+pr-wn)*sqrt(tau/(a*(1-delta)))
+        
+    def __pn_case_one(self, wn, delta, pr):
+        return .5 * (1+wn-delta+pr)
     
-        
-
 class ModelOneNumericalSolver:
     """
         This class offers methods to solve Model 1 (Without Online Store of the Manufacturer) numerically
@@ -161,7 +198,7 @@ def build_args(model, tau=None, a=None, s=None, cr=None, cn=None, delta=None):
             's'   : s,
             'cn'  : cn
         }
-    elif model == Model_2:
+    elif model == MODEL_2:
         args =  {
             'tau' : tau,
             'a'   : a,
