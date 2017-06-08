@@ -40,7 +40,7 @@ This solver requires [Python3](https://www.python.org/) and [SciPy](https://www.
 On Unix environments this may will work:
 
 ```sh
-$ sudo apt-get install python3 python-scipy
+$ sudo apt-get install python3 python3-scipy
 ```
 
 Windows Users are encouraged to download the [Anaconda Installer](https://www.continuum.io/downloads) - This will automatically install Python3 and a lot of scientific stuff on your PC.
@@ -55,6 +55,8 @@ $ cd clsc_numeric
 #
 # start all test cases:
 $ python3 tests.py
+# start test cases for model one:
+$ python3 tests.py TestModelOneNumericalSolver
 #
 #
 # or print out some numeric results:

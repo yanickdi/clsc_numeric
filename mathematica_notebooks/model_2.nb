@@ -10,15 +10,16 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      5641,        180]
-NotebookOptionsPosition[      5142,        160]
-NotebookOutlinePosition[      5515,        176]
-CellTagsIndexPosition[      5472,        173]
+NotebookDataLength[      5345,        161]
+NotebookOptionsPosition[      5073,        147]
+NotebookOutlinePosition[      5446,        163]
+CellTagsIndexPosition[      5403,        160]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
-Cell[BoxData[
+Cell[BoxData[{
+ RowBox[{"ClearAll", "[", "\"\<Global`*\>\"", "]"}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"fQn", "[", 
    RowBox[{"pn_", ",", " ", "pr_", ",", " ", "\[Delta]_"}], "]"}], " ", ":=", 
@@ -26,10 +27,7 @@ Cell[BoxData[
   RowBox[{"1", "-", 
    FractionBox[
     RowBox[{"pn", "-", "pr"}], 
-    RowBox[{"1", "-", "\[Delta]"}]]}]}]], "Input",
- CellChangeTimes->{{3.7058424287512107`*^9, 3.7058424364622917`*^9}}],
-
-Cell[BoxData[
+    RowBox[{"1", "-", "\[Delta]"}]]}]}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"fQr", "[", 
    RowBox[{"pn_", ",", " ", "pr_", ",", " ", "\[Delta]_"}], "]"}], ":=", 
@@ -37,9 +35,7 @@ Cell[BoxData[
    FractionBox[
     RowBox[{"pn", "-", "pr"}], 
     RowBox[{"1", "-", "\[Delta]"}]], "-", 
-   FractionBox["pr", "\[Delta]"]}]}]], "Input"],
-
-Cell[BoxData[
+   FractionBox["pr", "\[Delta]"]}]}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"pnOne", "[", 
    RowBox[{"\[Delta]_", ",", " ", "wn_", ",", " ", "pr_"}], "]"}], ":=", 
@@ -47,9 +43,7 @@ Cell[BoxData[
    FractionBox[
     RowBox[{"1", "+", "wn"}], "2"], "-", 
    FractionBox[
-    RowBox[{"\[Delta]", "-", "pr"}], "2"]}]}]], "Input"],
-
-Cell[BoxData[
+    RowBox[{"\[Delta]", "-", "pr"}], "2"]}]}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"\[Rho]One", "[", 
    RowBox[{
@@ -63,9 +57,7 @@ Cell[BoxData[
     FractionBox["\[Tau]", 
      RowBox[{"a", "*", 
       RowBox[{"(", 
-       RowBox[{"1", "-", "\[Delta]"}], ")"}]}]]]}]}]], "Input"],
-
-Cell[BoxData[
+       RowBox[{"1", "-", "\[Delta]"}], ")"}]}]]]}]}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"profManufacturer", "[", 
    RowBox[{
@@ -96,10 +88,7 @@ Cell[BoxData[
         RowBox[{"pn", ",", " ", "pr", ",", " ", "\[Delta]"}], "]"}]}], "-", 
       RowBox[{"fQr", "[", 
        RowBox[{"pn", ",", " ", "pr", ",", " ", "\[Delta]"}], "]"}]}], ")"}], 
-    "*", "s"}]}]}]], "Input",
- CellChangeTimes->{{3.7058428419058304`*^9, 3.705842877498211*^9}}],
-
-Cell[BoxData[
+    "*", "s"}]}]}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"profManOne", "[", 
    RowBox[{
@@ -114,10 +103,7 @@ Cell[BoxData[
     RowBox[{"\[Rho]One", "[", 
      RowBox[{
      "\[Tau]", ",", " ", "a", ",", " ", "\[Delta]", ",", " ", "wn", ",", " ", 
-      "pr"}], "]"}]}], "]"}]}]], "Input",
- CellChangeTimes->{{3.705842705020364*^9, 3.705842758114933*^9}}],
-
-Cell[BoxData[
+      "pr"}], "]"}]}], "]"}]}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"lagrOne", "[", 
    RowBox[{
@@ -156,10 +142,11 @@ Cell[BoxData[
         RowBox[{
          RowBox[{"pnOne", "[", 
           RowBox[{"\[Delta]", ",", " ", "wn", ",", " ", "pr"}], "]"}], ",", 
-         " ", "pr", ",", " ", "\[Delta]"}], "]"}]}]}], ")"}]}]}]}]], "Input"]
+         " ", "pr", ",", " ", "\[Delta]"}], "]"}]}]}], ")"}]}]}]}]}], "Input",
+ CellChangeTimes->{{3.7059001643646765`*^9, 3.705900174344887*^9}}]
 },
-WindowSize->{1775, 789},
-WindowMargins->{{Automatic, -7}, {59, Automatic}},
+WindowSize->{1544, 766},
+WindowMargins->{{55, Automatic}, {Automatic, 29}},
 Magnification:>1.6 Inherited,
 FrontEndVersion->"11.0 for Microsoft Windows (64-bit) (July 28, 2016)",
 StyleDefinitions->"Default.nb"
@@ -175,16 +162,8 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
-Cell[558, 20, 323, 9, 72, "Input"],
-Cell[884, 31, 270, 8, 72, "Input"],
-Cell[1157, 41, 264, 8, 76, "Input"],
-Cell[1424, 51, 450, 14, 91, "Input"],
-Cell[1877, 67, 1130, 32, 110, "Input"],
-Cell[3010, 101, 682, 16, 48, "Input"],
-Cell[3695, 119, 1443, 39, 142, "Input"]
+Cell[558, 20, 4511, 125, 646, "Input"]
 }
 ]
 *)
-
-(* End of internal cache information *)
 

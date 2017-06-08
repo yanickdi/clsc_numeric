@@ -7,6 +7,37 @@ DECIMALS_ALLOW_NN = 15
 def is_prof_pos(prof):
     """ checks whether a given profit is positive - it allows also a -.1*10^15 as positive! """
     return round(prof, 15) >= 0
+    
+class ModelTwoNumericalSolver:
+    """
+        This class offers methods to solve Model 2 (With Online Store of the Manufacturer) numerically
+    """
+    def __init__(self):
+        pass
+        
+    
+    def optimize(self, const_args):
+        """
+        This is the core method of this class. It will return all six 
+        decision variables to maximize the retailer's profit (with respect to the profit maximization
+        condition of the retailer) and the cond 0 <= qr <= (tau/roh)*qn
+        
+        Args:
+            const_args (dict): A dictionary having set all parameters, e.g. 
+        
+        Returns:
+            dict: A dictionary of decision_vars {pn, pr, wn, roh, qn, qr} or None if the solution is not possible
+                  The dictionary also contains a key named `_dbg` where some calculation info is stored to test this method
+        """
+        raise NotImplementedError()
+        
+        
+    def _optimize_case_one_a(self, const_args):
+        """ helper function that solves the case roh >= 1 and qr = 0 """
+        raise NotImplementedError()
+        
+    
+        
 
 class ModelOneNumericalSolver:
     """
@@ -67,11 +98,6 @@ class ModelOneNumericalSolver:
                     case = _CASE_ONE
                 if is_prof_pos(prof_man_case_2) and is_prof_pos(prof_ret_case_2):
                     case = _CASE_TWO
-                    
-        #if const_args['tau'] == 0 and const_args['a'] == 0.01 and const_args['s'] == 0 and const_args['cn'] == 0.6:
-        #    print('yeah')
-        #    print(prof_ret_case_2)
-        #    print(case)
 
         if case == None:
             return None
