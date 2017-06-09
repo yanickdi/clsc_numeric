@@ -25,5 +25,19 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(profit_man, .029687932228693096)
         #TODO: test retailer profit
         
+    def test_case_one_b(self):
+        solver = ModelTwoNumericalSolver()
+        # i dont know whether this parms lead to case one (b), but i will check the output anyway
+        const_args = build_args(MODEL_2, tau=.1, a=.05, s=.1, cr=.2, cn=.3, delta=.8)
+        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
+        # TODO, check the case
+        dec_vars = solver._optimize_case_one_b(const_args)
+        profit_man,_ = solver.calc_profits(const_args, dec_vars)
+        
+        self.assertAlmostEqual(dec_vars['wn'], .5551316701949486)
+        self.assertAlmostEqual(dec_vars['pr'], .48675444679663243)
+        self.assertAlmostEqual(dec_vars['qr'], .06250000000000011)
+        self.assertAlmostEqual(profit_man, .023662364345369585)
+        #TODO: test retailer profit
 if __name__ == '__main__':
     unittest.main()

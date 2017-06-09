@@ -56,7 +56,19 @@ class ModelTwoNumericalSolver:
             'wn' : (cn+1)/2 - ((2-delta)/2) * sqrt((a*tau) / (1-delta)),
             'pr'  : ( delta*(-2*sqrt(tau*a*(1-delta))+ delta*(sqrt(tau*a*(1-delta))+2*delta-5) - cn*delta+cn+3 ) ) / (2*(delta-2)*(delta-1))
         }
+        dec['roh'] = self.__roh_case_one(dec['wn'], delta, dec['pr'], tau, a)
+        dec['pn'] = self.__pn_case_one(dec['pr'], delta, dec['pr'])
+        dec['qn'] = self.__qn_case_one(dec['wn'], delta, dec['pr'])
+        dec['qr'] = self.__qr_case_one(dec['wn'], delta, dec['pr'])
+        return dec
         
+    def _optimize_case_one_b(self, const_args):
+        """ helper function that solves the case roh >= 1 and 0 < qr < tau/roh*qn """
+        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
+        dec = {
+            'wn' : (1+cn)/2 -  ((2-delta)/2) * sqrt((a*tau)/(1-delta)),
+            'pr'  : (cr+delta+s)/2 -  (delta/2) * sqrt((a*tau)/(1-delta))
+        }
         dec['roh'] = self.__roh_case_one(dec['wn'], delta, dec['pr'], tau, a)
         dec['pn'] = self.__pn_case_one(dec['pr'], delta, dec['pr'])
         dec['qn'] = self.__qn_case_one(dec['wn'], delta, dec['pr'])
