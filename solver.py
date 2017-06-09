@@ -29,8 +29,7 @@ class ModelTwoNumericalSolver:
             par (Parameter): A Parameter object of type MODEL_2
         
         Returns:
-            dict: A dictionary of decision_vars {pn, pr, wn, roh, qn, qr} or None if the solution is not possible
-                  The dictionary also contains a key named `_dbg` where some calculation info is stored to test this method
+            DecisionVariables: An object of type MODEL_2 that stores all decision_vars (pn, pr, wn, roh, qn, qr) or None if the solution is not possible
         """
         raise NotImplementedError()
     
@@ -43,33 +42,33 @@ class ModelTwoNumericalSolver:
         """
         if dec_vars == None:
             return (None, None)
-        wn, pn, roh, qn, qr, pr = dec_vars['wn'], dec_vars['pn'], dec_vars['roh'], dec_vars['qn'], dec_vars['qr'], dec_vars['pr']
+        wn, pn, roh, qn, qr, pr = dec_vars.wn, dec_vars.pn, dec_vars.roh, dec_vars.qn, dec_vars.qr, dec_vars.pr
         manu_profit = qn * (wn * (1- par.tau/roh) - par.cn) + qr*(pr-par.cr) + ((par.tau/roh)*qn-qr)*par.s
         retailer_profit = None
         return manu_profit, retailer_profit
         
     def _optimize_case_one_a(self, par):
         """ helper function that solves the case roh >= 1 and qr = 0 """
-        dec = {
-            'wn' : (par.cn+1)/2 - ((2-par.delta)/2) * sqrt((par.a*par.tau) / (1-par.delta)),
-            'pr'  : ( par.delta*(-2*sqrt(par.tau*par.a*(1-par.delta))+ par.delta*(sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5) - par.cn*par.delta+par.cn+3 ) ) / (2*(par.delta-2)*(par.delta-1))
-        }
-        dec['roh'] = self.__roh_case_one(dec['wn'], par.delta, dec['pr'], par.tau, par.a)
-        dec['pn'] = self.__pn_case_one(dec['pr'], par.delta, dec['pr'])
-        dec['qn'] = self.__qn_case_one(dec['wn'], par.delta, dec['pr'])
-        dec['qr'] = self.__qr_case_one(dec['wn'], par.delta, dec['pr'])
+        dec = DecisionVariables(MODEL_2,
+            wn = (par.cn+1)/2 - ((2-par.delta)/2) * sqrt((par.a*par.tau) / (1-par.delta)),
+            pr = ( par.delta*(-2*sqrt(par.tau*par.a*(1-par.delta))+ par.delta*(sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5) - par.cn*par.delta+par.cn+3 ) ) / (2*(par.delta-2)*(par.delta-1))
+            )
+        dec.roh = self.__roh_case_one(dec.wn, par.delta, dec.pr, par.tau, par.a)
+        dec.pn = self.__pn_case_one(dec.pr, par.delta, dec.pr)
+        dec.qn = self.__qn_case_one(dec.wn, par.delta, dec.pr)
+        dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
         return dec
         
     def _optimize_case_one_b(self, par):
         """ helper function that solves the case roh >= 1 and 0 < qr < tau/roh*qn """
-        dec = {
-            'wn' : (1+par.cn)/2 -  ((2-par.delta)/2) * sqrt((par.a*par.tau)/(1-par.delta)),
-            'pr'  : (par.cr+par.delta+par.s)/2 -  (par.delta/2) * sqrt((par.a*par.tau)/(1-par.delta))
-        }
-        dec['roh'] = self.__roh_case_one(dec['wn'], par.delta, dec['pr'], par.tau, par.a)
-        dec['pn'] = self.__pn_case_one(dec['pr'], par.delta, dec['pr'])
-        dec['qn'] = self.__qn_case_one(dec['wn'], par.delta, dec['pr'])
-        dec['qr'] = self.__qr_case_one(dec['wn'], par.delta, dec['pr'])
+        dec = DecisionVariables(MODEL_2,
+            wn = (1+par.cn)/2 -  ((2-par.delta)/2) * sqrt((par.a*par.tau)/(1-par.delta)),
+            pr = (par.cr+par.delta+par.s)/2 -  (par.delta/2) * sqrt((par.a*par.tau)/(1-par.delta))
+        )
+        dec.roh = self.__roh_case_one(dec.wn, par.delta, dec.pr, par.tau, par.a)
+        dec.pn = self.__pn_case_one(dec.pr, par.delta, dec.pr)
+        dec.qn = self.__qn_case_one(dec.wn, par.delta, dec.pr)
+        dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
         return dec
         
     def __qn_case_one(self, wn, delta, pr):
@@ -206,6 +205,20 @@ class Parameter:
             return 'tau={:.2f}, a={:.2f}, s={:.2f}, cn={:.2f}'.format(self.tau, self.a, self.s, self.cn)
         else:
             return 'Parameter obj of type model 2'
+            
+class DecisionVariables:
+    """
+        An object of this class is a struct like wrapper for all Model Decision variables
+    """
+    
+    def __init__(self, model, pn=None, pr=None, wn=None, roh=None, qn=None, qr=None):
+        if model == MODEL_1:
+            self.wn, self.pn, self.roh, self.qn = wn, pn, roh, qn
+        elif model == MODEL_2:
+            self.pn, self.pr, self.wn, self.roh, self.qn, self.qr = pn, pr, wn, roh, qn, qr
+        else:
+            raise RuntimeError(str(model) + ' not allowed.')
+        self.model = model
     
 if __name__ == '__main__':
     print('You cannot call this file directly')

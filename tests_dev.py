@@ -18,9 +18,9 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         dec_vars = solver._optimize_case_one_a(par)
         profit_man,_ = solver.calc_profits(par, dec_vars)
         
-        self.assertAlmostEqual(dec_vars['wn'], .5769703256659778)
-        self.assertAlmostEqual(dec_vars['pr'], .29424258141649456)
-        self.assertAlmostEqual(dec_vars['qr'], .0)
+        self.assertAlmostEqual(dec_vars.wn, .5769703256659778)
+        self.assertAlmostEqual(dec_vars.pr, .29424258141649456)
+        self.assertAlmostEqual(dec_vars.qr, .0)
         self.assertAlmostEqual(profit_man, .029687932228693096)
         #TODO: test retailer profit
         
@@ -32,9 +32,9 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         dec_vars = solver._optimize_case_one_b(par)
         profit_man,_ = solver.calc_profits(par, dec_vars)
         
-        self.assertAlmostEqual(dec_vars['wn'], .5551316701949486)
-        self.assertAlmostEqual(dec_vars['pr'], .48675444679663243)
-        self.assertAlmostEqual(dec_vars['qr'], .06250000000000011)
+        self.assertAlmostEqual(dec_vars.wn, .5551316701949486)
+        self.assertAlmostEqual(dec_vars.pr, .48675444679663243)
+        self.assertAlmostEqual(dec_vars.qr, .06250000000000011)
         self.assertAlmostEqual(profit_man, .023662364345369585)
         #TODO: test retailer profit
 if __name__ == '__main__':
