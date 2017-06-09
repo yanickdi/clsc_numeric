@@ -5,19 +5,18 @@
 import unittest
 from math import sqrt
 
-from solver import build_args, check_args, ModelTwoNumericalSolver, is_prof_pos
+from solver import ModelTwoNumericalSolver, Parameter, is_prof_pos
 from generator import Generator, MemoryOutputFile, MODEL_1, MODEL_2
 
 class TestModelTwoNumericalSolver(unittest.TestCase):
     def test_case_one_a(self):
         solver = ModelTwoNumericalSolver()
         # i dont know whether this parms lead to case one (a), but i will check the output anyway
-        const_args = build_args(MODEL_2, tau=.5, a=.01, s=.1, cr=.2, cn=.3, delta=.4)
-        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
+        par = Parameter(MODEL_2, tau=.5, a=.01, s=.1, cr=.2, cn=.3, delta=.4)
         # TODO, check the case
-        #self.assertTrue(self.__input_is_in_case_1(const_args))
-        dec_vars = solver._optimize_case_one_a(const_args)
-        profit_man,_ = solver.calc_profits(const_args, dec_vars)
+        #self.assertTrue(self.__input_is_in_case_1(par))
+        dec_vars = solver._optimize_case_one_a(par)
+        profit_man,_ = solver.calc_profits(par, dec_vars)
         
         self.assertAlmostEqual(dec_vars['wn'], .5769703256659778)
         self.assertAlmostEqual(dec_vars['pr'], .29424258141649456)
@@ -28,11 +27,10 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
     def test_case_one_b(self):
         solver = ModelTwoNumericalSolver()
         # i dont know whether this parms lead to case one (b), but i will check the output anyway
-        const_args = build_args(MODEL_2, tau=.1, a=.05, s=.1, cr=.2, cn=.3, delta=.8)
-        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
+        par = Parameter(MODEL_2, tau=.1, a=.05, s=.1, cr=.2, cn=.3, delta=.8)
         # TODO, check the case
-        dec_vars = solver._optimize_case_one_b(const_args)
-        profit_man,_ = solver.calc_profits(const_args, dec_vars)
+        dec_vars = solver._optimize_case_one_b(par)
+        profit_man,_ = solver.calc_profits(par, dec_vars)
         
         self.assertAlmostEqual(dec_vars['wn'], .5551316701949486)
         self.assertAlmostEqual(dec_vars['pr'], .48675444679663243)

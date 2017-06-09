@@ -6,7 +6,7 @@ try:
 except:
     sys.exit('Failed: You have to install the python scipy package.')
 
-from solver import MODEL_1, MODEL_2
+from solver import MODEL_1, MODEL_2, Parameter
 import solver
     
 class Generator:
@@ -33,19 +33,19 @@ class Generator:
         """ Do se generation """
         model_solver = solver.ModelOneNumericalSolver() #TODO: Switch here between different models
         self.file_writer.open()
-        for const_args in self.__model_one_const_generator():
-            dec_vars = model_solver.optimize(const_args)
-            manu_profit, ret_profit = model_solver.calc_profits(const_args, dec_vars)
-            self.file_writer.writeSolution(const_args, dec_vars, manu_profit, ret_profit)
+        for par in self.__model_one_par_generator():
+            dec_vars = model_solver.optimize(par)
+            manu_profit, ret_profit = model_solver.calc_profits(par, dec_vars)
+            self.file_writer.writeSolution(par, dec_vars, manu_profit, ret_profit)
         self.file_writer.close()
     
-    def __model_one_const_generator(self):
+    def __model_one_par_generator(self):
         """ Helper generator for yielding all combinations of input data """
         for tau in drange(0, 1, 0.1):
             for a in drange(0.01, 0.1, 0.01):
                 for s in drange(0, 1, .1):
                     for cn in drange(s, 1, .1):
-                        yield {'tau' : round(tau, 1), 'a' : round(a, 2), 's' : round(s, 1), 'cn' : round(cn, 1)}
+                        yield Parameter(MODEL_1, tau=round(tau, 1), a=round(a, 2), s=round(s, 1), cn=round(cn, 1))
     
 def drange(start, end, step_size):
     """ A floating point range from [start, end] with step size step_size"""
@@ -73,8 +73,8 @@ class MemoryOutputFile:
     def open(self):
         self._list = []
     
-    def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
-        self._list.append({'const_args' : const_args, 'dec_vars' : dec_vars, 'profit_man' : profit_man, 'profit_ret' : profit_ret})
+    def writeSolution(self, par, dec_vars, profit_man, profit_ret):
+        self._list.append({'par' : par, 'dec_vars' : dec_vars, 'profit_man' : profit_man, 'profit_ret' : profit_ret})
     
     def close(self):
         pass
@@ -99,9 +99,9 @@ class StdoutFile(AbstractOutputFile):
     def close(self):
         pass
     
-    def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
+    def writeSolution(self, par, dec_vars, profit_man, profit_ret):
         self.sol_nr += 1
-        line = '{}: {}, {}, profit of manufacturer: {}, profit or retailer: {}'.format(self.sol_nr, const_args, dec_vars, profit_man, profit_ret)
+        line = '{}: {}, {}, profit of manufacturer: {}, profit or retailer: {}'.format(self.sol_nr, par, dec_vars, profit_man, profit_ret)
         print(line)
 
         
@@ -115,15 +115,15 @@ class CsvOutputFile(AbstractOutputFile):
         self.file = open(self.file_name, 'w') # overrides file if exists
         self.file.write('tau;a;s;cn;pn;wn;roh;qn;manufacturer profit;retailer profit\n')
         
-    def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
-        const_str = '{};{};{};{}'.format(const_args['tau'], const_args['a'], const_args['s'], const_args['cn']) #TODO: This code doesnt support model 2
+    def writeSolution(self, par, dec_vars, profit_man, profit_ret):
+        par_str = '{};{};{};{}'.format(par.tau, par.a, par.s, par.cn) #TODO: This code doesnt support model 2
         if dec_vars == None:
             dec_str = '{};{};{};{}'.format(None, None, None, None)
             profit_man = -1.0
             profit_ret = -1.0
         else:
             dec_str =   '{};{};{};{}'.format(dec_vars['pn'], dec_vars['wn'], dec_vars['roh'], dec_vars['qn'])
-        line = '{};{};{:.5f};{:.5f}'.format(const_str, dec_str, profit_man, profit_ret)
+        line = '{};{};{:.5f};{:.5f}'.format(par_str, dec_str, profit_man, profit_ret)
         self.file.write(line.replace('.',',') + '\n')
         
     def close(self):

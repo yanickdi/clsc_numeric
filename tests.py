@@ -1,92 +1,86 @@
 import unittest
 from math import sqrt
 
-from solver import build_args, check_args, ModelOneNumericalSolver, is_prof_pos, MODEL_1, MODEL_2
+from solver import ModelOneNumericalSolver, is_prof_pos, Parameter, MODEL_1, MODEL_2
 from generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_1a(self):
         solver = ModelOneNumericalSolver()
-        # this args should lead to case one (roh is gte 1)
-        const_args = build_args(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
+        # this parameter should lead to case one (roh is gte 1)
+        par = Parameter(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
         # self checking the my test input variables..
-        self.assertTrue(self.__input_is_in_case_1(const_args))
+        self.assertTrue(self.__input_is_in_case_1(par))
         
-        analyitcal_profit_manufacturer = ((1-cn)**2 / 8) - (1/2)*(1+cn-2*s) * (tau*a)**(1/2) + (1/2)*a*tau
-        profit_solver_manufacturer,_ = solver.calc_profits(const_args, solver.optimize(const_args))
+        analyitcal_profit_manufacturer = ((1-par.cn)**2 / 8) - (1/2)*(1+par.cn-2*par.s) * (par.tau*par.a)**(1/2) + (1/2)*par.a*par.tau
+        profit_solver_manufacturer,_ = solver.calc_profits(par, solver.optimize(par))
         self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
         
     def test_case_1a_dec_vars(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
-        const_args = build_args(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
+        par = Parameter(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
         # self checking the test input variables..
         # if the following condition is true, it must lead to a case a optimization
-        self.assertTrue(self.__input_is_in_case_1(const_args) and not self.__input_is_in_case_2(const_args))
+        self.assertTrue(self.__input_is_in_case_1(par) and not self.__input_is_in_case_2(par))
         
-        solver_dec_vars = solver.optimize(const_args)
-        self.assertAlmostEqual(solver_dec_vars['pn'], (3+cn)/4 - (1/2)*(a*tau)**(1/2), msg='pn not the same')
-        self.assertAlmostEqual(solver_dec_vars['wn'], (1+cn)/2 - (a*tau)**(1/2), msg='wn not the same')
-        self.assertAlmostEqual(solver_dec_vars['roh'], tau/2 + (1-cn)/4 * (tau/a)**(1/2), msg='roh not the same')
+        solver_dec_vars = solver.optimize(par)
+        self.assertAlmostEqual(solver_dec_vars['pn'], (3+par.cn)/4 - (1/2)*(par.a*par.tau)**(1/2), msg='pn not the same')
+        self.assertAlmostEqual(solver_dec_vars['wn'], (1+par.cn)/2 - (par.a*par.tau)**(1/2), msg='wn not the same')
+        self.assertAlmostEqual(solver_dec_vars['roh'], par.tau/2 + (1-par.cn)/4 * (par.tau/par.a)**(1/2), msg='roh not the same')
 
     def test_case_2a(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case two (roh is equal to 1)
-        const_args = build_args(MODEL_1, tau=0.1, a=0.006, s=0.005, cn=0.3)
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
+        par = Parameter(MODEL_1, tau=0.1, a=0.006, s=0.005, cn=0.3)
         # self checking the test input variables..
         # if the following condition is true, it must lead to a case b optimization
-        self.assertTrue(self.__input_is_in_case_2(const_args) and not self.__input_is_in_case_1(const_args))
+        self.assertTrue(self.__input_is_in_case_2(par) and not self.__input_is_in_case_1(par))
         
-        analyitcal_profit_manufacturer = ((1-cn-tau+s*tau)**2)/(8*(1-tau))
-        profit_solver_manufacturer,_ = solver.calc_profits(const_args, solver.optimize(const_args))
+        analyitcal_profit_manufacturer = ((1-par.cn-par.tau+par.s*par.tau)**2)/(8*(1-par.tau))
+        profit_solver_manufacturer,_ = solver.calc_profits(par, solver.optimize(par))
         self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
         
         
     def test_case_1_or_2(self):
         solver = ModelOneNumericalSolver()
-        const_args = build_args(MODEL_1, tau=0.3, a=0.01, s=0, cn=0.3)
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
+        par = Parameter(MODEL_1, tau=0.3, a=0.01, s=0, cn=0.3)
         # self checking if input vars not in case 1 and not in case 2:
-        self.assertTrue(self.__input_is_in_case_1(const_args) and self.__input_is_in_case_2(const_args))
-        prof_solver_man, prof_solver_ret = solver.calc_profits(const_args, solver.optimize(const_args))
+        self.assertTrue(self.__input_is_in_case_1(par) and self.__input_is_in_case_2(par))
+        prof_solver_man, prof_solver_ret = solver.calc_profits(par, solver.optimize(par))
         self.assertAlmostEqual(prof_solver_ret, 0.00428571) # would be case 2 solution, because is higher than case 1 solution
         self.assertAlmostEqual(prof_solver_man, 0.02857143) 
         
     def test_case_2_dec_vars(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case two (roh is equal to 1)
-        const_args = build_args(MODEL_1, tau=0.1, a=0.006, s=0.005, cn=0.3)
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
-        # self checking the test input variables..
-        # if the following condition is true, it must lead to a case b optimization
-        self.assertTrue(self.__input_is_in_case_2(const_args))
+        par = Parameter(MODEL_1, tau=0.1, a=0.006, s=0.005, cn=0.3)
+        # self checking the test input variables
+        self.assertTrue(self.__input_is_in_case_2(par))
         
-        solver_dec_vars = solver.optimize(const_args)
+        solver_dec_vars = solver.optimize(par)
         self.assertAlmostEqual(solver_dec_vars['pn'], 0.83319444, msg='pn not the same')
-        self.assertAlmostEqual(solver_dec_vars['wn'], (1/(1-tau)) * ((1+cn)/2 - (tau*(1+s))/2), msg='wn not the same')
+        self.assertAlmostEqual(solver_dec_vars['wn'], (1/(1-par.tau)) * ((1+par.cn)/2 - (par.tau*(1+par.s))/2), msg='wn not the same')
         self.assertAlmostEqual(solver_dec_vars['roh'], 1.0, msg='roh not the same')
     
     def test_qn(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
-        const_args = build_args(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
-        dec_vars = solver.optimize(const_args)
+        par = Parameter(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
+        dec_vars = solver.optimize(par)
         self.assertAlmostEqual(dec_vars['qn'], 1 - dec_vars['pn'])
         # TODO: also test a case leading to roh == 1
         
     def test_sol_not_possible(self):
         solver = ModelOneNumericalSolver()
-        const_args = build_args(MODEL_1, tau=1, a=0.01, s=0, cn=0.8)
-        self.assertIsNone(solver.optimize(const_args))
+        par = Parameter(MODEL_1, tau=1, a=0.01, s=0, cn=0.8)
+        self.assertIsNone(solver.optimize(par))
         
-    def __input_is_in_case_1(self, const_args):
-        return const_args['cn'] <= 1 - 4*(1-const_args['tau']/2)*(const_args['a']/const_args['tau'])**(1/2)
+    def __input_is_in_case_1(self, par):
+        return par.cn <= 1 - 4*(1-par.tau/2)*sqrt(par.a/par.tau)
         
-    def __input_is_in_case_2(self, const_args):
-        return const_args['cn'] >= 1 - const_args['tau']*(1-const_args['s']) - 4*(1-const_args['tau']) * sqrt(const_args['a']/const_args['tau'])
+    def __input_is_in_case_2(self, par):
+        return par.cn >= 1 - par.tau*(1-par.s) - 4*(1-par.tau) * sqrt(par.a/par.tau)
         
 class TestGenerator(unittest.TestCase):
     def test_model_1_compare_analytical(self):
@@ -97,10 +91,10 @@ class TestGenerator(unittest.TestCase):
         
         generator.generate()        
         for solution in mof.getSolutions():
-            const_args, solver_dec_vars = solution['const_args'], solution['dec_vars']
+            par, solver_dec_vars = solution['par'], solution['dec_vars']
             solver_prof_man, solver_prof_ret = solution['profit_man'], solution['profit_ret']
-            assert const_args != None
-            dec_vars, prof_man, prof_ret = ana_solver.calcModelOne(const_args)
+            assert par != None
+            dec_vars, prof_man, prof_ret = ana_solver.calcModelOne(par)
             if dec_vars == None:
                 self.assertIsNone(prof_man)
                 self.assertIsNone(prof_ret)
@@ -135,43 +129,42 @@ class AnalyticalSolver:
         It is used to test the Solver's Solution and should only be used by UnitTests
     """
     
-    def calcModelOne(self, const_args):
+    def calcModelOne(self, par):
         """
         Returns a tuple (dec_vars, profit_manufacturer, profit_retailer)
         
         If the solution isnt possible, this method will return a tuple of (None, None, None)
         """
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         
-        case_1_pn  = (3+cn)/4 - (1/2)*(a*tau)**(1/2)
-        case_1_wn  = (1+cn)/2 - (a*tau)**(1/2)
-        case_1_roh = tau/2 + (1-cn)/4 * (tau/a)**(1/2)
-        case_1_qn  = (1-cn)/4 + (1/2)*(a*tau)**(1/2)
+        case_1_pn  = (3+par.cn)/4 - (1/2)*(par.a*par.tau)**(1/2)
+        case_1_wn  = (1+par.cn)/2 - (par.a*par.tau)**(1/2)
+        case_1_roh = par.tau/2 + (1-par.cn)/4 * (par.tau/par.a)**(1/2)
+        case_1_qn  = (1-par.cn)/4 + (1/2)*(par.a*par.tau)**(1/2)
         if case_1_roh != 0:
             # i can skip this solution..
-            case_1_prof_man = case_1_qn * ( case_1_wn * (1- tau/case_1_roh) - cn + (tau/case_1_roh)*s)
-            case_1_prof_ret = case_1_qn * (case_1_pn - case_1_wn)*(1- tau/case_1_roh) - a*case_1_roh
+            case_1_prof_man = case_1_qn * ( case_1_wn * (1- par.tau/case_1_roh) - par.cn + (par.tau/case_1_roh)*par.s)
+            case_1_prof_ret = case_1_qn * (case_1_pn - case_1_wn)*(1- par.tau/case_1_roh) - par.a*case_1_roh
         
-        if tau != 1:
-            case_2_pn  = (1/(1-tau)) * ( (3+cn)/(4) - (tau*(3+s)/(4)))
-            case_2_wn  = (1/(1-tau)) * ((1+cn)/(2) - (tau*(1+s))/(2) )
+        if par.tau != 1:
+            case_2_pn  = (1/(1-par.tau)) * ( (3+par.cn)/(4) - (par.tau*(3+par.s)/(4)))
+            case_2_wn  = (1/(1-par.tau)) * ((1+par.cn)/(2) - (par.tau*(1+par.s))/(2) )
             case_2_roh = 1
-            case_2_qn  = (1/(1-tau)) * ( (1-cn)/(4) - (tau*(1-s))/(4) )
-            case_2_prof_man = case_2_qn * ( case_2_wn * (1- tau/case_2_roh) - cn + (tau/case_2_roh)*s)
-            case_2_prof_ret = case_2_qn * (case_2_pn - case_2_wn)*(1- tau/case_2_roh) - a*case_2_roh
+            case_2_qn  = (1/(1-par.tau)) * ( (1-par.cn)/(4) - (par.tau*(1-par.s))/(4) )
+            case_2_prof_man = case_2_qn * ( case_2_wn * (1- par.tau/case_2_roh) - par.cn + (par.tau/case_2_roh)*par.s)
+            case_2_prof_ret = case_2_qn * (case_2_pn - case_2_wn)*(1- par.tau/case_2_roh) - par.a*case_2_roh
         else:
-            # tau == 1 leads to division by zero
+            # par.tau == 1 leads to division by zero
             pass
         
         if round(case_1_roh, 7) >= 1:
             # i can take both solutions
-            if tau != 1 and case_2_prof_man > case_1_prof_man and case_2_prof_man >= 0 and case_2_prof_ret >= 0:
+            if par.tau != 1 and case_2_prof_man > case_1_prof_man and case_2_prof_man >= 0 and case_2_prof_ret >= 0:
                 sol = 'CASE_2'
             else:
                 sol = 'CASE_1'
         else:
             # only case two would be possible
-            if tau == 1:
+            if par.tau == 1:
                 # no analytical solution possible:
                 #raise RuntimeError('no analytical solution possible')
                 return (None, None, None)
@@ -189,7 +182,6 @@ class AnalyticalSolver:
             
         if not is_prof_pos(ret_val[2]) or not is_prof_pos(ret_val[1]):
             if ret_val[2] >= 0 or ret_val[1] >= 0:
-                #print(const_args) # this may be interesting
                 pass
             return (None, None, None)
             

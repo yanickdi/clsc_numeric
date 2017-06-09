@@ -19,14 +19,14 @@ class ModelTwoNumericalSolver:
         pass
         
     
-    def optimize(self, const_args):
+    def optimize(self, par):
         """
         This is the core method of this class. It will return all six 
         decision variables to maximize the retailer's profit (with respect to the profit maximization
         condition of the retailer) and the cond 0 <= qr <= (tau/roh)*qn
         
         Args:
-            const_args (dict): A dictionary having set all parameters, e.g. 
+            par (Parameter): A Parameter object of type MODEL_2
         
         Returns:
             dict: A dictionary of decision_vars {pn, pr, wn, roh, qn, qr} or None if the solution is not possible
@@ -34,7 +34,7 @@ class ModelTwoNumericalSolver:
         """
         raise NotImplementedError()
     
-    def calc_profits(self, const_args, dec_vars):
+    def calc_profits(self, par, dec_vars):
         """
             Returns the numeric result of the profit of the manufacturer and the retailer (a tuple containing first manufacturer, second retailer)
             having set all decision variables
@@ -43,36 +43,33 @@ class ModelTwoNumericalSolver:
         """
         if dec_vars == None:
             return (None, None)
-        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
         wn, pn, roh, qn, qr, pr = dec_vars['wn'], dec_vars['pn'], dec_vars['roh'], dec_vars['qn'], dec_vars['qr'], dec_vars['pr']
-        manu_profit = qn * (wn * (1- tau/roh) - cn) + qr*(pr-cr) + ((tau/roh)*qn-qr)*s
+        manu_profit = qn * (wn * (1- par.tau/roh) - par.cn) + qr*(pr-par.cr) + ((par.tau/roh)*qn-qr)*par.s
         retailer_profit = None
         return manu_profit, retailer_profit
         
-    def _optimize_case_one_a(self, const_args):
+    def _optimize_case_one_a(self, par):
         """ helper function that solves the case roh >= 1 and qr = 0 """
-        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
         dec = {
-            'wn' : (cn+1)/2 - ((2-delta)/2) * sqrt((a*tau) / (1-delta)),
-            'pr'  : ( delta*(-2*sqrt(tau*a*(1-delta))+ delta*(sqrt(tau*a*(1-delta))+2*delta-5) - cn*delta+cn+3 ) ) / (2*(delta-2)*(delta-1))
+            'wn' : (par.cn+1)/2 - ((2-par.delta)/2) * sqrt((par.a*par.tau) / (1-par.delta)),
+            'pr'  : ( par.delta*(-2*sqrt(par.tau*par.a*(1-par.delta))+ par.delta*(sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5) - par.cn*par.delta+par.cn+3 ) ) / (2*(par.delta-2)*(par.delta-1))
         }
-        dec['roh'] = self.__roh_case_one(dec['wn'], delta, dec['pr'], tau, a)
-        dec['pn'] = self.__pn_case_one(dec['pr'], delta, dec['pr'])
-        dec['qn'] = self.__qn_case_one(dec['wn'], delta, dec['pr'])
-        dec['qr'] = self.__qr_case_one(dec['wn'], delta, dec['pr'])
+        dec['roh'] = self.__roh_case_one(dec['wn'], par.delta, dec['pr'], par.tau, par.a)
+        dec['pn'] = self.__pn_case_one(dec['pr'], par.delta, dec['pr'])
+        dec['qn'] = self.__qn_case_one(dec['wn'], par.delta, dec['pr'])
+        dec['qr'] = self.__qr_case_one(dec['wn'], par.delta, dec['pr'])
         return dec
         
-    def _optimize_case_one_b(self, const_args):
+    def _optimize_case_one_b(self, par):
         """ helper function that solves the case roh >= 1 and 0 < qr < tau/roh*qn """
-        tau, a, s, cr, cn, delta = const_args['tau'], const_args['a'], const_args['s'], const_args['cr'], const_args['cn'], const_args['delta']
         dec = {
-            'wn' : (1+cn)/2 -  ((2-delta)/2) * sqrt((a*tau)/(1-delta)),
-            'pr'  : (cr+delta+s)/2 -  (delta/2) * sqrt((a*tau)/(1-delta))
+            'wn' : (1+par.cn)/2 -  ((2-par.delta)/2) * sqrt((par.a*par.tau)/(1-par.delta)),
+            'pr'  : (par.cr+par.delta+par.s)/2 -  (par.delta/2) * sqrt((par.a*par.tau)/(1-par.delta))
         }
-        dec['roh'] = self.__roh_case_one(dec['wn'], delta, dec['pr'], tau, a)
-        dec['pn'] = self.__pn_case_one(dec['pr'], delta, dec['pr'])
-        dec['qn'] = self.__qn_case_one(dec['wn'], delta, dec['pr'])
-        dec['qr'] = self.__qr_case_one(dec['wn'], delta, dec['pr'])
+        dec['roh'] = self.__roh_case_one(dec['wn'], par.delta, dec['pr'], par.tau, par.a)
+        dec['pn'] = self.__pn_case_one(dec['pr'], par.delta, dec['pr'])
+        dec['qn'] = self.__qn_case_one(dec['wn'], par.delta, dec['pr'])
+        dec['qr'] = self.__qr_case_one(dec['wn'], par.delta, dec['pr'])
         return dec
         
     def __qn_case_one(self, wn, delta, pr):
@@ -97,7 +94,7 @@ class ModelOneNumericalSolver:
     def __init__(self):
         pass
     
-    def calc_profits(self, const_args, dec_vars):
+    def calc_profits(self, par, dec_vars):
         """
             Returns the numeric result of the profit of the manufacturer and the retailer (a tuple containing first manufacturer, second retailer)
             having set all decision variables
@@ -106,13 +103,12 @@ class ModelOneNumericalSolver:
         """
         if dec_vars == None:
             return (None, None)
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         wn, pn, roh, qn = dec_vars['wn'], dec_vars['pn'], dec_vars['roh'], dec_vars['qn']
-        manu_profit = qn * (wn * (1- tau/roh) - cn + (tau/roh) * s)
-        retailer_profit = qn * (pn - wn) * (1 - tau/roh) - a * roh
+        manu_profit = qn * (wn * (1- par.tau/roh) - par.cn + (par.tau/roh) * par.s)
+        retailer_profit = qn * (pn - wn) * (1 - par.tau/roh) - par.a * roh
         return manu_profit, retailer_profit
     
-    def optimize(self, const_args):
+    def optimize(self, par):
         """
         This is the core method of this class. It will return all four
         decision variables to maximize the retailer's profit (with
@@ -125,10 +121,10 @@ class ModelOneNumericalSolver:
         #       case 1 - roh is >= 1
         #       case 2 - roh is == 1
         
-        dec_vars_case_1 = self._optimize_case_one(const_args)
-        prof_man_case_1, prof_ret_case_1 = self.calc_profits(const_args, dec_vars_case_1)
-        dec_vars_case_2 = self._optimize_case_two(const_args)
-        prof_man_case_2, prof_ret_case_2 = self.calc_profits(const_args, dec_vars_case_2)
+        dec_vars_case_1 = self._optimize_case_one(par)
+        prof_man_case_1, prof_ret_case_1 = self.calc_profits(par, dec_vars_case_1)
+        dec_vars_case_2 = self._optimize_case_two(par)
+        prof_man_case_2, prof_ret_case_2 = self.calc_profits(par, dec_vars_case_2)
         
         case = None
         
@@ -155,32 +151,29 @@ class ModelOneNumericalSolver:
         else:
             return dec_vars_case_1 if case == _CASE_ONE else dec_vars_case_2
     
-    def _optimize_case_one(self, const_args):
+    def _optimize_case_one(self, par):
         """
         Returns a dec_vars dict having wn,pn,roh and qn stored
         """
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
         
         # defining our helper function:
         def __manufacturer_derivation_case_1(wn):
-            return (-1/2) - (cn/2) + wn + a * (tau/a)**(1/2)
+            return (-1/2) - (par.cn/2) + wn + par.a * (par.tau/par.a)**(1/2)
         
         # let scipy do the job:
         opt = scipy.optimize.fsolve(__manufacturer_derivation_case_1, x0=0.5, full_output=True)
         wn = opt[0][0]
         pn = (1 + wn) / 2
-        roh = (1-wn) * (1/2) * (tau/a)**(1/2)
+        roh = (1-wn) * (1/2) * sqrt(par.tau/par.a)
         return {'wn' : wn, 'pn' : pn, 'roh' : roh, 'qn' : 1 - pn}
         
-    def _optimize_case_two(self, const_args):
+    def _optimize_case_two(self, par):
         """
         Returns a dec_vars dict having wn,pn,roh and qn stored
         """
-        tau, a, s, cn = const_args['tau'], const_args['a'], const_args['s'], const_args['cn']
-        
         #helper function
         def __manufacturer_derivation_case_2(wn):
-            return (1/2) * (-1 -cn -2*wn * (-1 + tau) + tau + s*tau)
+            return (1/2) * (-1 -par.cn -2*wn * (-1 + par.tau) + par.tau + par.s*par.tau)
         
         # hello scipy:
         opt = scipy.optimize.fsolve(__manufacturer_derivation_case_2, x0=0.5, full_output=True)
@@ -188,42 +181,31 @@ class ModelOneNumericalSolver:
         pn = (1 + wn) / 2
         roh = 1
         return {'wn' : wn, 'pn' : pn, 'roh' : roh, 'qn' : 1 - pn}
+
     
-def check_args(model, args):
-    if model == MODEL_1:
-        tau, a, s, cn = args['tau'], args['a'], args['s'], args['cn']
-        assert 0 <= tau <= 1
-        assert 0 <= 0.01
-        assert s <= cn <= 1
-        assert 0 <= s <= cn
-        assert s <= cn
-    else:
-        #TODO check model 2
-        pass
+class Parameter:
+    """
+        An object of this class is a struct like wrapper for all Model Input Parameter (constants)
+    """
     
-    
-def build_args(model, tau=None, a=None, s=None, cr=None, cn=None, delta=None):
-    if model == MODEL_1:
-        args =  {
-            'tau' : tau,
-            'a'   : a,
-            's'   : s,
-            'cn'  : cn
-        }
-    elif model == MODEL_2:
-        args =  {
-            'tau' : tau,
-            'a'   : a,
-            's'   : s,
-            'cr'  : cr,
-            'cn'  : cn,
-            'delta' : delta
-        }
-    else:
-        raise RuntimeError(str(model) + ' not allowed.')
-    check_args(model, args)
-    return args
-    
+    def __init__(self, model, tau=None, a=None, s=None, cr=None, cn=None, delta=None):
+        if model == MODEL_1:
+            self.tau, self.a, self.s, self.cn = tau, a, s, cn
+        elif model == MODEL_2:
+            self.tau, self.a, self.s, self.cr, self.cn, self.delta = tau, a, s, cr, cn, delta
+        else:
+            raise RuntimeError(str(model) + ' not allowed.')
+        self.model = model
+            
+    def is_valid(self):
+        #TODO
+        raise NotImplementedError()
+        
+    def __str__(self):
+        if self.model == MODEL_1:
+            return 'tau={:.2f}, a={:.2f}, s={:.2f}, cn={:.2f}'.format(self.tau, self.a, self.s, self.cn)
+        else:
+            return 'Parameter obj of type model 2'
     
 if __name__ == '__main__':
     print('You cannot call this file directly')
