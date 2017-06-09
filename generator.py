@@ -6,7 +6,7 @@ try:
 except:
     sys.exit('Failed: You have to install the python scipy package.')
 
-from solver import MODEL_1, MODEL_2, Parameter
+from solver import MODEL_1, MODEL_2, Parameter, DecisionVariables
 import solver
     
 class Generator:
@@ -122,7 +122,7 @@ class CsvOutputFile(AbstractOutputFile):
             profit_man = -1.0
             profit_ret = -1.0
         else:
-            dec_str =   '{};{};{};{}'.format(dec_vars['pn'], dec_vars['wn'], dec_vars['roh'], dec_vars['qn'])
+            dec_str =   '{};{};{};{}'.format(dec_vars.pn, dec_vars.wn, dec_vars.roh, dec_vars.qn)
         line = '{};{};{:.5f};{:.5f}'.format(par_str, dec_str, profit_man, profit_ret)
         self.file.write(line.replace('.',',') + '\n')
         

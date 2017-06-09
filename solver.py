@@ -102,7 +102,7 @@ class ModelOneNumericalSolver:
         """
         if dec_vars == None:
             return (None, None)
-        wn, pn, roh, qn = dec_vars['wn'], dec_vars['pn'], dec_vars['roh'], dec_vars['qn']
+        wn, pn, roh, qn = dec_vars.wn, dec_vars.pn, dec_vars.roh, dec_vars.qn
         manu_profit = qn * (wn * (1- par.tau/roh) - par.cn + (par.tau/roh) * par.s)
         retailer_profit = qn * (pn - wn) * (1 - par.tau/roh) - par.a * roh
         return manu_profit, retailer_profit
@@ -114,7 +114,7 @@ class ModelOneNumericalSolver:
         respect to the profit maximization condition of the retailer)
         
         Returns:
-        A dictionary of decision_vars {wn, pn, roh and qn} or None if the solution is not possible
+        A DecisionVariables object of type MODEL_1 or None if the solution is not possible
         """
         ## test two cases:
         #       case 1 - roh is >= 1
@@ -127,7 +127,7 @@ class ModelOneNumericalSolver:
         
         case = None
         
-        if dec_vars_case_1['roh'] < 1:
+        if dec_vars_case_1.roh < 1:
             if is_prof_pos(prof_man_case_2) and is_prof_pos(prof_ret_case_2):
                 case = _CASE_TWO
             else:
@@ -164,7 +164,7 @@ class ModelOneNumericalSolver:
         wn = opt[0][0]
         pn = (1 + wn) / 2
         roh = (1-wn) * (1/2) * sqrt(par.tau/par.a)
-        return {'wn' : wn, 'pn' : pn, 'roh' : roh, 'qn' : 1 - pn}
+        return DecisionVariables(MODEL_1, wn=wn, pn=pn, roh=roh, qn=1 - pn)
         
     def _optimize_case_two(self, par):
         """
@@ -179,7 +179,7 @@ class ModelOneNumericalSolver:
         wn = opt[0][0]
         pn = (1 + wn) / 2
         roh = 1
-        return {'wn' : wn, 'pn' : pn, 'roh' : roh, 'qn' : 1 - pn}
+        return DecisionVariables(MODEL_1, wn=wn, pn=pn, roh=roh, qn=1 - pn)
 
     
 class Parameter:
@@ -219,6 +219,12 @@ class DecisionVariables:
         else:
             raise RuntimeError(str(model) + ' not allowed.')
         self.model = model
+        
+    def __str__(self):
+        if self.model == MODEL_1:
+            return 'wn={:.5f}, pn={:.5f}, roh={:.5f}, qn={:.5f}'.format(self.wn, self.pn, self.roh, self.qn)
+        else:
+            return 'pn={:.5f}, pr={:.5f}, wn={:.5f}, roh={:.5f}, qn={:.5f}, qr={:.5f}'.format(self.pn, self.pr, self.wn, self.roh, self.qn, self.qr)
     
 if __name__ == '__main__':
     print('You cannot call this file directly')

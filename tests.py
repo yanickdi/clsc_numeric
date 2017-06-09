@@ -1,7 +1,7 @@
 import unittest
 from math import sqrt
 
-from solver import ModelOneNumericalSolver, is_prof_pos, Parameter, MODEL_1, MODEL_2
+from solver import ModelOneNumericalSolver, is_prof_pos, Parameter, DecisionVariables, MODEL_1, MODEL_2
 from generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
@@ -25,9 +25,9 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         self.assertTrue(self.__input_is_in_case_1(par) and not self.__input_is_in_case_2(par))
         
         solver_dec_vars = solver.optimize(par)
-        self.assertAlmostEqual(solver_dec_vars['pn'], (3+par.cn)/4 - (1/2)*(par.a*par.tau)**(1/2), msg='pn not the same')
-        self.assertAlmostEqual(solver_dec_vars['wn'], (1+par.cn)/2 - (par.a*par.tau)**(1/2), msg='wn not the same')
-        self.assertAlmostEqual(solver_dec_vars['roh'], par.tau/2 + (1-par.cn)/4 * (par.tau/par.a)**(1/2), msg='roh not the same')
+        self.assertAlmostEqual(solver_dec_vars.pn, (3+par.cn)/4 - (1/2)*(par.a*par.tau)**(1/2), msg='pn not the same')
+        self.assertAlmostEqual(solver_dec_vars.wn, (1+par.cn)/2 - (par.a*par.tau)**(1/2), msg='wn not the same')
+        self.assertAlmostEqual(solver_dec_vars.roh, par.tau/2 + (1-par.cn)/4 * (par.tau/par.a)**(1/2), msg='roh not the same')
 
     def test_case_2a(self):
         solver = ModelOneNumericalSolver()
@@ -59,16 +59,16 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         self.assertTrue(self.__input_is_in_case_2(par))
         
         solver_dec_vars = solver.optimize(par)
-        self.assertAlmostEqual(solver_dec_vars['pn'], 0.83319444, msg='pn not the same')
-        self.assertAlmostEqual(solver_dec_vars['wn'], (1/(1-par.tau)) * ((1+par.cn)/2 - (par.tau*(1+par.s))/2), msg='wn not the same')
-        self.assertAlmostEqual(solver_dec_vars['roh'], 1.0, msg='roh not the same')
+        self.assertAlmostEqual(solver_dec_vars.pn, 0.83319444, msg='pn not the same')
+        self.assertAlmostEqual(solver_dec_vars.wn, (1/(1-par.tau)) * ((1+par.cn)/2 - (par.tau*(1+par.s))/2), msg='wn not the same')
+        self.assertAlmostEqual(solver_dec_vars.roh, 1.0, msg='roh not the same')
     
     def test_qn(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
         par = Parameter(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
         dec_vars = solver.optimize(par)
-        self.assertAlmostEqual(dec_vars['qn'], 1 - dec_vars['pn'])
+        self.assertAlmostEqual(dec_vars.qn, 1 - dec_vars.pn)
         # TODO: also test a case leading to roh == 1
         
     def test_sol_not_possible(self):
@@ -110,15 +110,10 @@ class TestGenerator(unittest.TestCase):
                 self.assertIsNone(prof_man)
                 self.assertIsNone(prof_ret)
             else:
-                if round(solver_dec_vars['pn'], 7) != round(dec_vars['pn'], 7):
-                    print(solver_dec_vars)
-                    print(dec_vars)
-                    print(const_args)
-                    
-                self.assertAlmostEqual(solver_dec_vars['pn'], dec_vars['pn'])
-                self.assertAlmostEqual(solver_dec_vars['wn'], dec_vars['wn'])
-                self.assertAlmostEqual(solver_dec_vars['roh'], dec_vars['roh'])
-                self.assertAlmostEqual(solver_dec_vars['qn'], dec_vars['qn'])
+                self.assertAlmostEqual(solver_dec_vars.pn, dec_vars.pn)
+                self.assertAlmostEqual(solver_dec_vars.wn, dec_vars.wn)
+                self.assertAlmostEqual(solver_dec_vars.roh, dec_vars.roh)
+                self.assertAlmostEqual(solver_dec_vars.qn, dec_vars.qn)
                 self.assertAlmostEqual(solver_prof_man, prof_man)
                 self.assertAlmostEqual(solver_prof_ret, prof_ret)
         
@@ -171,14 +166,14 @@ class AnalyticalSolver:
             # have to fall back on case 2
             else:
                 # only case 2 analytical is possible:
-                ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
+                ret_val = (DecisionVariables(MODEL_1, pn=case_2_pn, wn=case_2_wn, roh=case_2_roh, qn=case_2_qn), case_2_prof_man, case_2_prof_ret)
                 if is_prof_pos(ret_val[1]) and is_prof_pos(ret_val[2]): return ret_val
                 else: return (None, None, None)
         
         if sol == 'CASE_1':
-            ret_val = ({'pn' : case_1_pn, 'wn' : case_1_wn, 'roh' : case_1_roh, 'qn' : case_1_qn}, case_1_prof_man, case_1_prof_ret)
+            ret_val = (DecisionVariables(MODEL_1, pn=case_1_pn, wn=case_1_wn, roh=case_1_roh, qn=case_1_qn), case_1_prof_man, case_1_prof_ret)
         else:
-            ret_val = ({'pn' : case_2_pn, 'wn' : case_2_wn, 'roh' : case_2_roh, 'qn' : case_2_qn}, case_2_prof_man, case_2_prof_ret)
+            ret_val = (DecisionVariables(MODEL_1, pn=case_2_pn, wn=case_2_wn, roh=case_2_roh, qn=case_2_qn), case_2_prof_man, case_2_prof_ret)
             
         if not is_prof_pos(ret_val[2]) or not is_prof_pos(ret_val[1]):
             if ret_val[2] >= 0 or ret_val[1] >= 0:
