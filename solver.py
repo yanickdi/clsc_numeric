@@ -33,18 +33,17 @@ class ModelTwoNumericalSolver:
         """
         raise NotImplementedError()
     
-    def calc_profits(self, par, dec_vars):
+    def calc_profits(self, par, dec):
         """
             Returns the numeric result of the profit of the manufacturer and the retailer (a tuple containing first manufacturer, second retailer)
             having set all decision variables
             
-            This method checks whether `dec_vars` is not None. If its None - It will return a tuple of (None, None)
+            This method checks whether `dec` is not None. If its None - It will return a tuple of (None, None)
         """
-        if dec_vars == None:
+        if dec == None:
             return (None, None)
-        wn, pn, roh, qn, qr, pr = dec_vars.wn, dec_vars.pn, dec_vars.roh, dec_vars.qn, dec_vars.qr, dec_vars.pr
-        manu_profit = qn * (wn * (1- par.tau/roh) - par.cn) + qr*(pr-par.cr) + ((par.tau/roh)*qn-qr)*par.s
-        retailer_profit = None
+        manu_profit = dec.qn * (dec.wn * (1- par.tau/dec.roh) - par.cn) + dec.qr*(dec.pr-par.cr) + ((par.tau/dec.roh)*dec.qn-dec.qr)*par.s
+        retailer_profit = dec.qn * (dec.pn - dec.wn) * (1- par.tau/dec.roh) - par.a*dec.roh
         return manu_profit, retailer_profit
         
     def _optimize_case_one_a(self, par):
@@ -54,7 +53,7 @@ class ModelTwoNumericalSolver:
             pr = ( par.delta*(-2*sqrt(par.tau*par.a*(1-par.delta))+ par.delta*(sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5) - par.cn*par.delta+par.cn+3 ) ) / (2*(par.delta-2)*(par.delta-1))
             )
         dec.roh = self.__roh_case_one(dec.wn, par.delta, dec.pr, par.tau, par.a)
-        dec.pn = self.__pn_case_one(dec.pr, par.delta, dec.pr)
+        dec.pn = self.__pn_case_one(dec.wn, par.delta, dec.pr)
         dec.qn = self.__qn_case_one(dec.wn, par.delta, dec.pr)
         dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
         return dec
@@ -66,7 +65,7 @@ class ModelTwoNumericalSolver:
             pr = (par.cr+par.delta+par.s)/2 -  (par.delta/2) * sqrt((par.a*par.tau)/(1-par.delta))
         )
         dec.roh = self.__roh_case_one(dec.wn, par.delta, dec.pr, par.tau, par.a)
-        dec.pn = self.__pn_case_one(dec.pr, par.delta, dec.pr)
+        dec.pn = self.__pn_case_one(dec.wn, par.delta, dec.pr)
         dec.qn = self.__qn_case_one(dec.wn, par.delta, dec.pr)
         dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
         return dec
@@ -78,7 +77,7 @@ class ModelTwoNumericalSolver:
             pr = (par.delta*(-6*sqrt(par.tau*par.a*(1-par.delta))+par.delta*(5*sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5)-par.cn*par.delta + par.cn + 3)) / ( 2*(par.delta-2)*(par.delta-1))
         )
         dec.roh = self.__roh_case_one(dec.wn, par.delta, dec.pr, par.tau, par.a)
-        dec.pn = self.__pn_case_one(dec.pr, par.delta, dec.pr)
+        dec.pn = self.__pn_case_one(dec.wn, par.delta, dec.pr)
         dec.qn = self.__qn_case_one(dec.wn, par.delta, dec.pr)
         dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
         return dec
