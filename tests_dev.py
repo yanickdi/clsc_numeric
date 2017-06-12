@@ -47,9 +47,9 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         profit_man, profit_ret = solver.calc_profits(par, dec_vars)
         
         self.assertAlmostEqual(dec_vars.wn, .5551316701949)
-        self.assertAlmostEqual(dec_vars.pr, .6976524961498)
+        self.assertAlmostEqual(dec_vars.pr, .4612574113277)
         self.assertAlmostEqual(dec_vars.qr, .1581138830084)
-        self.assertAlmostEqual(profit_man,  .0586018385643)
+        self.assertAlmostEqual(profit_man,  .0212244937790)
         self.assertAlmostEqual(profit_ret, -.0027016118539)
 
 if __name__ == '__main__':
