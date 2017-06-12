@@ -70,6 +70,39 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec_vars.qr, .0)
         self.assertAlmostEqual(profit_man,  .0861342592593)
         self.assertAlmostEqual(profit_ret, -.0356442901235)
+        
+    def test_case_two_b(self):
+        solver = ModelTwoNumericalSolver()
+        # i dont know whether this parms lead to two a, but i will check the output anyway
+        par = Parameter(MODEL_2, tau=.1, a=.05, s=.1, cr=.2, cn=.3, delta=.8)
+        # TODO, check the case
+        dec_vars = solver._optimize_case_two_b(par)
+        profit_man, profit_ret = solver.calc_profits(par, dec_vars)
+        
+        self.assertAlmostEqual(dec_vars.wn, .667039106)
+        self.assertAlmostEqual(dec_vars.pr, .542458101)
+        self.assertAlmostEqual(dec_vars.pn, .704748603)
+        self.assertAlmostEqual(dec_vars.roh, 1)
+        self.assertAlmostEqual(dec_vars.qn, .188547486)
+        self.assertAlmostEqual(dec_vars.qr, 0.133379888)
+        self.assertAlmostEqual(profit_man,  .0908519553073)
+        self.assertAlmostEqual(profit_ret, -.0436009721919)
+        
+    def test_case_two_c(self):
+        solver = ModelTwoNumericalSolver()
+        # i dont know whether this parms lead to two a, but i will check the output anyway
+        par = Parameter(MODEL_2, tau=.1, a=.05, s=.1, cr=.2, cn=.3, delta=.8)
+        # TODO, check the case
+        dec_vars = solver._optimize_case_two_c(par)
+        profit_man, profit_ret = solver.calc_profits(par, dec_vars)
+        
+        self.assertAlmostEqual(dec_vars.wn, .65935483871)
+        self.assertAlmostEqual(dec_vars.pr, .56580645161)
+        self.assertAlmostEqual(dec_vars.pn, .71258064516)
+        self.assertAlmostEqual(dec_vars.roh, 1)
+        #self.assertAlmostEqual(dec_vars.qn, .26531435283)
+        self.assertAlmostEqual(dec_vars.qr, .026531435)
+        #self.assertAlmostEqual(dec_vars.qr, .15811388301)
 
 if __name__ == '__main__':
     unittest.main()
