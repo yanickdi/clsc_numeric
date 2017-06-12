@@ -71,7 +71,7 @@ class ModelTwoNumericalSolver:
         return dec
         
     def _optimize_case_one_c(self, par):
-        """ helper function that solves the case roh >= 1 and 0 < qr < tau/roh*qn """
+        """ helper function that solves the case roh >= 1 and qr = tau/roh*qn """
         dec = DecisionVariables(MODEL_2,
             wn = (par.cn+1)/2 - ((2-par.delta)/2)*sqrt((par.a*par.tau)/(1-par.delta)),
             pr = (par.delta*(-6*sqrt(par.tau*par.a*(1-par.delta))+par.delta*(5*sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5)-par.cn*par.delta + par.cn + 3)) / ( 2*(par.delta-2)*(par.delta-1))
@@ -82,11 +82,26 @@ class ModelTwoNumericalSolver:
         dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
         return dec
         
-    def __qn_case_one(self, wn, delta, pr):
-        return 1 - (self.__pn_case_one(wn, delta, pr) - pr)/(1-delta)
+    def _optimize_case_two_a(self, par):
+        """ helper function that solves the case roh = 1 and qr = 0 """
+        dec = DecisionVariables(MODEL_2,
+            wn = (1/(1-par.tau))*((1+par.cn)/2 - (par.tau*(1+par.s))/2),
+            pr = (par.delta * (par.cn+ 2*par.delta*(par.tau-1)-(par.s+3)*par.tau + 3) ) / (2*(par.delta-2)*(par.tau-1))
+        )
+        dec.roh = self.__roh_case_two()
+        dec.pn = self.__pn_case_two(dec.wn, par.delta, dec.pr)
+        dec.qn = self.__qn_case_two(dec.wn, par.delta, dec.pr)
+        dec.qr = self.__qr_case_two(dec.wn, par.delta, dec.pr)
+        return dec
         
     def __qr(self, pn, pr, delta):
         return (pn-pr)/(1-delta) - pr/delta
+        
+    def __qn(self, pn, pr, delta):
+        return 1 - (pn-pr)/(1-delta)
+        
+    def __qn_case_one(self, wn, delta, pr):
+        return self.__qn(self.__pn_case_one(wn, delta, pr), pr, delta)
         
     def __qr_case_one(self, wn, delta, pr):
         return self.__qr(self.__pn_case_one(wn, delta, pr), pr, delta)
@@ -96,6 +111,18 @@ class ModelTwoNumericalSolver:
         
     def __pn_case_one(self, wn, delta, pr):
         return .5 * (1+wn-delta+pr)
+        
+    def __roh_case_two(self):
+        return 1
+    
+    def __pn_case_two(self, wn, delta, pr):
+        return .5 * (1+wn-delta+pr)
+        
+    def __qn_case_two(self, wn, delta, pr):
+        return self.__qn(self.__pn_case_two(wn, delta, pr), pr, delta)
+        
+    def __qr_case_two(self, wn, delta, pr):
+        return self.__qr(self.__pn_case_two(wn, delta, pr), pr, delta)
     
 class ModelOneNumericalSolver:
     """
