@@ -71,6 +71,18 @@ class ModelTwoNumericalSolver:
         dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
         return dec
         
+    def _optimize_case_one_c(self, par):
+        """ helper function that solves the case roh >= 1 and 0 < qr < tau/roh*qn """
+        dec = DecisionVariables(MODEL_2,
+            wn = (par.cn+1)/2 - ((2-par.delta)/2)*sqrt((par.a*par.tau)/(1-par.delta)),
+            pr = (par.delta*(-6*sqrt(par.tau*par.a*(1-par.delta))+par.delta*(5*sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5)-par.cn*par.delta + par.cn + 3)) / ( 2*(par.delta-2)*(par.delta-1))
+        )
+        dec.roh = self.__roh_case_one(dec.wn, par.delta, dec.pr, par.tau, par.a)
+        dec.pn = self.__pn_case_one(dec.pr, par.delta, dec.pr)
+        dec.qn = self.__qn_case_one(dec.wn, par.delta, dec.pr)
+        dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
+        return dec
+        
     def __qn_case_one(self, wn, delta, pr):
         return 1 - (self.__pn_case_one(wn, delta, pr) - pr)/(1-delta)
         
