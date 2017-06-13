@@ -16,13 +16,18 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         # TODO, check the case
         #self.assertTrue(self.__input_is_in_case_1(par))
         dec = solver._optimize_case_one_a(par)
-        profit_man,_ = solver.calc_profits(par, dec)
+        profit_man,profit_ret = solver.calc_profits(par, dec)
         
-        self.assertAlmostEqual(dec.wn, .5769703256659778)
-        self.assertAlmostEqual(dec.pr, .29424258141649456)
-        self.assertAlmostEqual(dec.qr, .0)
-        self.assertAlmostEqual(profit_man, .029687932228693096)
-        #TODO: test retailer profit
+        self.assertAlmostEqual(dec.pn, .735606453541)
+        self.assertAlmostEqual(dec.pr, .294242581416)
+        self.assertAlmostEqual(dec.wn, .576970325666)
+        self.assertAlmostEqual(dec.roh, 1.448143094543)
+        self.assertAlmostEqual(dec.qr, 0)
+        self.assertAlmostEqual(dec.qn, 0.264393546459)
+        self.assertAlmostEqual(profit_man, 0.0296879322287)
+        self.assertAlmostEqual(profit_ret, 0.0129795065546)
+        self.assertAlmostEqual(dec.lambda1, 2.07500000000)
+        self.assertAlmostEqual(dec.lambda2, 0)
         
     def test_case_one_b(self):
         solver = ModelTwoNumericalSolver()
@@ -30,12 +35,16 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         par = Parameter(MODEL_2, tau=.1, a=.05, s=.1, cr=.2, cn=.3, delta=.8)
         # TODO, check the case
         dec = solver._optimize_case_one_b(par)
-        profit_man,_ = solver.calc_profits(par, dec)
+        profit_man, profit_ret = solver.calc_profits(par, dec)
         
-        self.assertAlmostEqual(dec.wn, .5551316701949486)
-        self.assertAlmostEqual(dec.pr, .48675444679663243)
-        self.assertAlmostEqual(dec.qr, .06250000000000011)
-        self.assertAlmostEqual(profit_man, .023662364345369585)
+        self.assertAlmostEqual(dec.pn, .62094305850)
+        self.assertAlmostEqual(dec.pr, 0.48675444680)
+        self.assertAlmostEqual(dec.wn, .55513167019)
+        self.assertAlmostEqual(dec.roh, .20811388301)
+        self.assertAlmostEqual(dec.qn, .32905694150)
+        self.assertAlmostEqual(dec.qr, 0.06250000000)
+        self.assertAlmostEqual(profit_man, .0236623643454)
+        self.assertAlmostEqual(profit_ret, .0008443058496)
         #TODO: test retailer profit
         
     def test_case_one_c(self):
@@ -80,12 +89,13 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         dec = solver._optimize_case_two_b(par)
         profit_man, profit_ret = solver.calc_profits(par, dec)
         
-        self.assertAlmostEqual(dec.wn, .667039106)
-        self.assertAlmostEqual(dec.pr, .542458101)
+        
         self.assertAlmostEqual(dec.pn, .704748603)
+        self.assertAlmostEqual(dec.pr, .542458101)
+        self.assertAlmostEqual(dec.wn, .667039106)
         self.assertAlmostEqual(dec.roh, 1)
         self.assertAlmostEqual(dec.qn, .188547486)
-        self.assertAlmostEqual(dec.qr, 0.133379888)
+        self.assertAlmostEqual(dec.qr, .133379888)
         self.assertAlmostEqual(profit_man,  .0908519553073)
         self.assertAlmostEqual(profit_ret, -.0436009721919)
         

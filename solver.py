@@ -31,6 +31,13 @@ class ModelTwoNumericalSolver:
         Returns:
             DecisionVariables: An object of type MODEL_2 that stores all decision_vars (pn, pr, wn, roh, qn, qr) or None if the solution is not possible
         """
+        cases = (
+            ('1a) roh >= 1 and qr = 0',                     self._optimize_case_one_a),
+            ('1b) roh >= 1 and 0 <= qr <= (tau/roh)*qn',    self._optimize_case_one_b),
+            ('1c) roh >= 1 and qr = tau/roh*qn',            self._optimize_case_one_c),
+            ('2a) roh = 1 and qr = 0',                      self._optimize_case_two_a),
+            ('2b) roh = 1 and 0 <= qr <= (tau/roh)*qn',     self._optimize_case_one_b),
+            ('2c) roh = 1 and qr = (tau/roh) * qn',         self._optimize_case_one_c))
         raise NotImplementedError()
     
     def calc_profits(self, par, dec):
@@ -50,7 +57,9 @@ class ModelTwoNumericalSolver:
         """ helper function that solves the case roh >= 1 and qr = 0 """
         dec = DecisionVariables(MODEL_2,
             wn = (par.cn+1)/2 - ((2-par.delta)/2) * sqrt((par.a*par.tau) / (1-par.delta)),
-            pr = ( par.delta*(-2*sqrt(par.tau*par.a*(1-par.delta))+ par.delta*(sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5) - par.cn*par.delta+par.cn+3 ) ) / (2*(par.delta-2)*(par.delta-1))
+            pr = ( par.delta*(-2*sqrt(par.tau*par.a*(1-par.delta))+ par.delta*(sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5) - par.cn*par.delta+par.cn+3 ) ) / (2*(par.delta-2)*(par.delta-1)),
+            lambda1 = 1 + par.cn + par.cr + par.s + (2 * (-1 + par.cn))/(-2 + par.delta) - par.delta,
+            lambda2 = 0
             )
         dec.roh = self.__roh_case_one(dec.wn, par.delta, dec.pr, par.tau, par.a)
         dec.pn = self.__pn_case_one(dec.wn, par.delta, dec.pr)
@@ -59,7 +68,7 @@ class ModelTwoNumericalSolver:
         return dec
         
     def _optimize_case_one_b(self, par):
-        """ helper function that solves the case roh >= 1 and 0 < qr < tau/roh*qn """
+        """ helper function that solves the case roh >= 1 and 0 <= qr <= (tau/roh)*qn """
         dec = DecisionVariables(MODEL_2,
             wn = (1+par.cn)/2 -  ((2-par.delta)/2) * sqrt((par.a*par.tau)/(1-par.delta)),
             pr = (par.cr+par.delta+par.s)/2 -  (par.delta/2) * sqrt((par.a*par.tau)/(1-par.delta))
@@ -71,7 +80,7 @@ class ModelTwoNumericalSolver:
         return dec
         
     def _optimize_case_one_c(self, par):
-        """ helper function that solves the case roh >= 1 and qr = tau/roh*qn """
+        """ helper function that solves the case roh >= 1 and qr = (tau/roh)*qn """
         dec = DecisionVariables(MODEL_2,
             wn = (par.cn+1)/2 - ((2-par.delta)/2)*sqrt((par.a*par.tau)/(1-par.delta)),
             pr = (par.delta*(-6*sqrt(par.tau*par.a*(1-par.delta))+par.delta*(5*sqrt(par.tau*par.a*(1-par.delta))+2*par.delta-5)-par.cn*par.delta + par.cn + 3)) / ( 2*(par.delta-2)*(par.delta-1))
@@ -95,7 +104,7 @@ class ModelTwoNumericalSolver:
         return dec
         
     def _optimize_case_two_b(self, par):
-        """ helper function that solves the case roh = 1 and 0 < qr < tau/roh*qn """
+        """ helper function that solves the case roh = 1 and 0 <= qr <= (tau/roh)*qn """
         dec = DecisionVariables(MODEL_2,
             wn =  (par.tau*(-par.delta*(par.cn+5*par.s+5)-par.cr*(par.delta-2)+par.delta**2+6*par.s+4)+4*(par.cn+1)*(par.delta-1)+par.delta*par.s*par.tau**2) / (par.delta*((par.tau-8)*par.tau+8)+8*(par.tau-1)),
             pr = (-par.tau*(par.delta*(par.cn+5*par.delta+3*par.s-5)+par.cr*(3*par.delta-4)-4*par.s)+4*(par.delta-1)*(par.cr+par.delta+par.s)+par.delta*par.tau**2*(par.delta+par.s-1)) / (par.delta*((par.tau-8)*par.tau+8)+8*(par.tau-1))
@@ -107,7 +116,7 @@ class ModelTwoNumericalSolver:
         return dec
     
     def _optimize_case_two_c(self, par):
-        """ helper function that solves the case roh = 1 and qr = tau/roh * qn """
+        """ helper function that solves the case roh = 1 and qr = (tau/roh) * qn """
         dec = DecisionVariables(MODEL_2,
             wn =  (par.cn*(par.delta*(par.tau-1)+2)+par.delta*(par.tau*(par.cr*(par.tau-1)+par.delta*(-par.tau)+par.delta+par.tau+2)-1)+2*(par.cr-1)*par.tau+2) / (par.delta*(6*par.tau-2)-4*par.tau+4),
             pr = (par.delta*(par.tau*(par.cn+par.cr+5*par.delta-4)+par.cn+par.tau**2*(par.cr-par.delta+1)-2*par.delta+3)) / (par.delta*(6*par.tau-2)-4*par.tau+4)
@@ -273,11 +282,12 @@ class DecisionVariables:
         An object of this class is a struct like wrapper for all Model Decision variables
     """
     
-    def __init__(self, model, pn=None, pr=None, wn=None, roh=None, qn=None, qr=None):
+    def __init__(self, model, pn=None, pr=None, wn=None, roh=None, qn=None, qr=None, lambda1=None, lambda2=None):
         if model == MODEL_1:
             self.wn, self.pn, self.roh, self.qn = wn, pn, roh, qn
         elif model == MODEL_2:
             self.pn, self.pr, self.wn, self.roh, self.qn, self.qr = pn, pr, wn, roh, qn, qr
+            self.lambda1, self.lambda2 = lambda1, lambda2
         else:
             raise RuntimeError(str(model) + ' not allowed.')
         self.model = model
