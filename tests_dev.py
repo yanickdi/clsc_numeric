@@ -45,7 +45,8 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qr, 0.06250000000)
         self.assertAlmostEqual(profit_man, .0236623643454)
         self.assertAlmostEqual(profit_ret, .0008443058496)
-        #TODO: test retailer profit
+        self.assertAlmostEqual(dec.lambda1, 0)
+        self.assertAlmostEqual(dec.lambda2, 0)
         
     def test_case_one_c(self):
         solver = ModelTwoNumericalSolver()
@@ -62,8 +63,9 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qr, .1581138830084)
         self.assertAlmostEqual(profit_man,  .0212244937790)
         self.assertAlmostEqual(profit_ret, -.0027016118539)
-    
-        
+        self.assertAlmostEqual(dec.lambda1, 0)
+        self.assertAlmostEqual(dec.lambda2, -0.050994071)
+      
     def test_case_two_a(self):
         solver = ModelTwoNumericalSolver()
         # i dont know whether this parms lead to two a, but i will check the output anyway
@@ -80,6 +82,8 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qr, .0)
         self.assertAlmostEqual(profit_man,  .0861342592593)
         self.assertAlmostEqual(profit_ret, -.0356442901235)
+        self.assertAlmostEqual(dec.lambda1, -.070740741)
+        self.assertAlmostEqual(dec.lambda2, 0)
         
     def test_case_two_b(self):
         solver = ModelTwoNumericalSolver()
@@ -98,6 +102,8 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qr, .133379888)
         self.assertAlmostEqual(profit_man,  .0908519553073)
         self.assertAlmostEqual(profit_ret, -.0436009721919)
+        self.assertAlmostEqual(dec.lambda1, 0)
+        self.assertAlmostEqual(dec.lambda2, 0)
         
     def test_case_two_c(self):
         solver = ModelTwoNumericalSolver()
@@ -115,6 +121,14 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qr, .02661290323)
         self.assertAlmostEqual(profit_man,  .0878225806452)
         self.assertAlmostEqual(profit_ret, -.0372515608741)
+        self.assertAlmostEqual(dec.lambda1, 0)
+        self.assertAlmostEqual(dec.lambda2, 0.052903225806451626)
 
+    def test_optimize(self):
+        solver = ModelTwoNumericalSolver()
+        # i dont know whether this parms lead to two a, but i will check the output anyway
+        par = Parameter(MODEL_2, tau=.1, a=.05, s=.1, cr=.2, cn=.3, delta=.8)
+        dec = solver.optimize(par)
+        profit_man, profit_ret = solver.calc_profits(par, dec)
 if __name__ == '__main__':
     unittest.main()
