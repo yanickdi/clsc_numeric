@@ -12,6 +12,10 @@ def is_prof_pos(prof):
     """ checks whether a given profit is positive - it allows also a -.1*10^15 as positive! """
     return round(prof, 15) >= 0
     
+def is_almost_equal(one, two):
+    """ compares two floats, allowing a deviation after 15 decimal places """
+    return round(one, DECIMALS_ALLOW_NN) == round(two, DECIMALS_ALLOW_NN)
+    
 class ModelTwoNumericalSolver:
     """
         This class offers methods to solve Model 2 (With Online Store of the Manufacturer) numerically
@@ -22,15 +26,15 @@ class ModelTwoNumericalSolver:
     
     def optimize(self, par):
         """
-        This is the core method of this class. It will return all six 
-        decision variables to maximize the retailer's profit (with respect to the profit maximization
-        condition of the retailer) and the cond 0 <= qr <= (tau/roh)*qn
+        This is the core method of this class. It will return a Solution object having stored
+        the profit of the manufacturer, the retailer, the case that led to the solution and all decision vars
         
         Args:
             par (Parameter): A Parameter object of type MODEL_2
         
         Returns:
-            DecisionVariables: An object of type MODEL_2 that stores all decision_vars (pn, pr, wn, roh, qn, qr) or None if the solution is not possible
+            Solution: An object of class Solution
+                      or None if there is no solution possible
         """
         cases = (
             (_CASE_ONE_A, self._optimize_case_one_a),
@@ -48,11 +52,35 @@ class ModelTwoNumericalSolver:
             # check valid
             if self._is_valid(par, sol):
                 valid_solutions.append(sol)
-        print(len(valid_solutions))
+        if len(valid_solutions) > 0:
+            # take the best valid solution (manufacturer decides)
+            best_sol = max(valid_solutions, key=lambda sol: sol.profit_man)
+        else:
+            return None
         
     
     def _is_valid(self, par, sol):
-        print(sol.case, sol.dec, sol.profit_man)
+        """ Tests whether a given solution is feasible regarding to all model subjects """
+        #TODO: check lambdas
+        #TODO: assert all decision vars are positive in case of valid solution
+        
+        # check case constraints
+        if not (sol.dec.roh >= 1):
+            return False
+        if sol.case in (_CASE_ONE_A, _CASE_TWO_A):
+            assert sol.dec.qr == 0
+            if not (sol.dec.qr == 0):
+                return False
+        elif sol.case in (_CASE_ONE_B, _CASE_TWO_B):
+            if not (-10**-DECIMALS_ALLOW_NN <= sol.dec.qr <= ((par.tau/sol.dec.roh) * sol.dec.qn)+10**-DECIMALS_ALLOW_NN):
+                return False
+        elif sol.case in (_CASE_ONE_C, _CASE_TWO_C):
+            if not (is_almost_equal(sol.dec.qr, (par.tau/sol.dec.roh) * sol.dec.qn)):
+                return False
+                
+        # check profits
+        if not (sol.profit_man >= -10**-DECIMALS_ALLOW_NN and sol.profit_ret >= -10**-DECIMALS_ALLOW_NN):
+            return False
         return True
     
     
