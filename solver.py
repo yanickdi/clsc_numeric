@@ -5,7 +5,7 @@ import scipy.optimize
 
 MODEL_1, MODEL_2 = 1, 2
 _CASE_ONE, _CASE_TWO = 1, 2
-_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = 0,1,2,3,4,5
+_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
 DECIMALS_ALLOW_NN = 15
 
 def is_prof_pos(prof):
@@ -46,18 +46,21 @@ class ModelTwoNumericalSolver:
         
         valid_solutions = []
         for case_id, case_fct in cases:
-            dec = case_fct(par)
-            profit_man, profit_ret = self.calc_profits(par, dec)
-            sol = Solution(dec, profit_man, profit_ret, case_id)
+            try:
+                dec = case_fct(par)
+                profit_man, profit_ret = self.calc_profits(par, dec)
+                sol = Solution(dec, profit_man, profit_ret, case_id)
+            except ZeroDivisionError:
+                # there occured a zero division, so this solution will be skipped
+                sol = None
             # check valid
-            if self._is_valid(par, sol):
+            if sol is not None and self._is_valid(par, sol):
                 valid_solutions.append(sol)
         if len(valid_solutions) > 0:
             # take the best valid solution (manufacturer decides)
             best_sol = max(valid_solutions, key=lambda sol: sol.profit_man)
         else:
             return None
-        
     
     def _is_valid(self, par, sol):
         """ Tests whether a given solution is feasible regarding to all model subjects """
@@ -68,8 +71,8 @@ class ModelTwoNumericalSolver:
         if not (sol.dec.roh >= 1):
             return False
         if sol.case in (_CASE_ONE_A, _CASE_TWO_A):
-            assert sol.dec.qr == 0
-            if not (sol.dec.qr == 0):
+            assert is_almost_equal(sol.dec.qr, 0)
+            if not is_almost_equal(sol.dec.qr, 0):
                 return False
         elif sol.case in (_CASE_ONE_B, _CASE_TWO_B):
             if not (-10**-DECIMALS_ALLOW_NN <= sol.dec.qr <= ((par.tau/sol.dec.roh) * sol.dec.qn)+10**-DECIMALS_ALLOW_NN):
@@ -82,8 +85,6 @@ class ModelTwoNumericalSolver:
         if not (sol.profit_man >= -10**-DECIMALS_ALLOW_NN and sol.profit_ret >= -10**-DECIMALS_ALLOW_NN):
             return False
         return True
-    
-    
     
     def calc_profits(self, par, dec):
         """
@@ -331,8 +332,11 @@ class Parameter:
     def __str__(self):
         if self.model == MODEL_1:
             return 'tau={:.2f}, a={:.2f}, s={:.2f}, cn={:.2f}'.format(self.tau, self.a, self.s, self.cn)
+        elif self.model == MODEL_2:
+            return 'tau={:.2f}, a={:.2f}, s={:.2f}, cr={:.2f}, cn={:.2f}, delta={:.2f}'.format(
+                self.tau, self.a, self.s, self.cr, self.cn, self.delta)
         else:
-            return 'Parameter obj of type model 2'
+            return '?'
             
 class DecisionVariables:
     """

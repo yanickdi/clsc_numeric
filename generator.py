@@ -14,8 +14,9 @@ class Generator:
     This class generates a set of model input data and generates an
     output file where the corresponding numerical model results are stored
     """
-    def __init__(self, model_nr, output_file):
-        self.model_nr = model_nr
+    def __init__(self, model_id, output_file):
+        self.model_id = model_id
+        assert model_id in (MODEL_1, MODEL_2)
         self.output_file = output_file
         if issubclass(type(output_file), MemoryOutputFile):
             self.file_writer = output_file
@@ -27,11 +28,30 @@ class Generator:
                 self.file_writer = CsvOutputFile(output_file)
             else:
                 raise RuntimeError('other output files than stdout not implemented yet.')
-        assert model_nr == MODEL_1 #TODO: Implement model 2
-        
+                
     def generate(self):
+        if self.model_id == MODEL_1:
+            self._generate_model_one()
+        elif self.model_id == MODEL_2:
+            self._generate_model_two()
+        else:
+            raise RuntimeError('model not known')
+            
+    def _generate_model_two(self):
+        """ Generator of model two """
+        model_solver = solver.ModelTwoNumericalSolver()
+        self.file_writer.open()
+        for par in self.__model_two_par_generator():
+            sol = model_solver.optimize(par)
+            if sol == None:
+                self.file_writer.writeSolution(par, None, None, None)
+            else:
+                self.file_writer.writeSolution(par, sol.dec, sol.profit_man, sol.profit_ret)
+        self.file_writer.close()
+        
+    def _generate_model_one(self):
         """ Do se generation """
-        model_solver = solver.ModelOneNumericalSolver() #TODO: Switch here between different models
+        model_solver = solver.ModelOneNumericalSolver()
         self.file_writer.open()
         for par in self.__model_one_par_generator():
             dec_vars = model_solver.optimize(par)
@@ -39,8 +59,21 @@ class Generator:
             self.file_writer.writeSolution(par, dec_vars, manu_profit, ret_profit)
         self.file_writer.close()
     
+    def __model_two_par_generator(self):
+        """ Helper generator for yielding all combinations of input data for model 2"""
+        for tau in drange(0, 1, 0.1):
+            for a in drange(0.01, 0.1, 0.01):
+                for s in drange(0, 1, .1):
+                    for cr in drange(s, 1, .1):
+                        for cn in drange(cr, 1, .1):
+                            for delta in drange(cr, 1, .1):
+                                if delta == 0: continue
+                                yield Parameter(
+                                    MODEL_2, tau=round(tau, 1), a=round(a, 2), s=round(s, 1),
+                                    cr=round(cr, 1), cn=round(cn, 1), delta=round(delta, 1))
+                        
     def __model_one_par_generator(self):
-        """ Helper generator for yielding all combinations of input data """
+        """ Helper generator for yielding all combinations of input data for model 2"""
         for tau in drange(0, 1, 0.1):
             for a in drange(0.01, 0.1, 0.01):
                 for s in drange(0, 1, .1):
