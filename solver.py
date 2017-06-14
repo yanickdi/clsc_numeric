@@ -6,15 +6,21 @@ import scipy.optimize
 MODEL_1, MODEL_2 = 1, 2
 _CASE_ONE, _CASE_TWO = 1, 2
 _CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
-DECIMALS_ALLOW_NN = 15
+DECIMALS_ALLOW_NN = 14
 
 def is_prof_pos(prof):
-    """ checks whether a given profit is positive - it allows also a -.1*10^15 as positive! """
+    """ checks whether a given profit is positive - it allows also a -.1*10^14 as positive! """
     return round(prof, 15) >= 0
     
-def is_almost_equal(one, two):
-    """ compares two floats, allowing a deviation after 15 decimal places """
-    return round(one, DECIMALS_ALLOW_NN) == round(two, DECIMALS_ALLOW_NN)
+def is_almost_equal(one, two, dbg=False):
+    """ compares two floats, allowing a deviation after 14 decimal places """
+    if dbg:
+        print('--')
+        print(one)
+        print('--')
+    return round(one, DECIMALS_ALLOW_NN) == round(two, DECIMALS_ALLOW_NN) \
+        or (0 in (round(one, DECIMALS_ALLOW_NN), round(two, DECIMALS_ALLOW_NN)) and \
+            abs(round(one, DECIMALS_ALLOW_NN)) == abs(round(two, DECIMALS_ALLOW_NN)))
     
 class ModelTwoNumericalSolver:
     """
@@ -58,21 +64,20 @@ class ModelTwoNumericalSolver:
                 valid_solutions.append(sol)
         if len(valid_solutions) > 0:
             # take the best valid solution (manufacturer decides)
-            best_sol = max(valid_solutions, key=lambda sol: sol.profit_man)
+            return max(valid_solutions, key=lambda sol: sol.profit_man)
         else:
             return None
     
     def _is_valid(self, par, sol):
         """ Tests whether a given solution is feasible regarding to all model subjects """
-        #TODO: check lambdas
         #TODO: assert all decision vars are positive in case of valid solution
-        
         # check case constraints
         if not (sol.dec.roh >= 1):
             return False
         if sol.case in (_CASE_ONE_A, _CASE_TWO_A):
-            assert is_almost_equal(sol.dec.qr, 0)
             if not is_almost_equal(sol.dec.qr, 0):
+                is_almost_equal(sol.dec.qr, 0, dbg=True)
+                raise Exception()
                 return False
         elif sol.case in (_CASE_ONE_B, _CASE_TWO_B):
             if not (-10**-DECIMALS_ALLOW_NN <= sol.dec.qr <= ((par.tau/sol.dec.roh) * sol.dec.qn)+10**-DECIMALS_ALLOW_NN):
