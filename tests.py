@@ -217,6 +217,21 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertIsNotNone(sol)
         self.assertAlmostEqual(sol.profit_man, 0.1687500000000)
         self.assertAlmostEqual(sol.profit_ret, 0.0181250000000)
+        
+    def test_optimize_instance_d(self):
+        solver = ModelTwoNumericalSolver()
+        # i dont know whether this parms lead to two a, but i will check the output anyway
+        par = Parameter(MODEL_2, tau=.4, a=.01, s=.0, cr=.0, cn=.0, delta=.9)
+        sol = solver.optimize(par)
+        self.assertIsNotNone(sol)
+        self.assertAlmostEqual(sol.profit_man, 0.1382727272727)
+        
+    def test_optimize_instance_e(self):
+        solver = ModelTwoNumericalSolver()
+        # i dont know whether this parms lead to two a, but i will check the output anyway
+        par = Parameter(MODEL_2, tau=.7, a=.01, s=.4, cr=.4, cn=.6, delta=.9)
+        sol = solver.optimize(par)
+        self.assertIsNone(sol)
              
 class TestGenerator(unittest.TestCase):
     def test_model_1_compare_analytical(self):

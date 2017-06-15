@@ -76,6 +76,8 @@ class ModelTwoNumericalSolver:
             return False
         if sol.case in (_CASE_ONE_A, _CASE_TWO_A):
             if not is_almost_equal(sol.dec.qr, 0):
+                print(sol.case)
+                print('--\n',par,'\n--')
                 is_almost_equal(sol.dec.qr, 0, dbg=True)
                 raise Exception()
                 return False
@@ -115,7 +117,8 @@ class ModelTwoNumericalSolver:
         dec.roh = self.__roh_case_one(dec.wn, par.delta, dec.pr, par.tau, par.a)
         dec.pn = self.__pn_case_one(dec.wn, par.delta, dec.pr)
         dec.qn = self.__qn_case_one(dec.wn, par.delta, dec.pr)
-        dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
+        #dec.qr = self.__qr_case_one(dec.wn, par.delta, dec.pr)
+        dec.qr = 0
         return dec
         
     def _optimize_case_one_b(self, par):
@@ -150,13 +153,12 @@ class ModelTwoNumericalSolver:
         dec = DecisionVariables(MODEL_2,
             wn = (1/(1-par.tau))*((1+par.cn)/2 - (par.tau*(1+par.s))/2),
             pr = (par.delta * (par.cn+ 2*par.delta*(par.tau-1)-(par.s+3)*par.tau + 3) ) / (2*(par.delta-2)*(par.tau-1)),
+            qr = 0, roh = 1,
             lambda1 = (2 * par.cr * (-2 + par.delta) * (-1 + par.tau) + par.delta * (-2 + 2 * par.delta + par.cn * (-2 + par.tau) + par.tau - 2 * par.delta * par.tau + par.tau**2) - par.s * (4 * (-1 + par.tau) + par.delta * (2 + (-4 + par.tau) * par.tau)))/(2 * (-2 + par.delta) * (-1 + par.tau)),
             lambda2 = 0
         )
-        dec.roh = self.__roh_case_two()
         dec.pn = self.__pn_case_two(dec.wn, par.delta, dec.pr)
         dec.qn = self.__qn_case_two(dec.wn, par.delta, dec.pr)
-        dec.qr = self.__qr_case_two(dec.wn, par.delta, dec.pr)
         return dec
         
     def _optimize_case_two_b(self, par):

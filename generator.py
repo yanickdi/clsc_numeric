@@ -103,11 +103,17 @@ class AbstractOutputFile:
 class MemoryOutputFile:
     """ This class is used to test and store the outcome of the Generator Object """
     
+    def __init__(self, callback=None):
+        self.callback = callback
+    
     def open(self):
         self._list = []
     
     def writeSolution(self, par, dec_vars, profit_man, profit_ret):
-        self._list.append({'par' : par, 'dec_vars' : dec_vars, 'profit_man' : profit_man, 'profit_ret' : profit_ret})
+        if self.callback is not None:
+            self.callback(par, dec_vars, profit_man, profit_ret)
+        else:
+            self._list.append({'par' : par, 'dec_vars' : dec_vars, 'profit_man' : profit_man, 'profit_ret' : profit_ret})
     
     def close(self):
         pass
