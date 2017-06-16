@@ -239,7 +239,7 @@ class ModelOneNumericalSolver:
         respect to the profit maximization condition of the retailer)
         
         Returns:
-        A DecisionVariables object of type MODEL_1 or None if the solution is not possible
+        A Solution object or None if the solution is not possible
         """
         ## test two cases:
         #       case 1 - roh is >= 1
@@ -269,11 +269,13 @@ class ModelOneNumericalSolver:
                     case = _CASE_ONE
                 if is_prof_pos(prof_man_case_2) and is_prof_pos(prof_ret_case_2):
                     case = _CASE_TWO
-
-        if case == None:
-            return None
+                    
+        if case == _CASE_ONE:
+            return Solution(dec_vars_case_1, prof_man_case_1, prof_ret_case_1, case)
+        elif case == _CASE_TWO:
+            return Solution(dec_vars_case_2, prof_man_case_2, prof_ret_case_2, case)
         else:
-            return dec_vars_case_1 if case == _CASE_ONE else dec_vars_case_2
+            return None
     
     def _optimize_case_one(self, par):
         """

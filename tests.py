@@ -13,8 +13,8 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         self.assertTrue(self.__input_is_in_case_1(par))
         
         analyitcal_profit_manufacturer = ((1-par.cn)**2 / 8) - (1/2)*(1+par.cn-2*par.s) * (par.tau*par.a)**(1/2) + (1/2)*par.a*par.tau
-        profit_solver_manufacturer,_ = solver.calc_profits(par, solver.optimize(par))
-        self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
+        sol = solver.optimize(par)
+        self.assertAlmostEqual(analyitcal_profit_manufacturer, sol.profit_man)
         
     def test_case_1a_dec_vars(self):
         solver = ModelOneNumericalSolver()
@@ -24,10 +24,10 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         # if the following condition is true, it must lead to a case a optimization
         self.assertTrue(self.__input_is_in_case_1(par) and not self.__input_is_in_case_2(par))
         
-        solver_dec_vars = solver.optimize(par)
-        self.assertAlmostEqual(solver_dec_vars.pn, (3+par.cn)/4 - (1/2)*(par.a*par.tau)**(1/2), msg='pn not the same')
-        self.assertAlmostEqual(solver_dec_vars.wn, (1+par.cn)/2 - (par.a*par.tau)**(1/2), msg='wn not the same')
-        self.assertAlmostEqual(solver_dec_vars.roh, par.tau/2 + (1-par.cn)/4 * (par.tau/par.a)**(1/2), msg='roh not the same')
+        sol = solver.optimize(par)
+        self.assertAlmostEqual(sol.dec.pn, (3+par.cn)/4 - (1/2)*(par.a*par.tau)**(1/2), msg='pn not the same')
+        self.assertAlmostEqual(sol.dec.wn, (1+par.cn)/2 - (par.a*par.tau)**(1/2), msg='wn not the same')
+        self.assertAlmostEqual(sol.dec.roh, par.tau/2 + (1-par.cn)/4 * (par.tau/par.a)**(1/2), msg='roh not the same')
 
     def test_case_2a(self):
         solver = ModelOneNumericalSolver()
@@ -38,8 +38,8 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         self.assertTrue(self.__input_is_in_case_2(par) and not self.__input_is_in_case_1(par))
         
         analyitcal_profit_manufacturer = ((1-par.cn-par.tau+par.s*par.tau)**2)/(8*(1-par.tau))
-        profit_solver_manufacturer,_ = solver.calc_profits(par, solver.optimize(par))
-        self.assertAlmostEqual(analyitcal_profit_manufacturer, profit_solver_manufacturer)
+        sol = solver.optimize(par)
+        self.assertAlmostEqual(analyitcal_profit_manufacturer, sol.profit_man)
         
         
     def test_case_1_or_2(self):
@@ -47,9 +47,9 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         par = Parameter(MODEL_1, tau=0.3, a=0.01, s=0, cn=0.3)
         # self checking if input vars not in case 1 and not in case 2:
         self.assertTrue(self.__input_is_in_case_1(par) and self.__input_is_in_case_2(par))
-        prof_solver_man, prof_solver_ret = solver.calc_profits(par, solver.optimize(par))
-        self.assertAlmostEqual(prof_solver_ret, 0.00428571) # would be case 2 solution, because is higher than case 1 solution
-        self.assertAlmostEqual(prof_solver_man, 0.02857143) 
+        sol = solver.optimize(par)
+        self.assertAlmostEqual(sol.profit_ret, 0.00428571) # would be case 2 solution, because is higher than case 1 solution
+        self.assertAlmostEqual(sol.profit_man, 0.02857143) 
         
     def test_case_2_dec_vars(self):
         solver = ModelOneNumericalSolver()
@@ -58,17 +58,17 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         # self checking the test input variables
         self.assertTrue(self.__input_is_in_case_2(par))
         
-        solver_dec_vars = solver.optimize(par)
-        self.assertAlmostEqual(solver_dec_vars.pn, 0.83319444, msg='pn not the same')
-        self.assertAlmostEqual(solver_dec_vars.wn, (1/(1-par.tau)) * ((1+par.cn)/2 - (par.tau*(1+par.s))/2), msg='wn not the same')
-        self.assertAlmostEqual(solver_dec_vars.roh, 1.0, msg='roh not the same')
+        sol = solver.optimize(par)
+        self.assertAlmostEqual(sol.dec.pn, 0.83319444, msg='pn not the same')
+        self.assertAlmostEqual(sol.dec.wn, (1/(1-par.tau)) * ((1+par.cn)/2 - (par.tau*(1+par.s))/2), msg='wn not the same')
+        self.assertAlmostEqual(sol.dec.roh, 1.0, msg='roh not the same')
     
     def test_qn(self):
         solver = ModelOneNumericalSolver()
         # this args should lead to case one (roh is gte 1)
         par = Parameter(MODEL_1, tau=0.1, a=0.005, s=0.0005, cn=0.01)
-        dec_vars = solver.optimize(par)
-        self.assertAlmostEqual(dec_vars.qn, 1 - dec_vars.pn)
+        sol = solver.optimize(par)
+        self.assertAlmostEqual(sol.dec.qn, 1 - sol.dec.pn)
         # TODO: also test a case leading to roh == 1
         
     def test_sol_not_possible(self):

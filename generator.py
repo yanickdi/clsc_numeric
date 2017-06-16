@@ -54,9 +54,11 @@ class Generator:
         model_solver = solver.ModelOneNumericalSolver()
         self.file_writer.open()
         for par in self.__model_one_par_generator():
-            dec_vars = model_solver.optimize(par)
-            manu_profit, ret_profit = model_solver.calc_profits(par, dec_vars)
-            self.file_writer.writeSolution(par, dec_vars, manu_profit, ret_profit)
+            sol = model_solver.optimize(par)
+            if sol == None:
+                self.file_writer.writeSolution(par, None, None, None)
+            else:
+                self.file_writer.writeSolution(par, sol.dec, sol.profit_man, sol.profit_ret)
         self.file_writer.close()
     
     def __model_two_par_generator(self):
