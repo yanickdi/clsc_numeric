@@ -67,6 +67,10 @@ class ModelTwoNumericalSolver:
     def _is_valid(self, par, sol):
         """ Tests whether a given solution is feasible regarding to all model subjects """
         #TODO: assert all decision vars are positive in case of valid solution
+        # check all variables positive
+        for var in (sol.dec.pn, sol.dec.pr, sol.dec.wn, sol.dec.qn, sol.dec.qr):
+            if var < -10**-DECIMALS_ALLOW_NN:
+                return False
         # check case constraints
         if not (sol.dec.roh >= 1):
             return False
@@ -340,6 +344,9 @@ class Parameter:
         else:
             return '?'
             
+    def __repr__(self):
+        return self.__str__()
+            
 class DecisionVariables:
     """
         An object of this class is a struct like wrapper for all Model Decision variables
@@ -360,6 +367,9 @@ class DecisionVariables:
             return 'wn={:.5f}, pn={:.5f}, roh={:.5f}, qn={:.5f}'.format(self.wn, self.pn, self.roh, self.qn)
         else:
             return 'pn={:.5f}, pr={:.5f}, wn={:.5f}, roh={:.5f}, qn={:.5f}, qr={:.5f}'.format(self.pn, self.pr, self.wn, self.roh, self.qn, self.qr)
+    
+    def __repr__(self):
+        return self.__str__()
     
 if __name__ == '__main__':
     print('You cannot call this file directly')

@@ -232,6 +232,12 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         par = Parameter(MODEL_2, tau=.7, a=.01, s=.4, cr=.4, cn=.6, delta=.9)
         sol = solver.optimize(par)
         self.assertIsNone(sol)
+        
+    def test_optimize_instance_f(self):
+        solver = ModelTwoNumericalSolver()
+        par = Parameter(MODEL_2, tau=.9, a=.1, s=.2, cr=.4, cn=.8, delta=.4)
+        sol = solver.optimize(par)
+        self.assertIsNone(sol)
              
 class TestGenerator(unittest.TestCase):
     def test_model_1_compare_analytical(self):

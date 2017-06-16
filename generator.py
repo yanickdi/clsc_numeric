@@ -159,7 +159,7 @@ class CsvOutputFile(AbstractOutputFile):
         if self.model == MODEL_1:
             self.file.write('tau;a;s;cn;pn;wn;roh;qn;manufacturer profit;retailer profit\n')
         elif self.model == MODEL_2:
-            self.file.write('tau;a;s;cn;cr;delta;pn;pr;wn;roh;qn;qr;manufacturer profit;retailer profit;case\n')
+            self.file.write('tau;a;s;cr;cn;delta;pn;pr;wn;roh;qn;qr;manufacturer profit;retailer profit;case\n')
         
     def writeSolution(self, par, sol):
         if self.model == MODEL_1:
@@ -169,8 +169,13 @@ class CsvOutputFile(AbstractOutputFile):
             else:
                 dec_str =  '{};{};{};{}'.format(sol.dec.pn, sol.dec.wn, sol.dec.roh, sol.dec.qn)
                 line = '{};{};{:.5f};{:.5f}'.format(par_str, dec_str, sol.profit_man, sol.profit_ret)
-        else:
-            raise RuntimeError()
+        elif self.model == MODEL_2:
+            par_str = '{};{};{};{};{};{}'.format(par.tau, par.a, par.s, par.cr, par.cn, par.delta)
+            if sol == None:
+                line = '{};-;-;-;-;-;-;-;-;-'.format(par_str)
+            else:
+                dec_str =  '{:.5f};{:.5f};{:.5f};{:.5f};{:.5f};{:.5f}'.format(sol.dec.pn, sol.dec.pr, sol.dec.wn, sol.dec.roh, sol.dec.qn, sol.dec.qr)
+                line = '{};{};{:.5f};{:.5f};{}'.format(par_str, dec_str, sol.profit_man, sol.profit_ret, sol.case)
         self.file.write(line.replace('.',',') + '\n')
         
     def close(self):
