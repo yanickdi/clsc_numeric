@@ -14,9 +14,9 @@ class Generator:
     This class generates a set of model input data and generates an
     output file where the corresponding numerical model results are stored
     """
-    def __init__(self, model_id, output_file):
-        self.model_id = model_id
-        assert model_id in (MODEL_1, MODEL_2)
+    def __init__(self, model, output_file):
+        self.model = model
+        assert model in (MODEL_1, MODEL_2)
         self.output_file = output_file
         if issubclass(type(output_file), MemoryOutputFile):
             self.file_writer = output_file
@@ -30,9 +30,9 @@ class Generator:
                 raise RuntimeError('other output files than stdout not implemented yet.')
                 
     def generate(self):
-        if self.model_id == MODEL_1:
+        if self.model == MODEL_1:
             self._generate_model_one()
-        elif self.model_id == MODEL_2:
+        elif self.model == MODEL_2:
             self._generate_model_two()
         else:
             raise RuntimeError('model not known')
@@ -173,10 +173,9 @@ class CsvOutputFile(AbstractOutputFile):
     
 def __parser_model_one_or_two(string):
     if string.lower() == 'one' or string == '1':
-        return 1
+        return MODEL_1
     elif string.lower() == 'two' or string == '2':
-        raise argparse.ArgumentTypeError('Model 2 not implemented yet.')
-        #return 2
+        return MODEL_2
     raise argparse.ArgumentTypeError('model has to be either \'one\' or \'two\' (or 1/2)')
     
 def __parser_file(string):
@@ -196,7 +195,7 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=__parser_file, nargs=1, required=True)
     args = parser.parse_args()
     
-    model_nr = args.model[0]
+    model = args.model[0]
     output_file = args.output[0]
-    generator = Generator(model_nr, output_file)
+    generator = Generator(model, output_file)
     generator.generate()
