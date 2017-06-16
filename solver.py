@@ -12,12 +12,8 @@ def is_prof_pos(prof):
     """ checks whether a given profit is positive - it allows also a -.1*10^14 as positive! """
     return round(prof, 15) >= 0
     
-def is_almost_equal(one, two, dbg=False):
+def is_almost_equal(one, two):
     """ compares two floats, allowing a deviation after 14 decimal places """
-    if dbg:
-        print('--')
-        print(one)
-        print('--')
     return round(one, DECIMALS_ALLOW_NN) == round(two, DECIMALS_ALLOW_NN) \
         or (0 in (round(one, DECIMALS_ALLOW_NN), round(two, DECIMALS_ALLOW_NN)) and \
             abs(round(one, DECIMALS_ALLOW_NN)) == abs(round(two, DECIMALS_ALLOW_NN)))
@@ -64,7 +60,7 @@ class ModelTwoNumericalSolver:
                 valid_solutions.append(sol)
         if len(valid_solutions) > 0:
             # take the best valid solution (manufacturer decides)
-            return max(valid_solutions, key=lambda sol: sol.profit_man)
+            return max(valid_solutions, key=lambda sol: (sol.profit_man, sol.dec.lambda1, sol.dec.lambda2))
         else:
             return None
     
@@ -76,9 +72,6 @@ class ModelTwoNumericalSolver:
             return False
         if sol.case in (_CASE_ONE_A, _CASE_TWO_A):
             if not is_almost_equal(sol.dec.qr, 0):
-                print(sol.case)
-                print('--\n',par,'\n--')
-                is_almost_equal(sol.dec.qr, 0, dbg=True)
                 raise Exception()
                 return False
         elif sol.case in (_CASE_ONE_B, _CASE_TWO_B):

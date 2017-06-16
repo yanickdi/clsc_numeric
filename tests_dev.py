@@ -12,9 +12,7 @@ class TestGeneratorModelTwo(unittest.TestCase):
     def test_model_two(self):
         def __test_callback(par, dec_vars, profit_man, profit_ret):
             if dec_vars is not None:
-                self.assertTrue(dec_vars.lambda1 >= 0, par)
-            else:
-                print('blub')
+                self.assertTrue(profit_man >= 0)
         mof = MemoryOutputFile(callback=__test_callback)
         generator = Generator(MODEL_2, mof)
         generator.generate()
