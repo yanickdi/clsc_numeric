@@ -242,31 +242,26 @@ class TestGenerator(unittest.TestCase):
         
         generator.generate()        
         for solution in mof.getSolutions():
-            par, solver_dec_vars = solution['par'], solution['dec_vars']
-            solver_prof_man, solver_prof_ret = solution['profit_man'], solution['profit_ret']
+            par, sol = solution['par'], solution['sol']
             assert par != None
             dec_vars, prof_man, prof_ret = ana_solver.calcModelOne(par)
             if dec_vars == None:
                 self.assertIsNone(prof_man)
                 self.assertIsNone(prof_ret)
-                self.assertIsNone(solver_dec_vars)
-                self.assertIsNone(solver_prof_man)
-                self.assertIsNone(solver_prof_ret)
-            elif solver_dec_vars == None:
-                self.assertIsNone(solver_prof_man)
-                self.assertIsNone(solver_prof_ret)
+                self.assertIsNone(sol)
+            elif sol == None:
                 if dec_vars != None:
                     print(const_args)
                 self.assertIsNone(dec_vars)
                 self.assertIsNone(prof_man)
                 self.assertIsNone(prof_ret)
             else:
-                self.assertAlmostEqual(solver_dec_vars.pn, dec_vars.pn)
-                self.assertAlmostEqual(solver_dec_vars.wn, dec_vars.wn)
-                self.assertAlmostEqual(solver_dec_vars.roh, dec_vars.roh)
-                self.assertAlmostEqual(solver_dec_vars.qn, dec_vars.qn)
-                self.assertAlmostEqual(solver_prof_man, prof_man)
-                self.assertAlmostEqual(solver_prof_ret, prof_ret)
+                self.assertAlmostEqual(sol.dec.pn, dec_vars.pn)
+                self.assertAlmostEqual(sol.dec.wn, dec_vars.wn)
+                self.assertAlmostEqual(sol.dec.roh, dec_vars.roh)
+                self.assertAlmostEqual(sol.dec.qn, dec_vars.qn)
+                self.assertAlmostEqual(sol.profit_man, prof_man)
+                self.assertAlmostEqual(sol.profit_ret, prof_ret)
         
 
 class AnalyticalSolver:

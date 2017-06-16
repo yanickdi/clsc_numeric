@@ -25,7 +25,7 @@ class Generator:
         else:
             suffix = output_file.split('.')[-1]
             if suffix == 'csv':
-                self.file_writer = CsvOutputFile(output_file)
+                self.file_writer = CsvOutputFile(output_file, model)
             else:
                 raise RuntimeError('other output files than stdout not implemented yet.')
                 
@@ -44,9 +44,9 @@ class Generator:
         for par in self.__model_two_par_generator():
             sol = model_solver.optimize(par)
             if sol == None:
-                self.file_writer.writeSolution(par, None, None, None)
+                self.file_writer.writeSolution(par, None)
             else:
-                self.file_writer.writeSolution(par, sol.dec, sol.profit_man, sol.profit_ret)
+                self.file_writer.writeSolution(par, sol)
         self.file_writer.close()
         
     def _generate_model_one(self):
@@ -56,9 +56,9 @@ class Generator:
         for par in self.__model_one_par_generator():
             sol = model_solver.optimize(par)
             if sol == None:
-                self.file_writer.writeSolution(par, None, None, None)
+                self.file_writer.writeSolution(par, None)
             else:
-                self.file_writer.writeSolution(par, sol.dec, sol.profit_man, sol.profit_ret)
+                self.file_writer.writeSolution(par, sol)
         self.file_writer.close()
     
     def __model_two_par_generator(self):
@@ -99,7 +99,7 @@ class AbstractOutputFile:
     def close(self):
         raise NotImplementedError()
     
-    def writeSolution(self, const_args, dec_vars, profit_man, profit_ret):
+    def writeSolution(self, sol):
         raise NotImplementedError()
         
 class MemoryOutputFile:
@@ -111,11 +111,11 @@ class MemoryOutputFile:
     def open(self):
         self._list = []
     
-    def writeSolution(self, par, dec_vars, profit_man, profit_ret):
+    def writeSolution(self, par, sol):
         if self.callback is not None:
-            self.callback(par, dec_vars, profit_man, profit_ret)
+            self.callback(par, sol)
         else:
-            self._list.append({'par' : par, 'dec_vars' : dec_vars, 'profit_man' : profit_man, 'profit_ret' : profit_ret})
+            self._list.append({'par' : par, 'sol' : sol})
     
     def close(self):
         pass
@@ -127,6 +127,7 @@ class MemoryOutputFile:
         
         The list contains dictionaries with the following keywords: const_args, dec_vars, profit_man, profit_ret
         """
+        assert self.callback is None
         return self._list
         
         
@@ -140,31 +141,36 @@ class StdoutFile(AbstractOutputFile):
     def close(self):
         pass
     
-    def writeSolution(self, par, dec_vars, profit_man, profit_ret):
+    def writeSolution(self, par, sol):
         self.sol_nr += 1
-        line = '{}: {}, {}, profit of manufacturer: {}, profit or retailer: {}'.format(self.sol_nr, par, dec_vars, profit_man, profit_ret)
+        line = '{}: {}, {}'.format(self.sol_nr, par, sol)
         print(line)
 
         
 class CsvOutputFile(AbstractOutputFile):
     """ This class writes an comma separated, text based file """
     
-    def __init__(self, file_name):
+    def __init__(self, file_name, model):
         self.file_name = file_name
+        self.model = model
     
     def open(self):
         self.file = open(self.file_name, 'w') # overrides file if exists
-        self.file.write('tau;a;s;cn;pn;wn;roh;qn;manufacturer profit;retailer profit\n')
+        if self.model == MODEL_1:
+            self.file.write('tau;a;s;cn;pn;wn;roh;qn;manufacturer profit;retailer profit\n')
+        elif self.model == MODEL_2:
+            self.file.write('tau;a;s;cn;cr;delta;pn;pr;wn;roh;qn;qr;manufacturer profit;retailer profit;case\n')
         
-    def writeSolution(self, par, dec_vars, profit_man, profit_ret):
-        par_str = '{};{};{};{}'.format(par.tau, par.a, par.s, par.cn) #TODO: This code doesnt support model 2
-        if dec_vars == None:
-            dec_str = '{};{};{};{}'.format(None, None, None, None)
-            profit_man = -1.0
-            profit_ret = -1.0
+    def writeSolution(self, par, sol):
+        if self.model == MODEL_1:
+            par_str = '{};{};{};{}'.format(par.tau, par.a, par.s, par.cn)
+            if sol == None:
+                line = '{};-;-;-;-;-;-'.format(par_str)
+            else:
+                dec_str =  '{};{};{};{}'.format(sol.dec.pn, sol.dec.wn, sol.dec.roh, sol.dec.qn)
+                line = '{};{};{:.5f};{:.5f}'.format(par_str, dec_str, sol.profit_man, sol.profit_ret)
         else:
-            dec_str =   '{};{};{};{}'.format(dec_vars.pn, dec_vars.wn, dec_vars.roh, dec_vars.qn)
-        line = '{};{};{:.5f};{:.5f}'.format(par_str, dec_str, profit_man, profit_ret)
+            raise RuntimeError()
         self.file.write(line.replace('.',',') + '\n')
         
     def close(self):
