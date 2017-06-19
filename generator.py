@@ -31,7 +31,7 @@ class Generator:
             suffix = output_file.split('.')[-1]
             if suffix == 'csv':
                 german_comma = options.get('german_comma', False)
-                self.file_writer = CsvOutputFile(output_file, model, german_comma=german_comma)
+                self.file_writer = TemplateOutputFile(output_file, 'templates/model.tpl.csv', model, options=options)
             elif suffix == 'html':
                 self.file_writer = TemplateOutputFile(output_file, 'templates/model.tpl.html', model, options=options)
             else:
@@ -180,45 +180,6 @@ class StdoutFile(AbstractOutputFile):
         self.sol_nr += 1
         line = '{}: {}, {}'.format(self.sol_nr, par, sol)
         print(line)
-
-        
-class CsvOutputFile(AbstractOutputFile):
-    """ This class writes an comma separated, text based file """
-    
-    def __init__(self, file_name, model, german_comma=False):
-        self.file_name = file_name
-        self.model = model
-        self.german_comma = german_comma
-    
-    def open(self):
-        self.file = open(self.file_name, 'w') # overrides file if exists
-        if self.model == MODEL_1:
-            self.file.write('tau;a;s;cn;pn;wn;roh;qn;manufacturer profit;retailer profit\n')
-        elif self.model == MODEL_2:
-            self.file.write('tau;a;s;cr;cn;delta;pn;pr;wn;roh;qn;qr;manufacturer profit;retailer profit;case\n')
-        
-    def writeSolution(self, par, sol):
-        if self.model == MODEL_1:
-            par_str = '{};{};{};{}'.format(par.tau, par.a, par.s, par.cn)
-            if sol == None:
-                line = '{};-;-;-;-;-;-'.format(par_str)
-            else:
-                dec_str =  '{};{};{};{}'.format(sol.dec.pn, sol.dec.wn, sol.dec.roh, sol.dec.qn)
-                line = '{};{};{:.5f};{:.5f}'.format(par_str, dec_str, sol.profit_man, sol.profit_ret)
-        elif self.model == MODEL_2:
-            par_str = '{};{};{};{};{};{}'.format(par.tau, par.a, par.s, par.cr, par.cn, par.delta)
-            if sol == None:
-                line = '{};-;-;-;-;-;-;-;-;-'.format(par_str)
-            else:
-                dec_str =  '{:.5f};{:.5f};{:.5f};{:.5f};{:.5f};{:.5f}'.format(sol.dec.pn, sol.dec.pr, sol.dec.wn, sol.dec.roh, sol.dec.qn, sol.dec.qr)
-                line = '{};{};{:.5f};{:.5f};{}'.format(par_str, dec_str, sol.profit_man, sol.profit_ret, sol.case)
-        if self.german_comma:
-            line = line.replace('.',',')
-        self.file.write(line + '\n')
-        
-    def close(self):
-        self.file.close()
-    
     
 def __parser_model_one_or_two(string):
     if string.lower() == 'one' or string == '1':

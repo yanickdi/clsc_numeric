@@ -1,10 +1,8 @@
 # Generator Output Files
-*.csv
+/*.csv
+/*.html
 # Excel Files
 *.xlsx
-
-# test files
-out.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

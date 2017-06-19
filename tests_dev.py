@@ -24,6 +24,5 @@ class TestHtmlOutputFile(unittest.TestCase):
             file.close()
             self.assertTrue(isfile(test_filen))
   
-  
 if __name__ == '__main__':
     unittest.main()

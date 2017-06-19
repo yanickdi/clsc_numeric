@@ -1,0 +1,38 @@
+{% macro g(number) -%}
+    {%- if options.german_comma -%}
+        {{ number|replace('.', ',')}}
+    {%- else -%}
+        {{number}}
+    {%- endif %}
+{%- endmacro -%}
+{%- if model == 'MODEL_1' -%}
+    tau;a;s;cn;wn;pn;roh;qn;profit_man;profit_ret{{'\n'}}
+    {%- for solution in solutions -%}
+        {%- for val in [solution.par.tau, solution.par.a, solution.par.s, solution.par.cn] -%}
+            {{g(val)}};
+        {%- endfor -%}
+        {%- if solution.sol -%}
+            {%- for val in [solution.sol.dec.wn, solution.sol.dec.pn, solution.sol.dec.roh, solution.sol.dec.qn, solution.sol.profit_man, solution.sol.profit_ret] -%}
+                {{ g('%.5f'|format(val))}}
+                {%- if not loop.last %};{% endif -%}
+            {%- endfor -%}
+        {%- else -%}
+            -;-;-;-;-;-
+        {%- endif -%}{{'\n'}}
+    {%- endfor -%}
+{%- elif model == 'MODEL_2' -%}
+    tau;a;s;cr;cn;delta;pn;pr;wn;roh;qn;qr;profit_man;profit_ret;case{{'\n'}}
+    {%- for solution in solutions -%}
+        {%- for val in [solution.par.tau, solution.par.a, solution.par.s, solution.par.cr, solution.par.cn, solution.par.delta] -%}
+            {{g(val)}};
+        {%- endfor -%}
+        {%- if solution.sol -%}
+            {%- for val in [solution.sol.dec.pn, solution.sol.dec.pr, solution.sol.dec.wn, solution.sol.dec.roh, solution.sol.dec.qn,solution.sol.dec.qr, solution.sol.profit_man, solution.sol.profit_ret] -%}
+                {{ g('%.5f'|format(val))}};
+            {%- endfor -%}
+            {{solution.sol.case}}
+        {%- else -%}
+            -;-;-;-;-;-;-;-;-
+        {%- endif -%}{{'\n'}}
+    {%- endfor -%}
+{%- endif %}
