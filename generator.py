@@ -19,7 +19,7 @@ class Generator:
     This class generates a set of model input data and generates an
     output file where the corresponding numerical model results are stored
     """
-    def __init__(self, model, output_file):
+    def __init__(self, model, output_file, options={}):
         self.model = model
         assert model in (MODEL_1, MODEL_2)
         self.output_file = output_file
@@ -30,7 +30,8 @@ class Generator:
         else:
             suffix = output_file.split('.')[-1]
             if suffix == 'csv':
-                self.file_writer = CsvOutputFile(output_file, model)
+                german_comma = options.get('german_comma', False)
+                self.file_writer = CsvOutputFile(output_file, model, german_comma=german_comma)
             elif suffix == 'html':
                 self.file_writer = HtmlOutputFile(output_file, model)
             else:
@@ -176,12 +177,13 @@ class StdoutFile(AbstractOutputFile):
         self.sol_nr += 1
         line = '{}: {}, {}'.format(self.sol_nr, par, sol)
         print(line)
+        
 
         
 class CsvOutputFile(AbstractOutputFile):
     """ This class writes an comma separated, text based file """
     
-    def __init__(self, file_name, model):
+    def __init__(self, file_name, model, german_comma=False):
         self.file_name = file_name
         self.model = model
     
@@ -233,11 +235,13 @@ def __parser_file(string):
 if __name__ == '__main__':
     # parse the command line
     parser = argparse.ArgumentParser(description='Numeric solver for Andrea\'s Model')
-    parser.add_argument('--model', type=__parser_model_one_or_two, nargs=1, required=True)
-    parser.add_argument('--output', type=__parser_file, nargs=1, required=True)
+    parser.add_argument('-model', type=__parser_model_one_or_two, nargs=1, required=True)
+    parser.add_argument('-output', type=__parser_file, nargs=1, required=True)
+    parser.add_argument('--german-comma', action='store_true')
     args = parser.parse_args()
     
     model = args.model[0]
     output_file = args.output[0]
-    generator = Generator(model, output_file)
+    generator = Generator(model, output_file, options={
+        'german_comma' : args.german_comma})
     generator.generate()
