@@ -372,6 +372,4 @@ class DecisionVariables:
         return self.__str__()
     
 if __name__ == '__main__':
-    print('You cannot call this file directly')
-    solver = ModelOneNumericalSolver()
-    pass
+    sys.exit('You cannot call this file directly')

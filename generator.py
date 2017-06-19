@@ -33,7 +33,7 @@ class Generator:
                 german_comma = options.get('german_comma', False)
                 self.file_writer = CsvOutputFile(output_file, model, german_comma=german_comma)
             elif suffix == 'html':
-                self.file_writer = HtmlOutputFile(output_file, model)
+                self.file_writer = TemplateOutputFile(output_file, 'templates/model.tpl.html', model, options=options)
             else:
                 raise RuntimeError('other output files than stdout not implemented yet.')
                 
@@ -110,28 +110,31 @@ class AbstractOutputFile:
     def writeSolution(self, par, sol):
         raise NotImplementedError()
         
-class HtmlOutputFile:
-    """ This class uses jinja2 template engine to store all output as an html file """
-    
-    def __init__(self, filename, model):
-        self.filename = filename
+class TemplateOutputFile(AbstractOutputFile):
+    """ This class uses jinja2 template engine to store all output as an text based file """
+
+    def __init__(self, outfile, tplfile, model, options={}):
+        self.outfile = outfile
+        self.tplfile = tplfile
         self.model = model
+        self.options = options
         self.solutions = []
-        
-        
+    
     def open(self):
-        with open('templates/model.tpl.html', 'r') as f:
+        with open(self.tplfile, 'r') as f:
             self.template = Template(f.read())
-        
+            
     def writeSolution(self, par, sol):
-        self.solutions.append( {'par' : par, 'sol' : sol})
+        if not (self.options.get('only_valid_solutions', False) and sol == None):
+            self.solutions.append( {'par' : par, 'sol' : sol})
         
     def close(self):
-        with open(self.filename, 'w') as f:
+        with open(self.outfile, 'w') as f:
             model = 'MODEL_1' if self.model == MODEL_1 else 'MODEL_2'
             f.write(self.template.render({
                 'model' : model,
-                'solutions' : self.solutions
+                'solutions' : self.solutions,
+                'options' : self.options
                 }))
         
 class MemoryOutputFile:
@@ -177,7 +180,6 @@ class StdoutFile(AbstractOutputFile):
         self.sol_nr += 1
         line = '{}: {}, {}'.format(self.sol_nr, par, sol)
         print(line)
-        
 
         
 class CsvOutputFile(AbstractOutputFile):
@@ -186,6 +188,7 @@ class CsvOutputFile(AbstractOutputFile):
     def __init__(self, file_name, model, german_comma=False):
         self.file_name = file_name
         self.model = model
+        self.german_comma = german_comma
     
     def open(self):
         self.file = open(self.file_name, 'w') # overrides file if exists
@@ -209,7 +212,9 @@ class CsvOutputFile(AbstractOutputFile):
             else:
                 dec_str =  '{:.5f};{:.5f};{:.5f};{:.5f};{:.5f};{:.5f}'.format(sol.dec.pn, sol.dec.pr, sol.dec.wn, sol.dec.roh, sol.dec.qn, sol.dec.qr)
                 line = '{};{};{:.5f};{:.5f};{}'.format(par_str, dec_str, sol.profit_man, sol.profit_ret, sol.case)
-        self.file.write(line.replace('.',',') + '\n')
+        if self.german_comma:
+            line = line.replace('.',',')
+        self.file.write(line + '\n')
         
     def close(self):
         self.file.close()
@@ -226,7 +231,7 @@ def __parser_file(string):
     if string == 'stdout':
         return string
     if len(string.split('.')) <= 1:
-        raise argparse.ArgumentTypeError('The output file has to have an suffix.')
+        raise argparse.ArgumentTypeError('The output file has to have a suffix.')
     suffix = string.split('.')[-1]
     if suffix not in ('html', 'tex', 'csv'):
         raise argparse.ArgumentTypeError('Supported output types are: .html/.tex/.csv')
@@ -238,10 +243,12 @@ if __name__ == '__main__':
     parser.add_argument('-model', type=__parser_model_one_or_two, nargs=1, required=True)
     parser.add_argument('-output', type=__parser_file, nargs=1, required=True)
     parser.add_argument('--german-comma', action='store_true')
+    parser.add_argument('--only-valid-solutions', action='store_true')
     args = parser.parse_args()
     
     model = args.model[0]
     output_file = args.output[0]
     generator = Generator(model, output_file, options={
-        'german_comma' : args.german_comma})
+        'german_comma' : args.german_comma,
+        'only_valid_solutions' : args.only_valid_solutions})
     generator.generate()

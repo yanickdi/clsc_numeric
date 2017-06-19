@@ -63,9 +63,12 @@ $ python3 generator.py -model 1 -output stdout
 # or create a .csv file of some numeric results:
 $ python3 generator.py -model 1 -output numeric_results.csv
 
-# numeric results for model 2:
+# csv results for model 2:
 $ python3 generator.py -model 2 -output model_2.csv --german-comma
 
 # html results for model 1:
 $ python3 generator.py -model 1 -output model_2.html
+
+# want to see only valid solutions:
+$ python3 generator.py -model 1 -output model_2.html --only-valid-solutions
 ```
