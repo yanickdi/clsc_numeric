@@ -35,15 +35,14 @@ $ mv clsc_numeric-master clsc_numeric
 ```
 
 ### Software requirements
-This solver requires [Python3](https://www.python.org/) and [SciPy](https://www.scipy.org/) to run.
+This solver requires [Python3](https://www.python.org/) and [SciPy](https://www.scipy.org/) to run. To create html output you will also need [Jinja2 Template Engine](http://jinja.pocoo.org/).
 
 On Unix environments this may will work:
 
 ```sh
-$ sudo apt-get install python3 python3-scipy
+$ sudo apt-get install python3 python3-scipy python3-pip
+$ sudo pip3 install jinja2
 ```
-
-Windows Users are encouraged to download the [Anaconda Installer](https://www.continuum.io/downloads) - This will automatically install Python3 and a lot of scientific stuff on your PC.
 
 # Usage
 documentation in progress.
@@ -63,4 +62,7 @@ $ python3 tests.py TestModelOneNumericalSolver
 $ python3 generator.py --model 1 --output stdout
 # or create a .csv file of some numeric results:
 $ python3 generator.py --model 1 --output numeric_results.csv
+
+# numeric results for model 2:
+$ python3 generator.py --model 2 --output model_2.csv
 ```
