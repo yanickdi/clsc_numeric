@@ -3,6 +3,9 @@
 # Excel Files
 *.xlsx
 
+# test files
+out.html
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

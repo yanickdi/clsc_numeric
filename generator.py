@@ -5,6 +5,11 @@ try:
     import scipy
 except:
     sys.exit('Failed: You have to install the python scipy package.')
+    
+try:
+    from jinja2 import Template
+except:
+    sys.exit('Failed: You have to install jinja2 template engine. Please see documentation')
 
 from solver import MODEL_1, MODEL_2, Parameter, DecisionVariables
 import solver
@@ -26,6 +31,8 @@ class Generator:
             suffix = output_file.split('.')[-1]
             if suffix == 'csv':
                 self.file_writer = CsvOutputFile(output_file, model)
+            elif suffix == 'html':
+                self.file_writer = HtmlOutputFile(output_file, model)
             else:
                 raise RuntimeError('other output files than stdout not implemented yet.')
                 
@@ -99,8 +106,32 @@ class AbstractOutputFile:
     def close(self):
         raise NotImplementedError()
     
-    def writeSolution(self, sol):
+    def writeSolution(self, par, sol):
         raise NotImplementedError()
+        
+class HtmlOutputFile:
+    """ This class uses jinja2 template engine to store all output as an html file """
+    
+    def __init__(self, filename, model):
+        self.filename = filename
+        self.model = model
+        self.solutions = []
+        
+        
+    def open(self):
+        with open('templates/model.tpl.html', 'r') as f:
+            self.template = Template(f.read())
+        
+    def writeSolution(self, par, sol):
+        self.solutions.append( {'par' : par, 'sol' : sol})
+        
+    def close(self):
+        with open(self.filename, 'w') as f:
+            model = 'MODEL_1' if self.model == MODEL_1 else 'MODEL_2'
+            f.write(self.template.render({
+                'model' : model,
+                'solutions' : self.solutions
+                }))
         
 class MemoryOutputFile:
     """ This class is used to test and store the outcome of the Generator Object """
