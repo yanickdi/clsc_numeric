@@ -7,22 +7,14 @@ from math import sqrt
 from tempfile import TemporaryDirectory
 from os.path import join, isfile
 
-from solver import ModelTwoNumericalSolver, Parameter, is_prof_pos
-from generator import Generator, MemoryOutputFile, MODEL_1, MODEL_2, HtmlOutputFile
+from solver import ModelTwoFracQuadNumericalSolver, Parameter, is_prof_pos
+from generator import Generator, MemoryOutputFile, MODEL_1, MODEL_2
 
-class TestGeneratorModelTwo(unittest.TestCase):
-    def test_model_two(self):
-        generator = Generator(MODEL_1, 'test_out.html')
-        generator.generate()
-
-class TestHtmlOutputFile(unittest.TestCase):
-    def test_template_generation(self):
-        with TemporaryDirectory() as tmpdir:
-            test_filen = join(tmpdir, 'test.html')
-            file = HtmlOutputFile(test_filen, MODEL_1)
-            file.open()
-            file.close()
-            self.assertTrue(isfile(test_filen))
+class TestModelTwoFracQuadNumericalSolver(unittest.TestCase):
+    def test_optimize(self):
+        par = Parameter(MODEL_2, tau=0.1, a=0.05, s=0.1, cr=0.2, cn=0.3, delta=0.5)
+        sol = ModelTwoFracQuadNumericalSolver()
+        sol.optimize(par)
   
 if __name__ == '__main__':
     unittest.main()
