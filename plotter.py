@@ -34,11 +34,11 @@ def _heatmap_profit_diff_data():
     """ returns a matrice """
     tau, s, cr, delta = 0.3, 0.1, 0.1, 0.4
     step_size_a, lower_bound_a, upper_bound_a = 0.001, .01, .04
-    step_size_cn, lower_bound_cn, upper_bound_cn = 0.01, cr, 0.5
+    step_size_cn, lower_bound_cn, upper_bound_cn = 0.01, cr, 1
     
     gen = _a_cn_generator(tau, s, cr, delta, step_size_a, step_size_cn, lower_bound_a, upper_bound_a, lower_bound_cn, upper_bound_cn)
-    nr_lines = int((upper_bound_a-lower_bound_a)/step_size_a) + 1
-    nr_cols = int((upper_bound_cn-lower_bound_cn)/step_size_cn) + 1
+    nr_cols = int((upper_bound_a-lower_bound_a)/step_size_a) + 1
+    nr_lines = int((upper_bound_cn-lower_bound_cn)/step_size_cn) + 1
     mat = np.empty([nr_lines, nr_cols])
     mat[:,:] = 0
     solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
@@ -67,8 +67,8 @@ def _a_cn_generator(
     assert lower_bound_cn >= cr
     round_digits_a = int(log(1/step_size_a, 10))
     round_digits_cn = int(log(1/step_size_cn, 10))
-    for line, a in enumerate(drange(0.01, upper_bound_a, step_size_a)):
-        for col, cn in enumerate(drange(lower_bound_cn, upper_bound_cn, step_size_cn)):
+    for line, cn in enumerate(drange(lower_bound_cn, upper_bound_cn, step_size_cn)):
+        for col, a in enumerate(drange(0.01, upper_bound_a, step_size_a)):
             par_model_2 = Parameter(
                 MODEL_2, tau=round(tau, 1), a=round(a, round_digits_a), s=round(s, 1),
                 cr=round(cr, 1), cn=round(cn, round_digits_cn), delta=round(delta, 1))
