@@ -33,8 +33,8 @@ def plot_heatmap_profit_diff():
 def _heatmap_profit_diff_data():
     """ returns a matrice """
     tau, s, cr, delta = 0.3, 0.1, 0.1, 0.4
-    step_size_a, lower_bound_a, upper_bound_a = 0.0001, .01, .04
-    step_size_cn, lower_bound_cn, upper_bound_cn = 0.001, cr, 0.5
+    step_size_a, lower_bound_a, upper_bound_a = 0.001, .01, .04
+    step_size_cn, lower_bound_cn, upper_bound_cn = 0.01, cr, 0.5
     
     gen = _a_cn_generator(tau, s, cr, delta, step_size_a, step_size_cn, lower_bound_a, upper_bound_a, lower_bound_cn, upper_bound_cn)
     nr_lines = int((upper_bound_a-lower_bound_a)/step_size_a) + 1
@@ -51,7 +51,7 @@ def _heatmap_profit_diff_data():
         if None not in (sol_model_1, sol_model_2):
             mat[line, col] = (sol_model_2.profit_man - sol_model_1.profit_man) / sol_model_1.profit_man
         i += 1
-    mat = mat.transpose()
+    #mat = mat.transpose()
     print(i)
     plt.imshow(mat, cmap='hot', interpolation='nearest')
     plt.show()
