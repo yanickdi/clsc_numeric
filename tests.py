@@ -3,6 +3,7 @@ from math import sqrt
 
 from solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, Parameter, DecisionVariables, MODEL_1, MODEL_2
 from generator import Generator, MemoryOutputFile
+from plotter import _rho_diff_func
 
 class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_1a(self):
@@ -269,7 +270,14 @@ class TestGenerator(unittest.TestCase):
                 self.assertAlmostEqual(sol.profit_man, prof_man)
                 self.assertAlmostEqual(sol.profit_ret, prof_ret)
         
-
+class TestContour(unittest.TestCase):
+    par1 = Parameter(MODEL_1, tau=0.3, a=0.013, s=0.1, cn=0.3)
+    par2 = Parameter(MODEL_2, tau=0.3, a=0.013, s=0.1, cn=0.3, cr=0.1, delta=0.4)
+    solver_1, solver_2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
+    sol_1, sol_2 = solver_1.optimize(par1), solver_2.optimize(par2)
+    diff = _rho_diff_func(sol_1, sol_2)
+    print(diff)
+        
 class AnalyticalSolver:
     """
         This class is used to try to give analytical solutions of model input data.

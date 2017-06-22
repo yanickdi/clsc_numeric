@@ -26,56 +26,71 @@ def __plot_name(string):
     if string not in allowed:
         raise argparse.ArgumentTypeError('Implemented plots are: ' + ' or '.join(allowed))
     return string
-    
-def plot_heatmap_profit_diff():
-    _heatmap_profit_diff_data()
 
-def _heatmap_profit_diff_data():
-    """ returns a matrice """
-    tau, s, cr, delta = 0.3, 0.1, 0.1, 0.4
-    step_size_a, lower_bound_a, upper_bound_a = 0.001, .01, .04
-    step_size_cn, lower_bound_cn, upper_bound_cn = 0.01, cr, 1
+class CountourPlotter:
+    def __init__(self, type, params):
+        self.type = type
+        assert type in (PLOT_PROFIT_DIFFERENCE, PLOT_RHO_DIFFERENCE)
+        self.tau, self.s, self.cr, self.delta = params['tau'], params['s'], params['cr'], params['delta']
+        self.step_size_a, self.lower_bound_a, self.upper_bound_a = params['step_size_a'], params['lower_bound_a'], params['upper_bound_a']
+        self.step_size_cn, self.lower_bound_cn, self.upper_bound_cn = params['step_size_cn'], params['lower_bound_cn'], params['upper_bound_cn']
+        self._calc_func = self.__rho_calc_func if type == PLOT_RHO_DIFFERENCE else self.__profit_calc_func
+        self.matrix = None
     
-    gen = _a_cn_generator(tau, s, cr, delta, step_size_a, step_size_cn, lower_bound_a, upper_bound_a, lower_bound_cn, upper_bound_cn)
-    nr_cols = int((upper_bound_a-lower_bound_a)/step_size_a) + 1
-    nr_lines = int((upper_bound_cn-lower_bound_cn)/step_size_cn) + 1
-    mat = np.empty([nr_lines, nr_cols])
-    mat[:,:] = 0
-    solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
-    i = 0
-    for line, col, par_model_1, par_model_2 in gen:
-        # calc solutions
-        sol_model_1 = solver_m1.optimize(par_model_1)
-        sol_model_2 = solver_m2.optimize(par_model_2)
-        # both possible?
-        if None not in (sol_model_1, sol_model_2):
-            mat[line, col] = (sol_model_2.profit_man - sol_model_1.profit_man) / sol_model_1.profit_man
-        i += 1
-    #mat = mat.transpose()
-    print(i)
-    plt.imshow(mat, cmap='hot', interpolation='nearest')
-    plt.show()
+    def _a_cn_generator(self):
+        """
+            Helper generator to generate parameters for plotting
+            it varies cn from [cr, 1] and a from [0, upper_bound_a]
+            Returns a tuple of (par_model_1, par_model_2)
+        """
+        assert self.lower_bound_cn >= self.cr
+        for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
+            for col, a in enumerate(drange(0.01, self.upper_bound_a, self.step_size_a)):
+                par_model_1 = Parameter(MODEL_1, tau=self.tau, a=a, s=self.s, cn=cn)
+                par_model_2 = Parameter(MODEL_2, tau=self.tau, a=a, s=self.s,  cr=self.cr, cn=cn, delta=self.delta)
+                yield (line, col, par_model_1, par_model_2)
+    
+    def calc(self):
+        self.nr_cols = int((self.upper_bound_a-self.lower_bound_a)/self.step_size_a) + 1
+        self.nr_lines = int((self.upper_bound_cn-self.lower_bound_cn)/self.step_size_cn) + 1
+        self.matrix = np.zeros([self.nr_lines, self.nr_cols])
+        solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
+        i = 0
+        for line, col, par_model_1, par_model_2 in self._a_cn_generator():
+            # calc solutions
+            sol_model_1 = solver_m1.optimize(par_model_1)
+            sol_model_2 = solver_m2.optimize(par_model_2)
+            # both possible?
+            if None not in (sol_model_1, sol_model_2):
+                self.matrix[line, col] = self._calc_func(sol_model_1, sol_model_2)
+            i += 1
+        print(i)
         
-def _a_cn_generator(
-    tau, s, cr, delta, step_size_a=0.01, step_size_cn=0.1, lower_bound_a = 0.01,
-    upper_bound_a=.04, lower_bound_cn=0, upper_bound_cn=1):
-    """
-        Helper generator for generate parameters for plotting
-        it varies cn from [cr, 1] and a from [0, upper_bound_a]
-        Returns a tuple of (par_model_1, par_model_2)
-    """
-    assert lower_bound_cn >= cr
-    round_digits_a = int(log(1/step_size_a, 10))
-    round_digits_cn = int(log(1/step_size_cn, 10))
-    for line, cn in enumerate(drange(lower_bound_cn, upper_bound_cn, step_size_cn)):
-        for col, a in enumerate(drange(0.01, upper_bound_a, step_size_a)):
-            par_model_2 = Parameter(
-                MODEL_2, tau=round(tau, 1), a=round(a, round_digits_a), s=round(s, 1),
-                cr=round(cr, 1), cn=round(cn, round_digits_cn), delta=round(delta, 1))
-            par_model_1 = Parameter(
-                MODEL_1, tau=round(tau, 1), a=round(a, round_digits_a), s=round(s, 1),
-                cr=round(cr, 1), cn=round(cn, round_digits_cn), delta=round(delta, 1))
-            yield (line, col, par_model_1, par_model_2)
+    def __rho_calc_func(self, sol_model_1, sol_model_2):
+        return (sol_model_2.dec.rho - sol_model_1.dec.rho) / sol_model_1.dec.rho
+        
+    def __profit_calc_func(self, sol_model_1, sol_model_2):
+        return (sol_model_2.profit_man - sol_model_1.profit_man) / sol_model_1.profit_man
+        
+    def plot(self):
+        if self.type == PLOT_PROFIT_DIFFERENCE:
+            title = 'Increase of Profits with vs. without Online Store'
+            side_title = r'increase of $\pi_{man}$ in percentage'
+        elif self.type == PLOT_RHO_DIFFERENCE:
+            title = r'Increase of Efforts $\rho$ with vs. without Online Store'
+            side_title = r'increase of $\rho$ in percentage'
+        
+        x_vector = np.linspace(self.lower_bound_a, self.upper_bound_a, num=self.nr_cols)       # x is a
+        y_vector = np.linspace(self.lower_bound_cn, self.upper_bound_cn, num=self.nr_lines)    # y is cn
+        cont = plt.contourf(x_vector, y_vector, self.matrix)
+        plt.legend()
+        plt.title(title)
+        plt.xlabel('a')
+        plt.ylabel('cn')
+        
+        cbar = plt.colorbar(cont)
+        cbar.ax.set_ylabel(side_title)
+        plt.show()
 
 if __name__ == '__main__':
     # parse the command line
@@ -84,5 +99,9 @@ if __name__ == '__main__':
     parser.add_argument('-output', type=__output_file, nargs=1, required=False)
     args = parser.parse_args()
     
-    if args.plot[0] == PLOT_PROFIT_DIFFERENCE:
-        plot_heatmap_profit_diff()
+    plotter = CountourPlotter(args.plot[0], params={
+        'tau': .3, 's': .1, 'cr': .1, 'delta' : .4,
+        'step_size_a' : .0001, 'lower_bound_a' : .01, 'upper_bound_a' : .04,
+        'step_size_cn' : .001, 'lower_bound_cn' : .1, 'upper_bound_cn' : .4})
+    plotter.calc()
+    plotter.plot()
