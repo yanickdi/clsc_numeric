@@ -473,6 +473,13 @@ class DecisionVariables:
     
     def __repr__(self):
         return self.__str__()
+        
+def drange(start, end, step_size):
+    """ A floating point range from [start, end] with step size step_size"""
+    r = start
+    while r <= end:
+        yield r
+        r += step_size
     
 if __name__ == '__main__':
     sys.exit('You cannot call this file directly')

@@ -11,7 +11,7 @@ try:
 except:
     sys.exit('Failed: You have to install jinja2 template engine. Please see documentation')
 
-from solver import MODEL_1, MODEL_2, Parameter, DecisionVariables
+from solver import MODEL_1, MODEL_2, Parameter, DecisionVariables, drange
 import solver
     
 class Generator:
@@ -89,13 +89,6 @@ class Generator:
                 for s in drange(0, 1, .1):
                     for cn in drange(s, 1, .1):
                         yield Parameter(MODEL_1, tau=round(tau, 1), a=round(a, 2), s=round(s, 1), cn=round(cn, 1))
-    
-def drange(start, end, step_size):
-    """ A floating point range from [start, end] with step size step_size"""
-    r = start
-    while r <= end:
-        yield r
-        r += step_size
         
         
 class AbstractOutputFile:
