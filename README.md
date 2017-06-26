@@ -81,4 +81,6 @@ or
 $ python3 plotter.py -plot cases-model-one
 or
 $ python3 plotter.py -plot cases-model-two
+# if you are in a hurry
+$ python3 plotter.py -plot any-plot-from-above --low-qual
 ```

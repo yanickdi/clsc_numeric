@@ -3,6 +3,8 @@ from math import log
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+import matplotlib as mpl
 
 from solver import drange, Parameter, MODEL_1, MODEL_2, ModelOneNumericalSolver, ModelTwoNumericalSolver
 import solver
@@ -36,7 +38,7 @@ class CountourPlotter:
             it varies cn from [cr, 1] and a from [0, upper_bound_a]
             Returns a tuple of (par_model_1, par_model_2)
         """
-        assert self.lower_bound_cn >= self.cr
+        #assert self.lower_bound_cn >= self.cr
         for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
             for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
                 par_model_1 = Parameter(MODEL_1, tau=self.tau, a=a, s=self.s, cn=cn)
@@ -62,27 +64,28 @@ class CountourPlotter:
         
     def __rho_calc_func(self, sol_model_1, sol_model_2):
         if sol_model_1 is None or sol_model_2 is None:
-            return 0
+            return np.nan
         return (sol_model_2.dec.rho - sol_model_1.dec.rho) / sol_model_1.dec.rho
         
     def __profit_calc_func(self, sol_model_1, sol_model_2):
         if sol_model_1 is None or sol_model_2 is None:
-            return 0
+            return np.nan
         return (sol_model_2.profit_man - sol_model_1.profit_man) / sol_model_1.profit_man
         
     def __case_calc_func_model_one(self, sol_model_1, sol_model_2):
         if sol_model_1 == None:
-            return 0
+            return np.nan
         else:
             return _ALL_CASES_MODEL_1.index(sol_model_1.case) + 1
             
     def __case_calc_func_model_two(self, sol_model_1, sol_model_2):
         if sol_model_2 == None:
-            return 0
+            return np.nan
         else:
             return _ALL_CASES_MODEL_2.index(sol_model_2.case) + 1
             
-    def plot_cases(self):
+    def __plot_cases(self):
+        """ not used any more"""
         if self.type == PLOT_CASES_MODEL_ONE:
             title = r'Which case will be active in the event of no Online Shop'
             side_title = r'0 = no solution, 1 = case 1,   2 = case 2'
@@ -93,17 +96,9 @@ class CountourPlotter:
         fig = plt.figure()
         ax = plt.subplot(111)
         
-        #x_vector = np.linspace(self.lower_bound_a, self.upper_bound_a, num=self.nr_cols)       # x is a
-        #y_vector = np.linspace(self.lower_bound_cn, self.upper_bound_cn, num=self.nr_lines)    # y is cn
-        #cont = ax.contourf(x_vector, y_vector, self.matrix, label='heatmap')
         imgplot = ax.matshow(self.matrix)
         fig.suptitle(title)
-        #ax.set_xlabel('a')
-        #ax.set_ylabel(r'$c_n$')
-        
         cbar = plt.colorbar(imgplot)
-        #cbar.ax.set_ylabel(side_title)
-        
         # Put a text of paramaters below current axis
         txt = r'par: $\tau$={:.2f}, s={:.2f}, cr={:.2f}, $\delta$={:.2f}'.format(self.tau, self.s, self.cr, self.delta)
         fig.text(0.6, 0.05, txt, fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
@@ -126,19 +121,24 @@ class CountourPlotter:
         elif self.type == PLOT_CASES_MODEL_TWO:
             title = r'Which case will be active in the event of having an Online Shop'
             side_title = r'0=no sol, 1=c1a, 2=c1b, 3=c1c, 4=c2a, 5=c2b, 6=c3b'
-            cbar_ticks = range(7)
+            cbar_ticks = range(2,7)
             
         fig = plt.figure()
         ax = plt.subplot(111)
         
         x_vector = np.linspace(self.lower_bound_a, self.upper_bound_a, num=self.nr_cols)       # x is a
         y_vector = np.linspace(self.lower_bound_cn, self.upper_bound_cn, num=self.nr_lines)    # y is cn
-        cont = ax.contourf(x_vector, y_vector, self.matrix, label='heatmap')
+        cont = ax.contourf(x_vector, y_vector, self.matrix, label='heatmap', cmap= cm.Set1)
         fig.suptitle(title)
         ax.set_xlabel('a')
         ax.set_ylabel(r'$c_n$')
+        if self.type == PLOT_CASES_MODEL_ONE:
+            ax.plot(x_vector, 0.02 * (41. - 178.885 * np.sqrt(x_vector)), color='black', linewidth=2.0) # hier line profit_ret = 0
+            ax.plot(x_vector, 16.* (0.00625 + 1. *np.sqrt(0.00253125 - 0.0251558* np.sqrt(x_vector) + 0.0625 *x_vector) -  0.223607 *np.sqrt(x_vector)), color='black', linewidth=2.0) # line wo profit_m_case_1 == profit_m_case_2
+            #TODO: in abh. von allen parametern
+            ax.set_ylim(0, 1)
         
-        cbar = plt.colorbar(cont, ticks = cbar_ticks)
+        cbar = plt.colorbar(cont, ticks=cbar_ticks)
         cbar.ax.set_ylabel(side_title)
         
         # Put a text of paramaters below current axis
@@ -149,13 +149,6 @@ class CountourPlotter:
         
     def plot(self):
         self.plot_contourf()
-        return
-        if self.type in (PLOT_PROFIT_DIFFERENCE, PLOT_RHO_DIFFERENCE):
-            self.plot_contourf()
-        elif self.type in (PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO):
-            self.plot_cases()
-        else:
-            raise RuntimeError('not implemented')
             
 def __parser_output_file(string):
     if string == 'stdout':
@@ -180,11 +173,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Plotting module of clsc solver')
     parser.add_argument('-plot', type=__parser_plot_name, nargs=1, required=True)
     parser.add_argument('-output', type=__parser_output_file, nargs=1, required=False)
+    parser.add_argument('--low-qual', action='store_true')
     args = parser.parse_args()
     
+    resolution = 'low' if args.low_qual else 'high'
+    
+    if resolution == 'high':
+        step_size_a = .0001
+        step_size_cn = .001
+    elif resolution == 'low':
+        step_size_a = .001
+        step_size_cn = .01
+    
     plotter = CountourPlotter(args.plot[0], params={
-        'tau': .3, 's': .1, 'cr': .1, 'delta' : .4,
-        'step_size_a' : .0001, 'lower_bound_a' : .0, 'upper_bound_a' : .04,
-        'step_size_cn' : .001, 'lower_bound_cn' : .1, 'upper_bound_cn' : .4})
+        'tau': .2, 's': .1, 'cr': .1, 'delta' : .4,
+        'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .04,
+        'step_size_cn' : step_size_cn, 'lower_bound_cn' : 0, 'upper_bound_cn' : 1.0})
     plotter.calc()
     plotter.plot()

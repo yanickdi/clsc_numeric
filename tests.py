@@ -3,7 +3,6 @@ from math import sqrt
 
 from solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, Parameter, DecisionVariables, MODEL_1, MODEL_2
 from generator import Generator, MemoryOutputFile
-from plotter import _rho_diff_func
 
 class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_1a(self):
@@ -256,9 +255,9 @@ class TestGenerator(unittest.TestCase):
                 self.assertIsNone(prof_man)
                 self.assertIsNone(prof_ret)
                 self.assertIsNone(sol)
-            elif sol == None:
+            elif sol == None:   # solver says no solution
                 if dec_vars != None:
-                    print(const_args)
+                    print(dec_vars)
                 self.assertIsNone(dec_vars)
                 self.assertIsNone(prof_man)
                 self.assertIsNone(prof_ret)
@@ -269,14 +268,6 @@ class TestGenerator(unittest.TestCase):
                 self.assertAlmostEqual(sol.dec.qn, dec_vars.qn)
                 self.assertAlmostEqual(sol.profit_man, prof_man)
                 self.assertAlmostEqual(sol.profit_ret, prof_ret)
-        
-class TestContour(unittest.TestCase):
-    par1 = Parameter(MODEL_1, tau=0.3, a=0.013, s=0.1, cn=0.3)
-    par2 = Parameter(MODEL_2, tau=0.3, a=0.013, s=0.1, cn=0.3, cr=0.1, delta=0.4)
-    solver_1, solver_2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
-    sol_1, sol_2 = solver_1.optimize(par1), solver_2.optimize(par2)
-    diff = _rho_diff_func(sol_1, sol_2)
-    print(diff)
         
 class AnalyticalSolver:
     """
@@ -313,7 +304,7 @@ class AnalyticalSolver:
         
         if round(case_1_rho, 7) >= 1:
             # i can take both solutions
-            if par.tau != 1 and case_2_prof_man > case_1_prof_man and case_2_prof_man >= 0 and case_2_prof_ret >= 0:
+            if par.tau != 1 and case_2_prof_man > case_1_prof_man and case_2_prof_man >= 0 and case_2_prof_ret >= 0 and case_2_qn >= 0:
                 sol = 'CASE_2'
             else:
                 sol = 'CASE_1'
@@ -339,7 +330,9 @@ class AnalyticalSolver:
             if ret_val[2] >= 0 or ret_val[1] >= 0:
                 pass
             return (None, None, None)
-            
+        #assert ret_val[0].qn >= 0
+        if ret_val[0].qn < 0:
+            return (None, None, None)
         return ret_val
         
 if __name__ == '__main__':

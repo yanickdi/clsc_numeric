@@ -141,6 +141,7 @@ class ModelTwoNumericalSolver:
             Solution: An object of class Solution
                       or None if there is no solution possible
         """
+        if par.cn < par.cr: return None
         cases = (
             (_CASE_ONE_A, self._optimize_case_one_a),
             (_CASE_ONE_B, self._optimize_case_one_b),
@@ -338,6 +339,22 @@ class ModelOneNumericalSolver:
         manu_profit = qn * (wn * (1- par.tau/rho) - par.cn + (par.tau/rho) * par.s)
         retailer_profit = qn * (pn - wn) * (1 - par.tau/rho) - par.a * rho
         return manu_profit, retailer_profit
+        
+    def _is_valid(self, par, sol):
+        """ Tests whether a given solution is feasible regarding to all model subjects """
+        #TODO: assert all decision vars are positive in case of valid solution
+        # check all variables positive
+        for var in (sol.dec.pn, sol.dec.qn):
+            if var < -10**-DECIMALS_ALLOW_NN:
+                return False
+        # check case constraints
+        if not (sol.dec.rho >= 1):
+            return False
+                
+        # check profits
+        if not (sol.profit_man >= -10**-DECIMALS_ALLOW_NN and sol.profit_ret >= -10**-DECIMALS_ALLOW_NN):
+            return False
+        return True
     
     def optimize(self, par):
         """
@@ -358,6 +375,17 @@ class ModelOneNumericalSolver:
         prof_man_case_2, prof_ret_case_2 = self.calc_profits(par, dec_vars_case_2)
         
         case = None
+        sol1 = Solution(dec_vars_case_1, prof_man_case_1, prof_ret_case_1, _CASE_ONE)
+        sol2 = Solution(dec_vars_case_2, prof_man_case_2, prof_ret_case_2, _CASE_TWO)
+        valid_solutions = []
+        for sol in (sol1, sol2):
+            if self._is_valid(par, sol):
+                valid_solutions.append(sol)
+        if len(valid_solutions) > 0:
+            # take the best valid solution (manufacturer decides)
+            return max(valid_solutions, key=lambda sol: (sol.profit_man, sol.profit_ret))
+        else:
+            return None
         
         if dec_vars_case_1.rho < 1:
             if is_prof_pos(prof_man_case_2) and is_prof_pos(prof_ret_case_2):
