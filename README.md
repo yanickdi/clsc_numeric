@@ -71,4 +71,14 @@ $ python3 generator.py -model 1 -output model_2.html
 
 # want to see only valid solutions:
 $ python3 generator.py -model 1 -output model_2.html --only-valid-solutions
+
+# PLOTTING
+
+$ python3 plotter.py -plot profit-difference
+or
+$ python3 plotter.py -plot rho-difference
+or
+$ python3 plotter.py -plot cases-model-one
+or
+$ python3 plotter.py -plot cases-model-two
 ```
