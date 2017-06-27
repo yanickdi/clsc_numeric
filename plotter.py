@@ -4,7 +4,6 @@ from math import log
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
-import matplotlib as mpl
 
 from solver import drange, Parameter, MODEL_1, MODEL_2, ModelOneNumericalSolver, ModelTwoNumericalSolver
 import solver
@@ -176,18 +175,19 @@ if __name__ == '__main__':
     parser.add_argument('--low-qual', action='store_true')
     args = parser.parse_args()
     
-    resolution = 'low' if args.low_qual else 'high'
+    quality = 'low' if args.low_qual else 'high'
     
-    if resolution == 'high':
+    if quality == 'high':
         step_size_a = .0001
         step_size_cn = .001
-    elif resolution == 'low':
+    elif quality == 'low':
         step_size_a = .001
         step_size_cn = .01
     
     plotter = CountourPlotter(args.plot[0], params={
         'tau': .2, 's': .1, 'cr': .1, 'delta' : .4,
         'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .04,
-        'step_size_cn' : step_size_cn, 'lower_bound_cn' : 0, 'upper_bound_cn' : 1.0})
+        'step_size_cn' : step_size_cn, 'lower_bound_cn' : .6, 'upper_bound_cn' : .7
+    })
     plotter.calc()
     plotter.plot()

@@ -75,7 +75,6 @@ class ModelTwoFracQuadNumericalSolver:
             
     def _is_valid(self, par, sol):
         """ Tests whether a given solution is feasible regarding to all model subjects """
-        #TODO: assert all decision vars are positive in case of valid solution
         # check all variables positive
         for var in (sol.dec.pn, sol.dec.pr, sol.dec.wn, sol.dec.qn, sol.dec.qr):
             if var < -10**-DECIMALS_ALLOW_NN:
