@@ -36,11 +36,12 @@ $ mv clsc_numeric-master clsc_numeric
 
 ### Software requirements
 This solver requires [Python3](https://www.python.org/) and [SciPy](https://www.scipy.org/) to run. To create html output you will also need [Jinja2 Template Engine](http://jinja.pocoo.org/).
+For plotting, you have to have [Matplotlib](https://matplotlib.org/) installed.
 
 On Unix environments this may will work:
 
 ```sh
-$ sudo apt-get install python3 python3-scipy python3-pip
+$ sudo apt-get install python3 python3-scipy python3-matplotlib python3-pip
 $ sudo pip3 install jinja2
 ```
 
