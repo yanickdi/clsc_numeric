@@ -26,30 +26,58 @@ f_rho_one = lambdify([tau, a, delta, wn, pr], rho_one)
 
 profit_man_one = profit_man.subs([(pn, pn_one), (rho, rho_one)])
 lagr_man_one = (profit_man_one -mu1*(-qr_) - mu2*(qr_ - tau/rho*qn_)).subs([(pn, pn_one), (rho, rho_one)])
+
 lag_diff_wn = lagr_man_one.diff(wn)
-f_lag_diff_wn = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(wn))
 lag_diff_pr = lagr_man_one.diff(pr)
 lag_diff_mu1 = lagr_man_one.diff(mu1)
 
+f_lag_diff_wn  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(wn), np)
+f_lag_diff_pr  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(pr), np)
+f_lag_diff_mu1 = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(mu1), np)
+
+f_lag_diff_wn_wn  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(wn).diff(wn), np)
+f_lag_diff_wn_pr  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(wn).diff(pr), np)
+f_lag_diff_wn_mu1  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(wn).diff(mu1), np)
+f_lag_diff_pr_wn  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(pr).diff(wn), np)
+f_lag_diff_pr_pr  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(pr).diff(pr), np)
+f_lag_diff_pr_mu1  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(pr).diff(mu1), np)
+f_lag_diff_mu1_wn  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(mu1).diff(wn), np)
+f_lag_diff_mu1_pr  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(mu1).diff(pr), np)
+f_lag_diff_mu1_mu1  = lambdify([tau, a, s, cr, cn, delta, wn, pr, mu1, mu2], lagr_man_one.diff(mu1).diff(mu1), np)
+
+CASE_1A_JAC = [
+    [f_lag_diff_wn_wn, f_lag_diff_wn_pr, f_lag_diff_wn_mu1],
+    [f_lag_diff_pr_wn, f_lag_diff_pr_pr, f_lag_diff_pr_mu1],
+    [f_lag_diff_mu1_wn, f_lag_diff_mu1_pr, f_lag_diff_mu1_mu1]]
+
 
 # case 1a:  diff_wn == 0,   diff_pr == 0,   diff_mu1 == 0,  mu2 == 0
-def f_case_1a(vector, args):
+def f_case_1a(vector, par):
     """
         vector must be [wn, pr, mu1]
         args must be a tuple (ParameterObject)
         returns a 3 dimensional scalar vector [lag_diff_wn, lag_diff_pr, lag_diff_mu1]
     """
-    par = args
-    repl_static = {tau : par.tau, a : par.a, s: par.s, cr : par.cr, cn : par.cn, delta : par.delta, mu2 : 0}
-    repl_vars = {wn : vector[0], pr: vector[1], mu1: vector[2]}
     y = np.zeros(3)
-    wn_val = lag_diff_wn.subs(repl_static).subs(repl_vars).evalf()
-    print(wn_val)
-    print(f_lag_diff_wn(par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], vector[2], 0))
-    pr_val = lag_diff_pr.subs(repl_static).subs(repl_vars).evalf()
-    mu1_val = lag_diff_mu1.subs(repl_static).subs(repl_vars).evalf()
-    #print(wn_val, pr_val, mu1_val)
+    wn_val =    f_lag_diff_wn(par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], vector[2], 0)
+    pr_val =    f_lag_diff_pr(par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], vector[2], 0)
+    mu1_val =   f_lag_diff_mu1(par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], vector[2], 0)
+    y[0], y[1], y[2] = conv(wn_val), conv(pr_val), conv(mu1_val)
+    print(y)
     return y
     
-result = root(f_case_1a, x0=[0.1, 0.1, 0.1], args=par)
+def f_case_1a_jac(vector, par):
+    mat = np.zeros((3,3))
+    for i,j in [(i,j) for i in range(3) for j in range(3)]:
+        val = CASE_1A_JAC[i][j](par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], vector[2], 0)
+        mat[i,j] = conv(val)
+    return mat
+    
+def conv(val):
+    if type(val) == complex or type(val) == np.complex128:
+        return 100
+    else:
+        return val
+    
+result = root(f_case_1a, x0=[0.5, 0.5, 0.6], jac=f_case_1a_jac, args=par)
 print(result)

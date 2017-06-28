@@ -29,6 +29,10 @@ class CountourPlotter:
             PLOT_CASES_MODEL_ONE : self.__case_calc_func_model_one,
             PLOT_CASES_MODEL_TWO : self.__case_calc_func_model_two
         }[type]
+        self.absolute = params['absolute']
+        self.gray = params['gray']
+        if type == PLOT_PROFIT_DIFFERENCE and self.absolute: self._calc_func = self.__profit_calc_func_absolute
+        elif type == PLOT_RHO_DIFFERENCE  and self.absolute: self._calc_func = self.__rho_calc_func_absolute
         self.matrix = None
     
     def _a_cn_generator(self):
@@ -57,27 +61,39 @@ class CountourPlotter:
             else:
                 sol_model_1 = solver_m1.optimize(par_model_1)
                 sol_model_2 = solver_m2.optimize(par_model_2)
-            self.matrix[line, col] = self._calc_func(sol_model_1, sol_model_2)
+            self.matrix[line, col] = self._calc_func(sol_model_1, sol_model_2, par_model_2)
             i += 1
         print(i)
         
-    def __rho_calc_func(self, sol_model_1, sol_model_2):
+    def __rho_calc_func(self, sol_model_1, sol_model_2, par):
         if sol_model_1 is None or sol_model_2 is None:
             return np.nan
         return (sol_model_2.dec.rho - sol_model_1.dec.rho) / sol_model_1.dec.rho
         
-    def __profit_calc_func(self, sol_model_1, sol_model_2):
+    def __rho_calc_func_absolute(self, sol_model_1, sol_model_2, par):
         if sol_model_1 is None or sol_model_2 is None:
             return np.nan
-        return (sol_model_2.profit_man - sol_model_1.profit_man) / sol_model_1.profit_man
+        return (sol_model_2.dec.rho - sol_model_1.dec.rho)
         
-    def __case_calc_func_model_one(self, sol_model_1, sol_model_2):
+    def __profit_calc_func(self, sol_model_1, sol_model_2, par):
+        if sol_model_1 is None or sol_model_2 is None or sol_model_1.profit_man < 0.01:
+            return np.nan
+        rel =  (sol_model_2.profit_man - sol_model_1.profit_man) / sol_model_1.profit_man
+        return rel
+        
+    def __profit_calc_func_absolute(self, sol_model_1, sol_model_2, par):
+        if sol_model_1 is None or sol_model_2 is None:
+            return np.nan
+        rel =  (sol_model_2.profit_man - sol_model_1.profit_man)
+        return rel
+        
+    def __case_calc_func_model_one(self, sol_model_1, sol_model_2, par):
         if sol_model_1 == None:
             return np.nan
         else:
             return _ALL_CASES_MODEL_1.index(sol_model_1.case) + 1
             
-    def __case_calc_func_model_two(self, sol_model_1, sol_model_2):
+    def __case_calc_func_model_two(self, sol_model_1, sol_model_2, par):
         if sol_model_2 == None:
             return np.nan
         else:
@@ -108,10 +124,14 @@ class CountourPlotter:
         if self.type == PLOT_PROFIT_DIFFERENCE:
             title = 'Increase of Profits with vs. without Online Store'
             side_title = r'relative increase of $\pi_{man}$'
+            if self.absolute:
+                side_title = side_title.replace('relative', 'absolute')
             cbar_ticks = None
         elif self.type == PLOT_RHO_DIFFERENCE:
             title = r'Increase of Efforts $\rho$ with vs. without Online Store'
             side_title = r'relative increase of $\rho$'
+            if self.absolute:
+                side_title = side_title.replace('relative', 'absolute')
             cbar_ticks = None
         elif self.type == PLOT_CASES_MODEL_ONE:
             title = r'Which case will be active in the event of no Online Shop'
@@ -121,21 +141,16 @@ class CountourPlotter:
             title = r'Which case will be active in the event of having an Online Shop'
             side_title = r'0=no sol, 1=c1a, 2=c1b, 3=c1c, 4=c2a, 5=c2b, 6=c3b'
             cbar_ticks = range(2,7)
-            
+        cmap = cm.gray if self.gray else None            
         fig = plt.figure()
         ax = plt.subplot(111)
         
         x_vector = np.linspace(self.lower_bound_a, self.upper_bound_a, num=self.nr_cols)       # x is a
         y_vector = np.linspace(self.lower_bound_cn, self.upper_bound_cn, num=self.nr_lines)    # y is cn
-        cont = ax.contourf(x_vector, y_vector, self.matrix, label='heatmap', cmap= cm.Set1)
+        cont = ax.contourf(x_vector, y_vector, self.matrix, label='heatmap', cmap=cmap)
         fig.suptitle(title)
         ax.set_xlabel('a')
         ax.set_ylabel(r'$c_n$')
-        if self.type == PLOT_CASES_MODEL_ONE:
-            ax.plot(x_vector, 0.02 * (41. - 178.885 * np.sqrt(x_vector)), color='black', linewidth=2.0) # hier line profit_ret = 0
-            ax.plot(x_vector, 16.* (0.00625 + 1. *np.sqrt(0.00253125 - 0.0251558* np.sqrt(x_vector) + 0.0625 *x_vector) -  0.223607 *np.sqrt(x_vector)), color='black', linewidth=2.0) # line wo profit_m_case_1 == profit_m_case_2
-            #TODO: in abh. von allen parametern
-            ax.set_ylim(0, 1)
         
         cbar = plt.colorbar(cont, ticks=cbar_ticks)
         cbar.ax.set_ylabel(side_title)
@@ -172,10 +187,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Plotting module of clsc solver')
     parser.add_argument('-plot', type=__parser_plot_name, nargs=1, required=True)
     parser.add_argument('-output', type=__parser_output_file, nargs=1, required=False)
+    parser.add_argument('--absolute', action='store_true')
     parser.add_argument('--low-qual', action='store_true')
+    parser.add_argument('--gray', action='store_true')
     args = parser.parse_args()
     
     quality = 'low' if args.low_qual else 'high'
+    absolute = args.absolute
+    gray = args.gray
     
     if quality == 'high':
         step_size_a = .0001
@@ -185,9 +204,11 @@ if __name__ == '__main__':
         step_size_cn = .01
     
     plotter = CountourPlotter(args.plot[0], params={
-        'tau': .2, 's': .1, 'cr': .1, 'delta' : .4,
+        'tau': .3, 's': .07, 'cr': .1, 'delta' : .3,
         'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .04,
-        'step_size_cn' : step_size_cn, 'lower_bound_cn' : .6, 'upper_bound_cn' : .7
+        'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .7,
+        'absolute' : absolute,
+        'gray' : gray
     })
     plotter.calc()
     plotter.plot()

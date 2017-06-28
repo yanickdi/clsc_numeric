@@ -351,7 +351,7 @@ class ModelOneNumericalSolver:
             return False
                 
         # check profits
-        if not (sol.profit_man >= -10**-DECIMALS_ALLOW_NN and sol.profit_ret >= -10**-DECIMALS_ALLOW_NN):
+        if not (sol.profit_man >= 10**-DECIMALS_ALLOW_NN and sol.profit_ret >= 10**-DECIMALS_ALLOW_NN):
             return False
         return True
     
@@ -467,9 +467,9 @@ class Parameter:
         
     def __str__(self):
         if self.model == MODEL_1:
-            return 'tau={:.2f}, a={:.2f}, s={:.2f}, cn={:.2f}'.format(self.tau, self.a, self.s, self.cn)
+            return 'tau={:.2f}, a={:.4f}, s={:.2f}, cn={:.4f}'.format(self.tau, self.a, self.s, self.cn)
         elif self.model == MODEL_2:
-            return 'tau={:.2f}, a={:.2f}, s={:.2f}, cr={:.2f}, cn={:.2f}, delta={:.2f}'.format(
+            return 'tau={:.2f}, a={:.4f}, s={:.2f}, cr={:.2f}, cn={:.4f}, delta={:.2f}'.format(
                 self.tau, self.a, self.s, self.cr, self.cn, self.delta)
         else:
             return '?'

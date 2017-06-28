@@ -204,5 +204,6 @@ if __name__ == '__main__':
     output_file = args.output[0]
     generator = Generator(model, output_file, options={
         'german_comma' : args.german_comma,
-        'only_valid_solutions' : args.only_valid_solutions})
+        'only_valid_solutions' : args.only_valid_solutions
+    })
     generator.generate()

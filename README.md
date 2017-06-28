@@ -58,7 +58,9 @@ $ python3 tests.py
 $ python3 tests.py TestModelOneNumericalSolver
 #
 #
-# or print out some numeric results:
+
+# CALC SOME NUMERIC RESULTS
+
 $ python3 generator.py -model 1 -output stdout
 # or create a .csv file of some numeric results:
 $ python3 generator.py -model 1 -output numeric_results.csv
@@ -83,4 +85,8 @@ or
 $ python3 plotter.py -plot cases-model-two
 # if you are in a hurry
 $ python3 plotter.py -plot any-plot-from-above --low-qual
+# plot profit-difference and rho-difference not only be calculated with relative increase but with absolute:
+$ python3 plotter.py -plot profit-difference --absolute
+# to get a gray-scale colour map:
+$ python3 plotter.py -plot cases-model-two --gray
 ```

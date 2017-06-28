@@ -268,7 +268,7 @@ class TestGenerator(unittest.TestCase):
                 self.assertAlmostEqual(sol.dec.qn, dec_vars.qn)
                 self.assertAlmostEqual(sol.profit_man, prof_man)
                 self.assertAlmostEqual(sol.profit_ret, prof_ret)
-        
+                
 class AnalyticalSolver:
     """
         This class is used to try to give analytical solutions of model input data.

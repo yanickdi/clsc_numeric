@@ -29,7 +29,7 @@ def jac(vec):
         [d_f2_x1(par0, par1), d_f2_x2(par0, par1)]
     ]
 
-root(f, [1, 1], jac=jac)
+root(f, [.5, .3], jac=jac)
 #findroot(f, [0,0], J=jac, solver=MDNewton)
 #print(y.subs({x1 : 1, x2: -2}).evalf())
 #print(f(1,2.0))
