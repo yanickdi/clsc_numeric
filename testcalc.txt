@@ -1,0 +1,82 @@
+Setting up equations...
+-(pr/delta) + (-pr + (1 - delta + pr + wn)/2)/(1 - delta) == s*tau
+pr/delta - (-pr + (1 - delta + pr + wn)/2)/(1 - delta) + tau*(1 - (-pr + (1 - delta + pr + wn)/2)/(1 - delta)) == 0
+Done, starting calculations...
+--
+{tau -> 0., a -> 0., s -> 0., cr -> 0., cn -> 0., delta -> 0.}
+Case 1a
+
+                                 1
+Power::infy: Infinite expression -- encountered.
+                                 0.
+
+                                 1
+Power::infy: Infinite expression -- encountered.
+                                 0.
+
+                                 1
+Power::infy: Infinite expression -- encountered.
+                                 0.
+
+General::stop: Further output of Power::infy will be suppressed during this calculation.
+
+Infinity::indet: Indeterminate expression 0. ComplexInfinity encountered.
+{}
+Case 1b
+
+Infinity::indet: Indeterminate expression 0. ComplexInfinity encountered.
+{}
+Case 1c
+
+Infinity::indet: Indeterminate expression 0. ComplexInfinity encountered.
+
+General::stop: Further output of Infinity::indet will be suppressed during this calculation.
+{}
+Case 2a
+{}
+Case 2b
+{}
+Case 2c
+{}
+--
+{tau -> 0., a -> 0., s -> 0., cr -> 0., cn -> 0., delta -> 0.1}
+Case 1a
+{{wn -> 0.5, pr -> 0.0736842105263158, mu1 -> -0.04736842105263161}}
+Case 1b
+{{wn -> 0.5, pr -> 0.04999999999999999}}
+Case 1c
+{{wn -> 0.5, pr -> 0.0736842105263158, mu2 -> 0.04736842105263161}}
+Case 2a
+{{wn -> 0.5, pr -> 0.0736842105263158, mu1 -> -0.04736842105263161}}
+Case 2b
+{{wn -> 0.5, pr -> 0.04999999999999999}}
+Case 2c
+{{wn -> 0.5, pr -> 0.0736842105263158, mu2 -> 0.04736842105263161}}
+--
+{tau -> 0., a -> 0., s -> 0., cr -> 0., cn -> 0., delta -> 0.2}
+Case 1a
+{{wn -> 0.5, pr -> 0.14444444444444446, mu1 -> -0.08888888888888889}}
+Case 1b
+{{wn -> 0.5, pr -> 0.1}}
+Case 1c
+{{wn -> 0.5, pr -> 0.14444444444444446, mu2 -> 0.08888888888888889}}
+Case 2a
+{{wn -> 0.5, pr -> 0.14444444444444446, mu1 -> -0.08888888888888889}}
+Case 2b
+{{wn -> 0.5, pr -> 0.1}}
+Case 2c
+{{wn -> 0.5, pr -> 0.14444444444444446, mu2 -> 0.08888888888888889}}
+--
+{tau -> 0.1, a -> 0.01, s -> 0., cr -> 0.1, cn -> 0.5, delta -> 0.9}
+Case 1a
+{{mu1 -> -0.8109544511500372, pr -> 0.9219089023002168, wn -> 1.0267775472558207}, {mu1 -> -0.8109544511501209, pr -> 0.9219089023002064, wn -> 1.026777547255808}}
+Case 1b
+{{pr -> 0.5548356826632344, wn -> 0.8357830305514155}}
+Case 1c
+{{pr -> 0.9022528601268426, mu2 -> 0.7891094185055606, wn -> 1.0027534957105853}, {pr -> 0.9022528601267229, mu2 -> 0.7891094184808455, wn -> 1.002753495710439}, {pr -> 0.902252860126376, mu2 -> 0.7891094184861409, wn -> 1.0027534957100153}, {pr -> 0.9022528601261819, mu2 -> 0.7891094184965508, wn -> 1.0027534957097777}}
+Case 2a
+{{wn -> 0.7777777777777785, pr -> 0.7181818181818186, mu1 -> -0.4545454545454547}}
+Case 2b
+{{wn -> 0.8481012658227851, pr -> 0.5455696202531647}}
+Case 2c
+{{wn -> 0.7545327754532781, pr -> 0.6991631799163184, mu2 -> 0.4184100418410042}}

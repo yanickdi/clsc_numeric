@@ -20,12 +20,12 @@ profit_man = (wn - cn - tau/rho*wn)*qn_ + qr_*(pr - cr) + (tau/rho*qn_ - qr_)*s
 
 # case 1:
 pn_one = Rational(1,2)*(1 - delta + pr + wn)
-rho_one = -((tau**Rational(1,3) * (-1 + delta - pr + wn)**Rational(2,3))/(2*(a*(-1 + delta))**Rational(1,3)))
-f_pn_one = lambdify([delta, wn, pr], pn_one)
-f_rho_one = lambdify([tau, a, delta, wn, pr], rho_one)
+rho_one = -((tau**Rational(1,3) * (-1 + delta - pr + wn)**Rational(2,3))/(2*(a*(1 - delta))**Rational(1,3)))
+qn_one = qn_.subs({pn:pn_one})
+qr_one = qr_.subs({pn:pn_one})
 
 profit_man_one = profit_man.subs([(pn, pn_one), (rho, rho_one)])
-lagr_man_one = (profit_man_one -mu1*(-qr_) - mu2*(qr_ - tau/rho*qn_)).subs([(pn, pn_one), (rho, rho_one)])
+lagr_man_one = (profit_man_one -mu1*(-qr_one) - mu2*(qr_one - tau/rho*qn_one)).subs([(pn, pn_one), (rho, rho_one)])
 
 lag_diff_wn = lagr_man_one.diff(wn)
 lag_diff_pr = lagr_man_one.diff(pr)
@@ -50,6 +50,10 @@ CASE_1A_JAC = [
     [f_lag_diff_pr_wn, f_lag_diff_pr_pr, f_lag_diff_pr_mu1],
     [f_lag_diff_mu1_wn, f_lag_diff_mu1_pr, f_lag_diff_mu1_mu1]]
 
+CASE_1B_JAC = [
+    [f_lag_diff_wn_wn, f_lag_diff_wn_pr],
+    [f_lag_diff_pr_wn, f_lag_diff_pr_pr]]
+
 
 # case 1a:  diff_wn == 0,   diff_pr == 0,   diff_mu1 == 0,  mu2 == 0
 def f_case_1a(vector, par):
@@ -66,18 +70,39 @@ def f_case_1a(vector, par):
     print(y)
     return y
     
+# case 1b:  diff_wn == 0,   diff_pr == 0,   mu1 == 0,  mu2 == 0
+def f_case_1b(vector, par):
+    """
+        vector must be [wn, pr]
+        args must be a tuple (ParameterObject)
+        returns a 2 dimensional scalar vector [lag_diff_wn, lag_diff_pr]
+    """
+    y = np.zeros(2)
+    wn_val =    f_lag_diff_wn(par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], 0, 0)
+    pr_val =    f_lag_diff_pr(par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], 0, 0)
+    y[0], y[1] = conv(wn_val), conv(pr_val), conv(mu1_val)
+    print(y)
+    return y
+    
 def f_case_1a_jac(vector, par):
     mat = np.zeros((3,3))
     for i,j in [(i,j) for i in range(3) for j in range(3)]:
-        val = CASE_1A_JAC[i][j](par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], vector[2], 0)
+        val = CASE_1A_JAC[i][j](par.tau, par.a, par.s, par.cr, par.cn, par.delta, vector[0], vector[1], 0, 0)
         mat[i,j] = conv(val)
     return mat
     
 def conv(val):
+    return val
     if type(val) == complex or type(val) == np.complex128:
         return 100
     else:
         return val
     
-result = root(f_case_1a, x0=[0.5, 0.5, 0.6], jac=f_case_1a_jac, args=par)
-print(result)
+#result = root(f_case_1a, x0=[0.5, 0.6, 0.7], jac=f_case_1a_jac, args=par)
+#print(result)
+#print(f_case_1a_jac([0,0], par))
+#print(lag_diff_wn.subs({tau:0.1, a:0.05, s:0.1, cr:0.2, cn:0.3, delta:0.5}).subs({mu1:0, mu2:0}).subs({pr:0.40827258264156957, wn:0.9263890418908035}))
+#print(qn.subs({tau:0.1, a:0.05, s:0.1, cr:0.2, cn:0.3, delta:0.5}).subs({mu1:0, mu2:0}).subs({pr:0.40827258264156957, wn:0.9263890418908035}))
+#print(pn_one.subs({tau:0.1, a:0.05, s:0.1, cr:0.2, cn:0.3, delta:0.5}).subs({mu1:0, mu2:0}).subs({pr:0.40827258264156957, wn:0.9263890418908035}))
+print(profit_man_one.subs({tau:0.1, a:0.05, s:0.1, cr:0.2, cn:0.3, delta:0.5}).subs({mu1:0, mu2:0}).subs({pr:0.40827258264156957, wn:0.9263890418908035}))
+#print(qr_one)

@@ -8,6 +8,7 @@ from scipy.optimize import fsolve, root
 MODEL_1, MODEL_2 = 1, 2
 _CASE_ONE, _CASE_TWO = 1, 2
 _CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
+ALL_CASES = [_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C]
 DECIMALS_ALLOW_NN = 14
 
 def is_prof_pos(prof):
@@ -20,65 +21,82 @@ def is_almost_equal(one, two):
         or (0 in (round(one, DECIMALS_ALLOW_NN), round(two, DECIMALS_ALLOW_NN)) and \
             abs(round(one, DECIMALS_ALLOW_NN)) == abs(round(two, DECIMALS_ALLOW_NN)))
             
-class ModelTwoFracQuadNumericalSolver:
+class ModelTwoFracQuad:
     """
         This class offers methods to solve the Model 2 where rho is quadratic in the retailer function
     """
     
-    def calc_profits(self, par, dec_vars):
-        if dec_vars == None:
+    @staticmethod
+    def create_dec_vars(wn, pr, case, par):
+        try:
+            if case in (_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C):  #case 1: rho >= 1
+                pn = ModelTwoFracQuad._pn_case_one(wn, pr, par)
+                rho = ModelTwoFracQuad._rho_case_one(wn, pr, par)
+            else: #case 2: rho = 1
+                pn = ModelTwoFracQuad._pn_case_two(wn, pr, par)
+                rho = 1
+            qn = ModelTwoFracQuad._qn(pn, pr, par)
+            qr = ModelTwoFracQuad._qr(pn, pr, par)
+        except ZeroDivisionError as e:
+            raise e
+        dec = DecisionVariables(MODEL_2, pn=pn, pr=pr, wn=wn, rho=rho, qn=qn, qr=qr)
+        return dec
+    
+    @staticmethod
+    def calc_profits(par, dec):
+        if dec == None:
             return (None, None)
-        wn, pn, rho, qn = dec_vars.wn, dec_vars.pn, dec_vars.rho, dec_vars.qn
-        #manu_profit = qn * (wn * (1- par.tau/rho) - par.cn + (par.tau/rho) * par.s)
-        manu_profit = (wn - cn - tau/rho * wn) * qn + qr * (pr - cr) + (tau/rho * qn - qr) * s
-        retailer_profit = qn * (pn - wn) * (1 - tau/rho) - a * rho**2
+        
+        manu_profit = dec.qn * (dec.wn * (1- par.tau/dec.rho - par.cn)) + dec.qr * (dec.pr - par.cr) + ((par.tau/dec.rho)*dec.qn - dec.qr)*par.s
+        retailer_profit = dec.qn * (dec.pn - dec.wn) * (1 - par.tau/dec.rho) - (par.a*dec.rho**2 - 1)
         return manu_profit, retailer_profit
         
-    def optimize(self, par):
-        """
-        This is the core method of this class. It will return a Solution object having stored
-        the profit of the manufacturer, the retailer, the case that led to the solution and all decision vars
+    @staticmethod
+    def _qn(pn, pr, par):
+        return 1 - (pn - pr) / (1 - par.delta)
         
-        Args:
-            par (Parameter): A Parameter object of type MODEL_2
+    def _qr(pn, pr, par):
+        return (pn - pr) / (1 - par.delta) - pr /par.delta
         
-        Returns:
-            Solution: An object of class Solution
-                      or None if there is no solution possible
-        """
-        cases = (
-            (_CASE_ONE_A, self._optimize_case_one_a),)
-            #(_CASE_ONE_B, self._optimize_case_one_b),
-            #(_CASE_ONE_C, self._optimize_case_one_c),
-            #(_CASE_TWO_A, self._optimize_case_two_a),
-            #(_CASE_TWO_B, self._optimize_case_two_b),
-            #(_CASE_TWO_C, self._optimize_case_two_c))
+    @staticmethod
+    def _pn_case_one(wn, pr, par):
+        return .5 * (1-par.delta+pr+wn)
+    
+    @staticmethod
+    def _rho_case_one(wn, pr, par):
+        return (par.tau**(1/3) * (-1+par.delta-pr+wn)**(2/3))/(2 * (par.a *(1-par.delta))**(1/3))
         
-        valid_solutions = []
-        for case_id, case_fct in cases:
-            try:
-                dec = case_fct(par)
-                profit_man, profit_ret = self.calc_profits(par, dec)
-                sol = Solution(dec, profit_man, profit_ret, case_id)
-            except ZeroDivisionError:
-                print('zero div')
-                # there occured a zero division, so this solution will be skipped
-                sol = None
-            # check valid
-            if sol is not None and self._is_valid(par, sol):
-                valid_solutions.append(sol)
-        if len(valid_solutions) > 0:
-            # take the best valid solution (manufacturer decides)
-            return max(valid_solutions, key=lambda sol: (sol.profit_man, sol.dec.lambda1, sol.dec.lambda2))
-        else:
-            return None
-            
-    def _is_valid(self, par, sol):
+    @staticmethod
+    def _pn_case_two(wn, pr, par):
+        return .5 * (1-par.delta+pr+wn)
+        
+    @staticmethod
+    def is_valid(par, sol):
         """ Tests whether a given solution is feasible regarding to all model subjects """
         # check all variables positive
         for var in (sol.dec.pn, sol.dec.pr, sol.dec.wn, sol.dec.qn, sol.dec.qr):
             if var < -10**-DECIMALS_ALLOW_NN:
                 return False
+                
+        # check profits
+        if not (sol.profit_man >= -10**-DECIMALS_ALLOW_NN and sol.profit_ret >= -10**-DECIMALS_ALLOW_NN):
+            return False
+            
+        # check rho
+        if not (sol.dec.rho >= 1):
+            return False
+        # check qr
+        if not (-10**-DECIMALS_ALLOW_NN <= sol.dec.qr <= ((par.tau/sol.dec.rho) * sol.dec.qn)+10**-DECIMALS_ALLOW_NN):
+            return False
+            
+        return True
+        
+    @staticmethod
+    def is_valid_and_case_exact(par, sol):
+        """ Tests whether a given solution is feasible regarding to all model subjects and right case """
+        if not is_valid(par, sol):
+            return False
+            
         # check case constraints
         if not (sol.dec.rho >= 1):
             return False
@@ -92,33 +110,7 @@ class ModelTwoFracQuadNumericalSolver:
         elif sol.case in (_CASE_ONE_C, _CASE_TWO_C):
             if not (is_almost_equal(sol.dec.qr, (par.tau/sol.dec.rho) * sol.dec.qn)):
                 return False
-                
-        # check profits
-        if not (sol.profit_man >= -10**-DECIMALS_ALLOW_NN and sol.profit_ret >= -10**-DECIMALS_ALLOW_NN):
-            return False
         return True
-        
-    def _optimize_case_one_a(self, par):
-        """ helper function that solves the case rho >= 1 and qr = 0 """
-        der_wn =  lambda tau, a, s, cr, cn, delta, wn, pr, mu1 : (3*(-1 + delta - pr + wn)**(2/3) * (-1 - cn + cr + delta - mu1 - 2 * pr + s + 2 * wn) + 2 * (a * (-1 + delta))** (1/3) * tau**(2/3) * (-3 + 3 * delta - 3 * pr - s + 4 * wn))/(6 * (-1 + delta) * (-1 + delta - pr + wn)** (2/3))
-        der_pr =  lambda tau, a, s, cr, cn, delta, wn, pr, mu1 : (cr*(-2 + delta) + delta**2 + 2*(mu1 + 2*pr - s) + delta*(-1 + cn - mu1 - 2*pr + s - 2*wn + (2*(a*(-1 + delta))**(1/3)*s*tau**(2/3))/(3*(-1 + delta - pr + wn)**(2/3)) - (2*(a*(-1 + delta))**(1/3)*tau**(2/3)*wn)/(3*(-1 + delta - pr + wn)**(2/3))))/(2*(-1 + delta)*delta)
-        der_mu1 = lambda tau, a, s, cr, cn, delta, wn, pr, mu1 : (delta**2 + 2*pr - delta*(1 + pr + wn))/(2*(-1 + delta)*delta)
-        def _f(x):
-            wn, pr, mu1 = x[0], x[1], x[2]
-            #y = np.zeros(3)
-            y = [0,0,0]
-            y[0] = der_wn(par.tau, par.a, par.s, par.cr, par.cn, par.delta, wn, pr, mu1)
-            y[1] = der_wn(par.tau, par.a, par.s, par.cr, par.cn, par.delta, wn, pr, mu1)
-            y[2] = der_mu1(par.tau, par.a, par.s, par.cr, par.cn, par.delta, wn, pr, mu1)
-            return y
-        root(_f, [0.5, 0.5, 0.5])
-        #sys.exit()
-        #return der_pr(par.tau, par.a, par.s, par.cr, par.cn, par.delta, 1, 1)/0
-        
-    def __pn_case_one(self, wn, pr, delta):
-        return .5 * (1 - delta + pr + wn)
-    def __rho_case_one(self, tau, a, pr, wn, delta):
-        return -((tau**(1/3) * (-1 + delta - pr + wn)**(2/3))/(2 * (a * (-1 + delta))**(1/3)))
     
 class ModelTwoNumericalSolver:
     """
@@ -204,6 +196,7 @@ class ModelTwoNumericalSolver:
             return (None, None)
         manu_profit = dec.qn * (dec.wn * (1- par.tau/dec.rho) - par.cn) + dec.qr*(dec.pr-par.cr) + ((par.tau/dec.rho)*dec.qn-dec.qr)*par.s
         retailer_profit = dec.qn * (dec.pn - dec.wn) * (1- par.tau/dec.rho) - par.a*dec.rho
+        retailer_profit += par.a
         return manu_profit, retailer_profit
         
     def _optimize_case_one_a(self, par):
@@ -373,6 +366,9 @@ class ModelOneNumericalSolver:
         dec_vars_case_2 = self._optimize_case_two(par)
         prof_man_case_2, prof_ret_case_2 = self.calc_profits(par, dec_vars_case_2)
         
+        prof_ret_case_1 += par.a
+        prof_ret_case_2 += par.a
+        
         case = None
         sol1 = Solution(dec_vars_case_1, prof_man_case_1, prof_ret_case_1, _CASE_ONE)
         sol2 = Solution(dec_vars_case_2, prof_man_case_2, prof_ret_case_2, _CASE_TWO)
@@ -445,6 +441,9 @@ class ModelOneNumericalSolver:
 class Solution:
     def __init__(self, dec, profit_man, profit_ret, case):
         self.dec, self.profit_man, self.profit_ret, self.case = dec, profit_man, profit_ret, case
+        
+    def __str__(self):
+        return 'Solution object (wn={}, pr={})'.format(self.dec.wn, self.dec.pr)
         
     
 class Parameter:

@@ -77,13 +77,17 @@ $ python3 generator.py -model 1 -output model_2.html --only-valid-solutions
 
 # PLOTTING
 
-$ python3 plotter.py -plot profit-difference
+$ python3 plotter.py -plot profit-difference-man
+or
+$ python3 plotter.py -plot profit-difference-ret
 or
 $ python3 plotter.py -plot rho-difference
 or
 $ python3 plotter.py -plot cases-model-one
 or
 $ python3 plotter.py -plot cases-model-two
+or
+$ python3 plotter.py -plot compare-cases
 # if you are in a hurry
 $ python3 plotter.py -plot any-plot-from-above --low-qual
 # plot profit-difference and rho-difference not only be calculated with relative increase but with absolute:

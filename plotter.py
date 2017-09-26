@@ -10,10 +10,13 @@ from matplotlib import cm
 from solver import drange, Parameter, MODEL_1, MODEL_2, ModelOneNumericalSolver, ModelTwoNumericalSolver
 import solver
 
-PLOT_PROFIT_DIFFERENCE = 'profit-difference'
+PLOT_PROFIT_DIFFERENCE_MAN = 'profit-difference-man'
+PLOT_PROFIT_DIFFERENCE_RET = 'profit-difference-ret'
 PLOT_RHO_DIFFERENCE = 'rho-difference'
 PLOT_CASES_MODEL_ONE = 'cases-model-one'
 PLOT_CASES_MODEL_TWO = 'cases-model-two'
+PLOT_COMPARE_CASES = 'compare-cases'
+ALLOWED_PLOTS = PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, PLOT_COMPARE_CASES
 AUTOMATED_PLOTS = 'automated-plots'
 
 _ALL_CASES_MODEL_1 = [solver._CASE_ONE, solver._CASE_TWO]
@@ -28,14 +31,17 @@ class CountourPlotter:
         self.step_size_cn, self.lower_bound_cn, self.upper_bound_cn = params['step_size_cn'], params['lower_bound_cn'], params['upper_bound_cn']
         self._calc_func = {
             PLOT_RHO_DIFFERENCE : self.__rho_calc_func,
-            PLOT_PROFIT_DIFFERENCE : self.__profit_calc_func,
+            PLOT_PROFIT_DIFFERENCE_MAN : self.__profit_calc_func_man,
+            PLOT_PROFIT_DIFFERENCE_RET : self.__profit_calc_func_ret,
             PLOT_CASES_MODEL_ONE : self.__case_calc_func_model_one,
-            PLOT_CASES_MODEL_TWO : self.__case_calc_func_model_two
+            PLOT_CASES_MODEL_TWO : self.__case_calc_func_model_two,
+            PLOT_COMPARE_CASES : self.__cases_compare_calc_func
         }[type]
         self.absolute = params['absolute']
         self.gray = params['gray']
         self.output = params['output']
-        if type == PLOT_PROFIT_DIFFERENCE and self.absolute: self._calc_func = self.__profit_calc_func_absolute
+        if type == PLOT_PROFIT_DIFFERENCE_MAN and self.absolute: self._calc_func = self.__profit_calc_func_man_absolute
+        elif type == PLOT_PROFIT_DIFFERENCE_RET and self.absolute: self._calc_func = self.__profit_calc_func_ret_absolute
         elif type == PLOT_RHO_DIFFERENCE  and self.absolute: self._calc_func = self.__rho_calc_func_absolute
         self.matrix = None
     
@@ -89,16 +95,60 @@ class CountourPlotter:
             return np.nan
         return (sol_model_2.dec.rho - sol_model_1.dec.rho)
         
-    def __profit_calc_func(self, sol_model_1, sol_model_2, par):
-        if sol_model_1 is None or sol_model_2 is None:# or sol_model_1.profit_man < 0.01:
-            return np.nan
-        rel =  (sol_model_2.profit_man - sol_model_1.profit_man) / sol_model_1.profit_man
-        return max(0, min(1, rel))
         
-    def __profit_calc_func_absolute(self, sol_model_1, sol_model_2, par):
+    def __cases_compare_calc_func(self, sol_model_1, sol_model_2, par):
+        #0 equal cases
+        #1 model 1 case 1, model 2 case 2
+        #2 model 1 case 2, model 2 case 1
+        #3 solution in 1, not in 2
+        #4 solution in 2, not in 1
+        if sol_model_1 is None or sol_model_2 is None:
+            if sol_model_1:
+                return 3
+            elif sol_model_2:
+                return 4
+            else:
+                return np.nan
+        case_1, case_2 = sol_model_1.case, sol_model_2.case
+        switch = 0
+        if case_1 == solver._CASE_ONE and _ALL_CASES_MODEL_2.index(case_2) not in [0, 1, 2]:
+            switch = 1
+        elif case_1 == solver._CASE_TWO and _ALL_CASES_MODEL_2.index(case_2) not in [3,4,5]:
+            switch = 2
+        
+        return switch
+        
+    def __profit_calc_func_man(self, sol_model_1, sol_model_2, par):
         if sol_model_1 is None or sol_model_2 is None:
             return np.nan
-        rel =  (sol_model_2.profit_man - sol_model_1.profit_man)
+        rel =  (sol_model_2.profit_man - sol_model_1.profit_man) / sol_model_1.profit_man
+        #if rel <= 0 or rel >= .3:
+        #if rel < .3:
+        #    return np.nan
+        #return max(0, min(.5, rel))
+        return rel
+        
+        
+    def __profit_calc_func_ret(self, sol_model_1, sol_model_2, par):
+        if sol_model_1 is None or sol_model_2 is None:
+            return np.nan
+        rel =  (sol_model_2.profit_ret - sol_model_1.profit_man) / sol_model_1.profit_man
+        return rel
+        
+    def __profit_calc_func_ret_absolute(self, sol_model_1, sol_model_2, par):
+        if sol_model_1 is None or sol_model_2 is None:
+            return np.nan
+        rel =  sol_model_2.profit_ret - sol_model_1.profit_ret
+        if rel >= 0: rel = np.nan
+        return rel
+        
+    def __profit_calc_func_man_absolute(self, sol_model_1, sol_model_2, par):
+        if sol_model_1 is None and sol_model_2 is None or par.cn <= par.cr:
+            return np.nan
+        prof_1 = sol_model_1.profit_man if sol_model_1 is not None else 0
+        prof_2 = sol_model_2.profit_man if sol_model_2 is not None else 0
+        
+        rel =  (prof_2 - prof_1)
         return rel
         
     def __case_calc_func_model_one(self, sol_model_1, sol_model_2, par):
@@ -110,13 +160,29 @@ class CountourPlotter:
     def __case_calc_func_model_two(self, sol_model_1, sol_model_2, par):
         if sol_model_2 == None:
             return np.nan
+        #elif round(sol_model_2.profit_man, 1) == 0 or round(sol_model_2.profit_ret, 1) == 0:
+        #    return np.nan
         else:
             return _ALL_CASES_MODEL_2.index(sol_model_2.case) + 1
         
     def plot_contourf(self):
-        if self.type == PLOT_PROFIT_DIFFERENCE:
+        cmap = cm.gray if self.gray else None         
+        
+        fig = plt.figure()
+        ax = plt.subplot(111)
+        
+        levels, colors, extend = None, None, 'both'
+        yticklabels = None
+        
+        if self.type == PLOT_PROFIT_DIFFERENCE_MAN :
             title = 'Increase of Profits with vs. without Online Store'
             side_title = r'relative increase of $\pi_{man}$'
+            if self.absolute:
+                side_title = side_title.replace('relative', 'absolute')
+            cbar_ticks = None
+        elif self.type == PLOT_PROFIT_DIFFERENCE_RET :
+            title = 'Increase of Profits with vs. without Online Store'
+            side_title = r'relative increase of $\pi_{ret}$'
             if self.absolute:
                 side_title = side_title.replace('relative', 'absolute')
             cbar_ticks = None
@@ -129,39 +195,39 @@ class CountourPlotter:
         elif self.type == PLOT_CASES_MODEL_ONE:
             title = r'Which case will be active in the event of no Online Shop'
             side_title = r'0 = no solution, 1 = case 1,   2 = case 2'
-            cbar_ticks = None
+            levels = [0, 1, 2]
+            yticklabels = r'case $\rho\geq1$', r'case $\rho = 1$'
         elif self.type == PLOT_CASES_MODEL_TWO:
             title = r'Which case will be active in the event of having an Online Shop'
             side_title = r'1=c1a, 2=c1b, 3=c1c, 4=c2a, 5=c2b, 6=c3b'
-            cbar_ticks = range(2,7)
-        cmap = cm.gray if self.gray else None            
-        fig = plt.figure()
-        ax = plt.subplot(111)
-        
+            levels = [0,1,2,3,4,5,6]
+            yticklabels = '1a', '1b', '1c', '2a', '2b', '2c'
+        elif self.type == PLOT_COMPARE_CASES:
+            title = r'Comparison of Cases Model 1 vs. 2'
+            cbar_ticks = None
+            side_title = ''
+            yticklabels = ['same case', 'M1C1, M2C2', 'M1C2, M2C1', 'S1N2', 'S2N1']
+            levels = [0, 1, 2, 3, 4]
+        #fig.suptitle(title)
         x_vector = np.linspace(self.lower_bound_a, self.upper_bound_a, num=self.nr_cols)       # x is a
         y_vector = np.linspace(self.lower_bound_cn, self.upper_bound_cn, num=self.nr_lines)    # y is cn
         
-        #levels = [0, 1, 100]
-        #colors = ['green', 'blue', 'yellow', 'black']
-        #extend = 'both'
-        #cmap, norm = mp.colors.from_levels_and_colors(levels, colors, extend=extend)
-        #m = plt.pcolormesh(self.matrix, cmap=cmap, norm=norm)
-        #plt.colorbar(m)
-        #plt.show()
-        #sys.exit()
- 
-        #cont = ax.contourf(x_vector, y_vector, self.matrix, label='heatmap', cmap=cmap, norm=norm)
-        cont = ax.contourf(x_vector, y_vector, self.matrix, label='heatmap')
-        fig.suptitle(title)
+        
+        cont = ax.contourf(x_vector, y_vector, self.matrix, label='heatmap',
+            levels=levels, colors=colors, origin='lower', extend=extend)
+        cont.cmap.set_under('yellow')
+        cont.cmap.set_over('cyan')
+        cbar = fig.colorbar(cont)
+        if yticklabels:
+            cbar.ax.set_yticklabels(yticklabels)# vertically oriented colorbar
+        cbar.ax.set_ylabel(side_title)
         ax.set_xlabel('a')
         ax.set_ylabel(r'$c_n$')
         
-        cbar = plt.colorbar(cont)#, ticks=cbar_ticks)
-        cbar.ax.set_ylabel(side_title)
         
         # Put a text of paramaters below current axis
         txt = self.__par_txt()
-        fig.text(0.6, 0.05, txt, fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
+        fig.text(0.20, 0.83, txt, fontsize=12)#, bbox=dict(facecolor='white', alpha=0.5))
         plt.subplots_adjust(bottom=0.15)
         if self.output == None: plt.show()
         else:
@@ -197,7 +263,8 @@ def __parser_output_file(string):
     return string
     
 def __parser_plot_name(string):
-    allowed = (PLOT_PROFIT_DIFFERENCE, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, AUTOMATED_PLOTS)
+    #allowed = (PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, AUTOMATED_PLOTS)
+    allowed = ALLOWED_PLOTS
     if string not in allowed:
         raise argparse.ArgumentTypeError('Implemented plots are: ' + ' or '.join(allowed))
     return string
@@ -283,11 +350,11 @@ if __name__ == '__main__':
         else:
             output = None
         
-        
+         
         plotter = CountourPlotter(args.plot[0], params={
             'tau': .3, 's': .07, 'cr': .1, 'delta' : .3,
-            'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .04,
-            'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : 1.,
+            'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
+            'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
             'absolute' : absolute,
             'gray'   : gray,
             'output' : output
