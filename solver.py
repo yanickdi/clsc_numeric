@@ -1,11 +1,12 @@
 import sys
 from math import sqrt
+import sqlite3
 
 import numpy as np
 from scipy.optimize import fsolve, root
 
 
-MODEL_1, MODEL_2 = 1, 2
+MODEL_1, MODEL_2, MODEL_2_QUAD = 1, 2, 3
 _CASE_ONE, _CASE_TWO = 1, 2
 _CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
 ALL_CASES = [_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C]
@@ -48,7 +49,7 @@ class ModelTwoFracQuad:
             return (None, None)
         
         manu_profit = dec.qn * (dec.wn * (1- par.tau/dec.rho - par.cn)) + dec.qr * (dec.pr - par.cr) + ((par.tau/dec.rho)*dec.qn - dec.qr)*par.s
-        retailer_profit = dec.qn * (dec.pn - dec.wn) * (1 - par.tau/dec.rho) - (par.a*dec.rho**2 - 1)
+        retailer_profit = dec.qn * (dec.pn - dec.wn) * (1 - par.tau/dec.rho) - (par.a*dec.rho - 1)**2
         return manu_profit, retailer_profit
         
     @staticmethod
@@ -195,7 +196,7 @@ class ModelTwoNumericalSolver:
         if dec == None:
             return (None, None)
         manu_profit = dec.qn * (dec.wn * (1- par.tau/dec.rho) - par.cn) + dec.qr*(dec.pr-par.cr) + ((par.tau/dec.rho)*dec.qn-dec.qr)*par.s
-        retailer_profit = dec.qn * (dec.pn - dec.wn) * (1- par.tau/dec.rho) - par.a*dec.rho
+        retailer_profit = dec.qn * (dec.pn - dec.wn) * (1- par.tau/dec.rho) - par.a*(dec.rho-1)
         retailer_profit += par.a
         return manu_profit, retailer_profit
         
@@ -329,7 +330,7 @@ class ModelOneNumericalSolver:
             return (None, None)
         wn, pn, rho, qn = dec_vars.wn, dec_vars.pn, dec_vars.rho, dec_vars.qn
         manu_profit = qn * (wn * (1- par.tau/rho) - par.cn + (par.tau/rho) * par.s)
-        retailer_profit = qn * (pn - wn) * (1 - par.tau/rho) - par.a * rho
+        retailer_profit = qn * (pn - wn) * (1 - par.tau/rho) - par.a * (rho-1)
         return manu_profit, retailer_profit
         
     def _is_valid(self, par, sol):
@@ -445,7 +446,8 @@ class Solution:
     def __str__(self):
         return 'Solution object (wn={}, pr={})'.format(self.dec.wn, self.dec.pr)
         
-    
+
+        
 class Parameter:
     """
         An object of this class is a struct like wrapper for all Model Input Parameter (constants)
@@ -454,24 +456,16 @@ class Parameter:
     def __init__(self, model, tau=None, a=None, s=None, cr=None, cn=None, delta=None):
         if model == MODEL_1:
             self.tau, self.a, self.s, self.cn = tau, a, s, cn
-        elif model == MODEL_2:
-            self.tau, self.a, self.s, self.cr, self.cn, self.delta = tau, a, s, cr, cn, delta
         else:
-            raise RuntimeError(str(model) + ' not allowed.')
+            self.tau, self.a, self.s, self.cr, self.cn, self.delta = tau, a, s, cr, cn, delta
         self.model = model
-            
-    def is_valid(self):
-        #TODO
-        raise NotImplementedError()
         
     def __str__(self):
         if self.model == MODEL_1:
             return 'tau={:.2f}, a={:.4f}, s={:.2f}, cn={:.4f}'.format(self.tau, self.a, self.s, self.cn)
-        elif self.model == MODEL_2:
+        else:
             return 'tau={:.2f}, a={:.4f}, s={:.2f}, cr={:.2f}, cn={:.4f}, delta={:.2f}'.format(
                 self.tau, self.a, self.s, self.cr, self.cn, self.delta)
-        else:
-            return '?'
             
     def __repr__(self):
         return self.__str__()
@@ -484,11 +478,9 @@ class DecisionVariables:
     def __init__(self, model, pn=None, pr=None, wn=None, rho=None, qn=None, qr=None, lambda1=None, lambda2=None):
         if model == MODEL_1:
             self.wn, self.pn, self.rho, self.qn = wn, pn, rho, qn
-        elif model == MODEL_2:
+        else:
             self.pn, self.pr, self.wn, self.rho, self.qn, self.qr = pn, pr, wn, rho, qn, qr
             self.lambda1, self.lambda2 = lambda1, lambda2
-        else:
-            raise RuntimeError(str(model) + ' not allowed.')
         self.model = model
         
     def __str__(self):
@@ -506,6 +498,55 @@ def drange(start, end, step_size):
     while r <= end:
         yield r
         r += step_size
+        
+class Database:
+    def __init__(self):
+        self.conn = sqlite3.connect('database.db')
+        # turn on foreign key support
+        #self.conn.execute('''PRAGMA foreign_keys = ON;''')
+        # create tables
+        with self.conn as c:
+            c.execute('''CREATE TABLE IF NOT EXISTS parameter
+                ( parid integer primary key,
+                  tau real, a real, s real, cr real, cn real, delta real)''')
+            c.execute('''CREATE TABLE IF NOT EXISTS solution
+                ( solid integer primary key, parid integer not null,
+                  wn real, pr real, pn real, rho real, qn real, qr real,
+                  profit_man real not null, profit_ret real not null, case_comment text,
+                  FOREIGN KEY(parid) REFERENCES parameter(parid) ON DELETE RESTRICT)''')
     
+    instance = None
+        
+    @staticmethod
+    def getInstance():
+        if Database.instance is None:
+            Database.instance = Database()
+        return Database.instance
+        
+    def beginWrite(self):
+        self.conn.execute('BEGIN')
+        
+    def endWrite(self):
+        self.conn.execute('END')
+        
+    def writeParAndSolution(self, par, sol):
+        cur = self.conn.execute('''INSERT INTO parameter (tau, a, s, cr, cn, delta)
+                       VALUES (?, ?, ?, ?, ?, ?)''', (par.tau, par.a, par.s, par.cr, par.cn, par.delta))
+        if sol is not None:
+            dec = sol.dec
+            cur = self.conn.execute('''INSERT INTO solution (parid, wn, pr, pn, rho, qn, qr,
+                                        profit_man, profit_ret, case_comment)
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                                   (cur.lastrowid, dec.wn, dec.pr, dec.pn, dec.rho, dec.qn, dec.qr,
+                                    sol.profit_man, sol.profit_ret, sol.case))
+    
+    def commit(self):
+        self.conn.commit()
+        
 if __name__ == '__main__':
+    db = Database.getInstance()
+    par = Parameter(MODEL_2, 1, 2, 3, 4, 5, 6)
+    dec = DecisionVariables(MODEL_2, 0, 0, 0, 0, 0, 0)
+    sol = Solution(dec, 1, 1, _CASE_ONE)
+    db.writeParAndSolution(par, sol)
     sys.exit('You cannot call this file directly')

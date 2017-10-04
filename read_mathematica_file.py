@@ -2,7 +2,7 @@ FILENAME = 'calc.txt'
 
 import sys
 
-from solver import Parameter, MODEL_2, Solution, ALL_CASES, ModelTwoFracQuad
+from solver import Parameter, MODEL_2, Solution, ALL_CASES, ModelTwoFracQuad, Database
 
 def __retrFloat(str):
     return float(str.split(' -> ')[1])
@@ -79,32 +79,39 @@ def processSection(par, bufferedLines):
         return max(all_solutions, key=lambda sol: sol.profit_man)
     else:
         return None
-
-with open(FILENAME, 'r') as f:
-    line = f.readline()
-    actParameter = None
-    inBetweenLines = []
-    nextIsFirstLine = False
-    i = 0
-    while line != "":
-        line = line.strip()
-        if line == '--':
-            nextIsFirstLine = True
-        elif nextIsFirstLine:
-            # we are in the first line
-            actParameter = getParameter(line)
-            inBetweenLines = []
-            nextIsFirstLine = False
-        else:
-            # we are at Solution Section - buffer all lines
-            if actParameter is not None:
-                inBetweenLines.append(line)
-        line = f.readline()
         
-        # can we process anything?
-        if (nextIsFirstLine or line == "") and actParameter is not None:
-            sol = processSection(actParameter, inBetweenLines)
-            if sol is not None:
-                i += 1
+def main():
+    db = Database.getInstance()
+    with open(FILENAME, 'r') as f:
+        line = f.readline()
+        actParameter = None
+        inBetweenLines = []
+        nextIsFirstLine = False
+        i = 0
+        db.beginWrite()
+        while line != "":
+            line = line.strip()
+            if line == '--':
+                nextIsFirstLine = True
+            elif nextIsFirstLine:
+                # we are in the first line
+                actParameter = getParameter(line)
+                inBetweenLines = []
+                nextIsFirstLine = False
+            else:
+                # we are at Solution Section - buffer all lines
+                if actParameter is not None:
+                    inBetweenLines.append(line)
+            line = f.readline()
             
-    print(i)
+            # can we process anything?
+            if (nextIsFirstLine or line == "") and actParameter is not None:
+                sol = processSection(actParameter, inBetweenLines)
+                # write solution to database
+                db.writeParAndSolution(actParameter, sol)
+                i += 1
+                print(i)
+        db.endWrite()
+        
+if __name__ == '__main__':
+    main()

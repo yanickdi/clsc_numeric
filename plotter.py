@@ -352,7 +352,7 @@ if __name__ == '__main__':
         
          
         plotter = CountourPlotter(args.plot[0], params={
-            'tau': .3, 's': .07, 'cr': .1, 'delta' : .3,
+            'tau': .3, 's': .25, 'cr': .1, 'delta' : .3,
             'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
             'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
             'absolute' : absolute,
