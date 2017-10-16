@@ -1,8 +1,10 @@
+import sys, os
+if __name__ == '__main__': sys.path.append(os.path.abspath('..'))
 import unittest
 from math import sqrt
 
-from solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, Parameter, DecisionVariables, MODEL_1, MODEL_2
-from generator import Generator, MemoryOutputFile
+from clsc_numeric.solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, Parameter, DecisionVariables, MODEL_1, MODEL_2, _CASE_TWO_C
+from clsc_numeric.generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_1a(self):
@@ -99,7 +101,7 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qr, 0)
         self.assertAlmostEqual(dec.qn, 0.264393546459)
         self.assertAlmostEqual(profit_man, 0.0296879322287)
-        self.assertAlmostEqual(profit_ret, 0.0129795065546)
+        self.assertAlmostEqual(profit_ret, 0.0229795065546)
         self.assertAlmostEqual(dec.lambda1, 2.07500000000)
         self.assertAlmostEqual(dec.lambda2, 0)
         
@@ -118,7 +120,7 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qn, .32905694150)
         self.assertAlmostEqual(dec.qr, 0.06250000000)
         self.assertAlmostEqual(profit_man, .0236623643454)
-        self.assertAlmostEqual(profit_ret, .0008443058496)
+        self.assertAlmostEqual(profit_ret, .0508443058496)
         self.assertAlmostEqual(dec.lambda1, 0)
         self.assertAlmostEqual(dec.lambda2, 0)
         
@@ -136,7 +138,7 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qn, .2653143528319)
         self.assertAlmostEqual(dec.qr, .1581138830084)
         self.assertAlmostEqual(profit_man,  .0212244937790)
-        self.assertAlmostEqual(profit_ret, -.0027016118539)
+        self.assertAlmostEqual(profit_ret, .0472983881461)
         self.assertAlmostEqual(dec.lambda1, 0)
         self.assertAlmostEqual(dec.lambda2, -0.050994071)
       
@@ -155,7 +157,7 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qn, .282407407)
         self.assertAlmostEqual(dec.qr, .0)
         self.assertAlmostEqual(profit_man,  .0861342592593)
-        self.assertAlmostEqual(profit_ret, -.0356442901235)
+        self.assertAlmostEqual(profit_ret, .0143557098765)
         self.assertAlmostEqual(dec.lambda1, -.070740741)
         self.assertAlmostEqual(dec.lambda2, 0)
         
@@ -174,7 +176,7 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qn, .188547486)
         self.assertAlmostEqual(dec.qr, .133379888)
         self.assertAlmostEqual(profit_man,  .0908519553073)
-        self.assertAlmostEqual(profit_ret, -.0436009721919)
+        self.assertAlmostEqual(profit_ret, 0.0063990278081)
         self.assertAlmostEqual(dec.lambda1, 0)
         self.assertAlmostEqual(dec.lambda2, 0)
         
@@ -193,7 +195,7 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         self.assertAlmostEqual(dec.qn, .26612903226)
         self.assertAlmostEqual(dec.qr, .02661290323)
         self.assertAlmostEqual(profit_man,  .0878225806452)
-        self.assertAlmostEqual(profit_ret, -.0372515608741)
+        self.assertAlmostEqual(profit_ret, .0127484391259)
         self.assertAlmostEqual(dec.lambda1, 0)
         self.assertAlmostEqual(dec.lambda2, 0.052903225806451626)
 
@@ -201,7 +203,8 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         solver = ModelTwoNumericalSolver()
         par = Parameter(MODEL_2, tau=.1, a=.05, s=.1, cr=.2, cn=.3, delta=.8)
         sol = solver.optimize(par)
-        self.assertIsNone(sol)
+        self.assertIsNotNone(sol)
+        
         
     def test_optimize_instance_b(self):
         solver = ModelTwoNumericalSolver()
@@ -216,7 +219,7 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         sol = solver.optimize(par)
         self.assertIsNotNone(sol)
         self.assertAlmostEqual(sol.profit_man, 0.1687500000000)
-        self.assertAlmostEqual(sol.profit_ret, 0.0181250000000)
+        self.assertAlmostEqual(sol.profit_ret, 0.0281250000000)
         
     def test_optimize_instance_d(self):
         solver = ModelTwoNumericalSolver()
@@ -224,20 +227,30 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         par = Parameter(MODEL_2, tau=.4, a=.01, s=.0, cr=.0, cn=.0, delta=.9)
         sol = solver.optimize(par)
         self.assertIsNotNone(sol)
-        self.assertAlmostEqual(sol.profit_man, 0.1382727272727)
+        self.assertAlmostEqual(sol.profit_man, 0.1669565217391)
         
     def test_optimize_instance_e(self):
         solver = ModelTwoNumericalSolver()
         # i dont know whether this parms lead to two a, but i will check the output anyway
         par = Parameter(MODEL_2, tau=.7, a=.01, s=.4, cr=.4, cn=.6, delta=.9)
         sol = solver.optimize(par)
-        self.assertIsNone(sol)
+        self.assertTrue(sol.case == _CASE_TWO_C)
         
     def test_optimize_instance_f(self):
         solver = ModelTwoNumericalSolver()
         par = Parameter(MODEL_2, tau=.9, a=.1, s=.2, cr=.4, cn=.8, delta=.4)
         sol = solver.optimize(par)
         self.assertIsNone(sol)
+        
+        
+class TestToday(unittest.TestCase):
+    def test_right_case(self):
+        solver = ModelTwoNumericalSolver()
+        #a = np.
+        par = Parameter(MODEL_2, tau=.09, a=0.00146, s=.04, cr=.04, cn=.1, delta=.7956)
+        sol = solver.optimize(par)
+        self.assertAlmostEqual(sol.profit_man, 0.1582925507399)
+        print(sol.dec)
              
 class TestGenerator(unittest.TestCase):
     def test_model_1_compare_analytical(self):

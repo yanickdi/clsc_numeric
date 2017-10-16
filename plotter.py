@@ -1,14 +1,23 @@
 import argparse
 from math import log
-import sys
+import sys, os
+if __name__ == '__main__': sys.path.append(os.path.abspath('..'))
 
 import numpy as np
 import matplotlib as mp
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-from solver import drange, Parameter, MODEL_1, MODEL_2, ModelOneNumericalSolver, ModelTwoNumericalSolver
-import solver
+from clsc_numeric import solver
+from clsc_numeric.solver import drange, Parameter, MODEL_1, MODEL_2, ModelOneNumericalSolver, ModelTwoNumericalSolver
+
+# my color palette:
+RED_DARK = '#a70000'
+RED_MEDIUM = '#ec5300'
+RED_LIGHT = '#db1414'
+BLUE_DARK = '#0d0548'
+BLUE_MEDIUM = '#1b51a6'
+BLUE_LIGHT = '#1b51a6'
 
 PLOT_PROFIT_DIFFERENCE_MAN = 'profit-difference-man'
 PLOT_PROFIT_DIFFERENCE_RET = 'profit-difference-ret'
@@ -16,7 +25,8 @@ PLOT_RHO_DIFFERENCE = 'rho-difference'
 PLOT_CASES_MODEL_ONE = 'cases-model-one'
 PLOT_CASES_MODEL_TWO = 'cases-model-two'
 PLOT_COMPARE_CASES = 'compare-cases'
-ALLOWED_PLOTS = PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, PLOT_COMPARE_CASES
+PLOT_FIXED_PLOT = 'fixed-plot'
+ALLOWED_PLOTS = PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, PLOT_COMPARE_CASES, PLOT_FIXED_PLOT
 AUTOMATED_PLOTS = 'automated-plots'
 
 _ALL_CASES_MODEL_1 = [solver._CASE_ONE, solver._CASE_TWO]
@@ -40,6 +50,7 @@ class CountourPlotter:
         self.absolute = params['absolute']
         self.gray = params['gray']
         self.output = params['output']
+        self.nolegend = params['nolegend']
         if type == PLOT_PROFIT_DIFFERENCE_MAN and self.absolute: self._calc_func = self.__profit_calc_func_man_absolute
         elif type == PLOT_PROFIT_DIFFERENCE_RET and self.absolute: self._calc_func = self.__profit_calc_func_ret_absolute
         elif type == PLOT_RHO_DIFFERENCE  and self.absolute: self._calc_func = self.__rho_calc_func_absolute
@@ -52,8 +63,10 @@ class CountourPlotter:
             Returns a tuple of (par_model_1, par_model_2)
         """
         def __cr(cn):
-            if self.cr == 'delta*cn/2':
-                return self.delta * cn / 2
+            #if self.cr == 'delta*cn/2':
+            #    return self.delta * cn / 2
+            if self.cr == '0.4*cn':
+                return 0.4 * cn
             else:
                 return self.cr
                 
@@ -62,12 +75,19 @@ class CountourPlotter:
                 return cn / 2
             else:
                 return self.s
-                
-        for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
-            for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
-                par_model_1 = Parameter(MODEL_1, tau=self.tau, a=a, s=__s(cn), cn=cn)
-                par_model_2 = Parameter(MODEL_2, tau=self.tau, a=a, s=__s(cn),  cr=__cr(cn), cn=cn, delta=self.delta)
-                yield (line, col, par_model_1, par_model_2)
+        
+        if self.s == '0.4*cn' and self.cr == '0.4*cn':
+            for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
+                for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
+                    par_model_1 = Parameter(MODEL_1, tau=self.tau, a=a, s=0.4 * cn, cn=cn)
+                    par_model_2 = Parameter(MODEL_2, tau=self.tau, a=a, s=0.4 * cn,  cr=0.4 * cn, cn=cn, delta=self.delta)
+                    yield (line, col, par_model_1, par_model_2)
+        else:
+            for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
+                for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
+                    par_model_1 = Parameter(MODEL_1, tau=self.tau, a=a, s=__s(cn), cn=cn)
+                    par_model_2 = Parameter(MODEL_2, tau=self.tau, a=a, s=__s(cn),  cr=__cr(cn), cn=cn, delta=self.delta)
+                    yield (line, col, par_model_1, par_model_2)
     
     def calc(self):
         self.nr_cols = int((self.upper_bound_a-self.lower_bound_a)/self.step_size_a) + 1
@@ -132,14 +152,13 @@ class CountourPlotter:
     def __profit_calc_func_ret(self, sol_model_1, sol_model_2, par):
         if sol_model_1 is None or sol_model_2 is None:
             return np.nan
-        rel =  (sol_model_2.profit_ret - sol_model_1.profit_man) / sol_model_1.profit_man
+        rel =  (sol_model_2.profit_ret - sol_model_1.profit_ret) / sol_model_1.profit_ret
         return rel
         
     def __profit_calc_func_ret_absolute(self, sol_model_1, sol_model_2, par):
         if sol_model_1 is None or sol_model_2 is None:
             return np.nan
         rel =  sol_model_2.profit_ret - sol_model_1.profit_ret
-        if rel >= 0: rel = np.nan
         return rel
         
     def __profit_calc_func_man_absolute(self, sol_model_1, sol_model_2, par):
@@ -199,8 +218,10 @@ class CountourPlotter:
             yticklabels = r'case $\rho\geq1$', r'case $\rho = 1$'
         elif self.type == PLOT_CASES_MODEL_TWO:
             title = r'Which case will be active in the event of having an Online Shop'
-            side_title = r'1=c1a, 2=c1b, 3=c1c, 4=c2a, 5=c2b, 6=c3b'
+            #side_title = r'1=c1a, 2=c1b, 3=c1c, 4=c2a, 5=c2b, 6=c3b'
+            side_title = ''
             levels = [0,1,2,3,4,5,6]
+            colors = ['#ee4b4b', '#e12726', '#960000', '#44db6b', '#0ed040', '#009727']
             yticklabels = '1a', '1b', '1c', '2a', '2b', '2c'
         elif self.type == PLOT_COMPARE_CASES:
             title = r'Comparison of Cases Model 1 vs. 2'
@@ -226,9 +247,10 @@ class CountourPlotter:
         
         
         # Put a text of paramaters below current axis
-        txt = self.__par_txt()
-        fig.text(0.20, 0.83, txt, fontsize=12)#, bbox=dict(facecolor='white', alpha=0.5))
-        plt.subplots_adjust(bottom=0.15)
+        if not self.nolegend:
+            txt = self.__par_txt()
+            fig.text(0.20, 0.83, txt, fontsize=12)#, bbox=dict(facecolor='white', alpha=0.5))
+            plt.subplots_adjust(bottom=0.15)
         if self.output == None: plt.show()
         else:
             plt.savefig(self.output)
@@ -237,6 +259,8 @@ class CountourPlotter:
     def __par_txt(self):
         if self.cr == 'delta*cn/2':
             _cr = r'$\frac{\delta*cn}{2}$'
+        elif self.cr == '0.4*cn':
+            _cr = '40% of cn'
         else:
             _cr = '{:.2f}'.format(self.cr)
         if self.s == 'cn/2':
@@ -247,7 +271,157 @@ class CountourPlotter:
         
     def plot(self):
         self.plot_contourf()
-            
+
+class FixedPlot:
+    def __init__(self, filename=None):
+        self.filename = filename
+        self.calc()
+        
+    def calc(self):
+        cn = .1
+        self.all_a = np.linspace(0.0, 0.01, num=500)
+        nr_elements = len(self.all_a)
+        # vectors for 'with online shop':
+        self.on_profit_man = np.zeros(nr_elements)
+        self.on_profit_ret = np.zeros(nr_elements)
+        self.on_rho = np.zeros(nr_elements)
+        self.on_qn = np.zeros(nr_elements)
+        self.on_qr = np.zeros(nr_elements)
+        self.on_pn = np.zeros(nr_elements)
+        self.on_pr = np.zeros(nr_elements)
+        self.on_wn = np.zeros(nr_elements)
+        
+        # vectors for 'without online shop':
+        self.no_profit_man = np.zeros(nr_elements)
+        self.no_profit_ret = np.zeros(nr_elements)
+        self.no_rho = np.zeros(nr_elements)
+        self.no_qn = np.zeros(nr_elements)
+        self.no_qr = np.zeros(nr_elements)
+        self.no_pn = np.zeros(nr_elements)
+        self.no_wn = np.zeros(nr_elements)
+        
+        solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
+        for i, a in enumerate(self.all_a):
+            #a = round(a, 5)
+            par_n = Parameter(MODEL_1, tau=.09, a=a, s=0.4*cn, cn=cn)
+            par_o = Parameter(MODEL_2, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
+            sol_n = solver_m1.optimize(par_n)
+            sol_o = solver_m2.optimize(par_o)
+            if sol_o == None or a == 0:
+                self.on_profit_ret[i] = None
+                self.on_profit_man[i] = None
+                self.on_rho[i] = None
+                self.on_qn[i] = None
+                self.on_qr[i] = None
+                self.on_pn[i] = None
+                self.on_pr[i] = None
+                self.on_wn[i] = None
+            else:
+                self.on_profit_ret[i] = sol_o.profit_ret
+                self.on_profit_man[i] = sol_o.profit_man
+                self.on_rho[i] = sol_o.dec.rho
+                self.on_qn[i] = sol_o.dec.qn
+                self.on_qr[i] = sol_o.dec.qr
+                self.on_pn[i] = sol_o.dec.pn
+                self.on_pr[i] = sol_o.dec.pr
+                self.on_wn[i] = sol_o.dec.wn
+            if sol_n == None or a == 0:
+                self.no_profit_ret[i] = None
+                self.no_profit_man[i] = None
+                self.no_rho[i] = None
+                self.no_qn[i] = None
+                self.no_pn[i] = None
+                self.no_wn[i] = None
+            else:
+                self.no_profit_ret[i] = sol_n.profit_ret
+                self.no_profit_man[i] = sol_n.profit_man
+                self.no_rho[i] = sol_n.dec.rho
+                self.no_qn[i] = sol_n.dec.qn
+                self.no_pn[i] = sol_n.dec.pn
+                self.no_wn[i] = sol_n.dec.wn
+                
+    def plot(self):
+        #self.plot_profits()
+        #self.plot_profits(relative=True)
+        #self.plot_rhos()
+        #self.plot_quantities()
+        self.plot_prices()
+        #self.plot_wholesale_prices()
+        pass        
+        
+    def plot_profits(self, relative=False):
+        fig, ax = plt.subplots()
+        on_profit_sc = self.on_profit_man + self.on_profit_ret
+        no_profit_sc = self.no_profit_man + self.no_profit_ret
+        
+        if relative:
+            no_profit_man = self.no_profit_man * 0 + 1# / self.no_profit_man
+            no_profit_ret = self.no_profit_ret / self.no_profit_man
+            on_profit_ret = self.on_profit_ret / self.no_profit_man
+            on_profit_man = self.on_profit_man / self.no_profit_man
+        
+        # with online store:
+        pl1,  = ax.plot(self.all_a, on_profit_ret, color='#1b51a6')
+        ax.text(self.all_a[-1], on_profit_ret[-1], r'$\pi_{R}^{O}$', color=pl1.get_c())
+        pl2, = ax.plot(self.all_a, on_profit_man, color='#1b51a6')
+        ax.text(self.all_a[-1], on_profit_man[-1], r'$\pi_{M}^{O}$', color=pl2.get_c())
+        #pl3, = ax.plot(self.all_a, on_profit_sc, color='#0d0548')
+        #ax.text(self.all_a[-1], on_profit_sc[-1], r'$\pi_{SC}^{O}$', color=pl3.get_c())
+        # without online store:
+        pl4, = ax.plot(self.all_a, no_profit_ret, color='#ec5300')
+        ax.text(self.all_a[-1], no_profit_ret[-1], r'$\pi_{R}^{N}$', color=pl4.get_c())
+        pl5, = ax.plot(self.all_a, no_profit_man, color='#db1414')
+        ax.text(self.all_a[-1], no_profit_man[-1], r'$\pi_{M}^{N}$', color=pl5.get_c())
+        #pl6, = ax.plot(self.all_a, no_profit_sc, color='#a70000')
+        #ax.text(self.all_a[-1], no_profit_sc[-1], r'$\pi_{SC}^{N}$', color=pl6.get_c())
+        ax.set_xlabel('a')
+        plt.show()
+        
+    def plot_prices(self):
+        fig, ax = plt.subplots()
+        # with online store:
+        ax.plot(self.all_a, self.on_pn, color=BLUE_MEDIUM)
+        ax.text(self.all_a[-1]*.95, self.on_pn[-1]+.01, r'$pn_{O}^{*}$', color=BLUE_MEDIUM)
+        ax.plot(self.all_a, self.on_pr, color=BLUE_LIGHT)
+        ax.text(self.all_a[-1]*.95, self.on_pr[-1]+.01, r'$pr_{O}^{*}$', color=BLUE_LIGHT)
+        # without online store:
+        ax.plot(self.all_a, self.no_pn, color=RED_MEDIUM)
+        ax.text(self.all_a[-1]*.95, self.no_pn[-1]-.015, r'$pn_{N}^{*}$', color=RED_MEDIUM)
+        #plot wholesale prices:
+        ax.plot(self.all_a, self.on_wn, color=RED_DARK)
+        ax.text(self.all_a[-1]*.95, self.on_wn[-1]-.02, r'$wn_{O}^{*}$', color=RED_DARK)
+        ax.plot(self.all_a, self.no_wn, color=BLUE_DARK)
+        ax.text(self.all_a[-1]*.95, self.no_wn[-1]+.015, r'$wn_{N}^{*}$', color=BLUE_DARK)
+        
+        
+        ax.set_xlabel('a')
+        
+        plt.show()
+        
+    def plot_quantities(self):
+        fig, ax = plt.subplots()
+        # with online store:
+        pl1,  = ax.plot(self.all_a, self.on_qn, color='#1b51a6')
+        ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=pl1.get_c())
+        pl2, = ax.plot(self.all_a, self.on_qr, color='#1b51a6')
+        ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=pl2.get_c())
+        # without online store:
+        pl3, = ax.plot(self.all_a, self.no_qn, color='#ec5300')
+        ax.text(self.all_a[-1]*.95, self.no_qn[-1]+.01, r'$qn_{N}^{*}$', color=pl3.get_c())
+        ax.set_xlabel('a')
+        plt.show()
+        
+    def plot_rhos(self):
+        fig, ax = plt.subplots()
+        pl1,  = ax.plot(self.all_a, self.on_rho, color='#1b51a6')
+        ax.text(self.all_a[-1], self.on_rho[-1]*.7,  r'$\rho_{O}^{*}$', color=pl1.get_c())
+        pl2, = ax.plot(self.all_a, self.no_rho, color='#a70000')
+        ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{N}^{*}$', color=pl2.get_c())
+        ax.set_ylim([0, 5])
+        ax.set_xlabel('a')
+        plt.show()
+
+
 def __parser_output_file(string):
     if string == 'stdout':
         return string
@@ -263,7 +437,6 @@ def __parser_output_file(string):
     return string
     
 def __parser_plot_name(string):
-    #allowed = (PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, AUTOMATED_PLOTS)
     allowed = ALLOWED_PLOTS
     if string not in allowed:
         raise argparse.ArgumentTypeError('Implemented plots are: ' + ' or '.join(allowed))
@@ -343,20 +516,23 @@ if __name__ == '__main__':
     plot = args.plot[0]
     if plot == AUTOMATED_PLOTS:
         automated_plots(step_size_a, step_size_cn, gray)
+    elif plot == PLOT_FIXED_PLOT:
+        fixedPlot = FixedPlot()
+        fixedPlot.plot()
     else:
         absolute = args.absolute
         if args.output:
             output = args.output[0]
         else:
             output = None
-        
          
         plotter = CountourPlotter(args.plot[0], params={
-            'tau': .3, 's': .25, 'cr': .1, 'delta' : .3,
+            'tau': .09, 's': '0.4*cn', 'cr': '0.4*cn', 'delta' : .7956,
             'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
             'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
             'absolute' : absolute,
             'gray'   : gray,
+            'nolegend': True,
             'output' : output
         })
         plotter.calc()

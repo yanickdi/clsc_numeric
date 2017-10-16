@@ -1,5 +1,6 @@
-import sys
+import sys, os
 import argparse
+if __name__ == '__main__': sys.path.append(os.path.abspath('..'))
 
 try:
     import scipy

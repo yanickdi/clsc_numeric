@@ -141,7 +141,6 @@ class ModelTwoNumericalSolver:
             (_CASE_TWO_A, self._optimize_case_two_a),
             (_CASE_TWO_B, self._optimize_case_two_b),
             (_CASE_TWO_C, self._optimize_case_two_c))
-        
         valid_solutions = []
         for case_id, case_fct in cases:
             try:
@@ -155,14 +154,14 @@ class ModelTwoNumericalSolver:
             if sol is not None and self._is_valid(par, sol):
                 valid_solutions.append(sol)
         if len(valid_solutions) > 0:
+            #valid_solutions.sort(key=lambda sol: )
             # take the best valid solution (manufacturer decides)
-            return max(valid_solutions, key=lambda sol: (sol.profit_man, sol.dec.lambda1, sol.dec.lambda2))
+            return max(valid_solutions, key=lambda sol: (sol.profit_man, sol.profit_ret))
         else:
             return None
     
     def _is_valid(self, par, sol):
         """ Tests whether a given solution is feasible regarding to all model subjects """
-        #TODO: assert all decision vars are positive in case of valid solution
         # check all variables positive
         for var in (sol.dec.pn, sol.dec.pr, sol.dec.wn, sol.dec.qn, sol.dec.qr):
             if var < -10**-DECIMALS_ALLOW_NN:
@@ -178,7 +177,8 @@ class ModelTwoNumericalSolver:
             if not (-10**-DECIMALS_ALLOW_NN <= sol.dec.qr <= ((par.tau/sol.dec.rho) * sol.dec.qn)+10**-DECIMALS_ALLOW_NN):
                 return False
         elif sol.case in (_CASE_ONE_C, _CASE_TWO_C):
-            if not (is_almost_equal(sol.dec.qr, (par.tau/sol.dec.rho) * sol.dec.qn)):
+            if not (is_almost_equal(sol.dec.qr - ((par.tau/sol.dec.rho) * sol.dec.qn), 0)):
+                #print(sol.dec.qr, (par.tau/sol.dec.rho) * sol.dec.qn)
                 return False
                 
         # check profits
@@ -197,7 +197,6 @@ class ModelTwoNumericalSolver:
             return (None, None)
         manu_profit = dec.qn * (dec.wn * (1- par.tau/dec.rho) - par.cn) + dec.qr*(dec.pr-par.cr) + ((par.tau/dec.rho)*dec.qn-dec.qr)*par.s
         retailer_profit = dec.qn * (dec.pn - dec.wn) * (1- par.tau/dec.rho) - par.a*(dec.rho-1)
-        retailer_profit += par.a
         return manu_profit, retailer_profit
         
     def _optimize_case_one_a(self, par):
@@ -367,9 +366,6 @@ class ModelOneNumericalSolver:
         dec_vars_case_2 = self._optimize_case_two(par)
         prof_man_case_2, prof_ret_case_2 = self.calc_profits(par, dec_vars_case_2)
         
-        prof_ret_case_1 += par.a
-        prof_ret_case_2 += par.a
-        
         case = None
         sol1 = Solution(dec_vars_case_1, prof_man_case_1, prof_ret_case_1, _CASE_ONE)
         sol2 = Solution(dec_vars_case_2, prof_man_case_2, prof_ret_case_2, _CASE_TWO)
@@ -464,7 +460,7 @@ class Parameter:
         if self.model == MODEL_1:
             return 'tau={:.2f}, a={:.4f}, s={:.2f}, cn={:.4f}'.format(self.tau, self.a, self.s, self.cn)
         else:
-            return 'tau={:.2f}, a={:.4f}, s={:.2f}, cr={:.2f}, cn={:.4f}, delta={:.2f}'.format(
+            return 'tau={:.4f}, a={:.5f}, s={:.4f}, cr={:.4f}, cn={:.4f}, delta={:.4f}'.format(
                 self.tau, self.a, self.s, self.cr, self.cn, self.delta)
             
     def __repr__(self):
