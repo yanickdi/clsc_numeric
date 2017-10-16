@@ -3,7 +3,9 @@ if __name__ == '__main__': sys.path.append(os.path.abspath('..'))
 import unittest
 from math import sqrt
 
-from clsc_numeric.solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, Parameter, DecisionVariables, MODEL_1, MODEL_2, _CASE_TWO_C
+from clsc_numeric.solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, \
+    Parameter, DecisionVariables, MODEL_1, MODEL_2, MODEL_2_QUAD, _CASE_TWO_C, \
+    Database, SolverProxy
 from clsc_numeric.generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
@@ -241,7 +243,27 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
         par = Parameter(MODEL_2, tau=.9, a=.1, s=.2, cr=.4, cn=.8, delta=.4)
         sol = solver.optimize(par)
         self.assertIsNone(sol)
+
+class TestDatabase(unittest.TestCase):
+    def test_write_and_read(self):
+        proxy = SolverProxy()
+        par = Parameter(MODEL_2_QUAD, tau=.09, a=0.00146, s=.04, cr=.04, cn=.1, delta=.7956)
+        sol = proxy.read_or_calc_and_write(par)
+        proxy.commit()
+        print(sol)
+        #solver = ModelTwoNumericalSolver()
+        #sol = solver.optimize(par)
         
+        #db = Database()
+        #db.write_calculation(par, sol, 'unittest')
+
+        #sol_from_db = db.read_calculation(par)
+        #self.assertAlmostEqual(sol_from_db.dec.rho, sol.dec.rho)
+        
+    @classmethod
+    def tearDownClass(cls):
+        db = Database()
+        db.delete_where_comment('unittest')
         
 class TestToday(unittest.TestCase):
     def test_right_case(self):

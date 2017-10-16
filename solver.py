@@ -495,6 +495,101 @@ def drange(start, end, step_size):
         yield r
         r += step_size
         
+class ModelTwoQuadGridSearch:
+    def __init__(self):
+        pass
+        
+    def _retailer_decision(self, par, wn, pr):
+        tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
+        #rho_1 = (8*2**(1/3)*a**2*(-1 + delta)**2 + 4*a*(-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3) * sqrt(-a**4 *(-1 + delta)**4 *tau *(-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) + (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 6 * sqrt(3) * sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(   2/3))/(12 * a * (-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3)* sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
+        rho_1 = (-16 * (-2)**(1/3) * a**2 * (-1 + delta)**2 +  8 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3) *sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) +  1j * (1j + sqrt( 3)) * (2 * a**2 * (-1 + delta)**2 * (16 *a *(-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  6 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**( 2/3))/(24 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4*  tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
+        #rho_1 = (8 * 1j *2**(1/3) * (1j + sqrt(3)) * a**2 * (-1 + delta)**2 +   8 * a * (-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 *tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  1/3) + (-1 -   1j * sqrt(3)) * (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   6 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  2/3))/(24 * a *(-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
+        pn_1  = .5 * (1+wn-delta+pr)
+        rho_2 = 1
+        pn_2 = .5 * (1+wn-delta+pr)
+        valids = []
+        if type(rho_1) == complex or type(rho_1) == np.complex128:
+            if rho_1.imag < .000001 and rho_1.real > 1:
+                rho_1 = rho_1.real
+            else:
+                rho_1 = -1
+        for pn, rho in ((pn_1, rho_1), (pn_2, rho_2)):
+            qn = 1 - (pn - pr)/(1-delta)
+            qr = (pn-pr)/(1-delta) - pr/delta
+            if rho == 0: continue
+            ret_profit = qn*(pn-wn)*(1-par.tau/rho)-par.a*(rho-1)**2
+            if (0 <= qr <= (par.tau/rho)*qn) and rho >= 1 and ret_profit >= 0:
+                valids.append([pn, rho, qn, qr, ret_profit])
+        if len(valids) > 0:
+            return max(valids, key=lambda k: k[4])
+        else:
+            return None
+                
+        
+    def search(self, par):
+        """ Returns a solution object or None if no solution found """
+        max_man_profit = -1
+        #            0:wn   1:pr  2:pn 3:rho 4:qn  5:qr  6:ret_profit
+        max_param = None
+        for wn in np.arange(0, 1+.01, .01):
+            for pr in np.arange(0, 1+.01, .01):
+                wn, pr = float(wn), float(pr)
+                ret_dec = self._retailer_decision(par, wn, pr)
+                if ret_dec is None: continue
+                pn, rho, qn, qr, ret_prof = ret_dec
+                man_profit = qn*(wn*(1-par.tau/rho)-par.cn) + qr*(pr-par.cr)+((par.tau/rho)*qn - qr)*par.s
+                if man_profit > max_man_profit:
+                    max_man_profit = man_profit
+                    max_param = [wn, pr, pn, rho, qn, qr, ret_prof]
+        
+        # if we found something, build a solution object and return
+        if max_man_profit >= 0:
+            dec = DecisionVariables(MODEL_2_QUAD, pn=max_param[2], pr=max_param[1], wn=max_param[0],
+                rho=max_param[3], qn=max_param[4], qr=max_param[5])
+            case = _CASE_ONE if max_param[3] > 1 else _CASE_TWO
+            sol = Solution(dec, max_man_profit, max_param[6], case)
+            return sol
+        else:
+            return None
+        
+class SolverProxy:
+    def __init__(self):
+        self.db = Database()
+        self.model_1_solver = ModelOneNumericalSolver()
+        self.model_2_solver = ModelTwoNumericalSolver()
+        self.model_2_quad_search = ModelTwoQuadGridSearch()
+        
+    def read_calculation(self, par):
+        """ Reads a calculation from database. Raises a CalculationNotFoundError if not found. """
+        state, sol = db.read_calculation(par)
+        if state == Database.NOT_IN_DB:
+            raise CalculationNotFoundError()
+        return sol
+        
+    def read_or_calc_and_write(self, par):
+        """ doesn't commit after write! """
+        state, sol = self.db.read_calculation(par)
+        if state == Database.NOT_IN_DB:
+            sol = self.calculate(par)
+            self.db.write_calculation(par, sol)
+        return sol
+        
+    def commit(self):
+        self.db.commit()
+    
+    def calculate(self, par):
+        """ Tries to find a solution for problem of type par"""
+        if par.model == MODEL_1:
+            sol = self.model_1_solver.optimize(par)
+        elif par.model == MODEL_2:
+            sol = self.model_2_solver.optimize(par)
+        elif par.model == MODEL_2_QUAD:
+            sol = self.model_2_quad_search.search(par)
+        return sol
+        
+class CalculationNotFoundError (RuntimeError):
+    pass
+    
 class Database:
     def __init__(self):
         self.conn = sqlite3.connect('database.db')
@@ -502,16 +597,17 @@ class Database:
         #self.conn.execute('''PRAGMA foreign_keys = ON;''')
         # create tables
         with self.conn as c:
-            c.execute('''CREATE TABLE IF NOT EXISTS parameter
-                ( parid integer primary key,
-                  tau real, a real, s real, cr real, cn real, delta real)''')
-            c.execute('''CREATE TABLE IF NOT EXISTS solution
-                ( solid integer primary key, parid integer not null,
+            c.execute('''CREATE TABLE IF NOT EXISTS calculation
+                ( calc_id integer primary key,
+                  tau real, a real, s real, cr real, cn real, delta real,
                   wn real, pr real, pn real, rho real, qn real, qr real,
-                  profit_man real not null, profit_ret real not null, case_comment text,
-                  FOREIGN KEY(parid) REFERENCES parameter(parid) ON DELETE RESTRICT)''')
+                  profit_man real, profit_ret real,
+                  sol_case text, model integer, comment text, lastmodified text)''')
     
     instance = None
+    FOUND = 0
+    NO_SOLUTION = 1
+    NOT_IN_DB = 2
         
     @staticmethod
     def getInstance():
@@ -525,19 +621,67 @@ class Database:
     def endWrite(self):
         self.conn.execute('END')
         
-    def writeParAndSolution(self, par, sol):
-        cur = self.conn.execute('''INSERT INTO parameter (tau, a, s, cr, cn, delta)
-                       VALUES (?, ?, ?, ?, ?, ?)''', (par.tau, par.a, par.s, par.cr, par.cn, par.delta))
-        if sol is not None:
-            dec = sol.dec
-            cur = self.conn.execute('''INSERT INTO solution (parid, wn, pr, pn, rho, qn, qr,
-                                        profit_man, profit_ret, case_comment)
-                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                                   (cur.lastrowid, dec.wn, dec.pr, dec.pn, dec.rho, dec.qn, dec.qr,
-                                    sol.profit_man, sol.profit_ret, sol.case))
+    def read_calculation(self, par):
+        """ Returns two values: (state and solution)"""
+        tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
+        model = par.model
+        cur = self.conn.execute('''
+            SELECT tau, a, s, cr, cn, delta, 
+                    wn, pr, pn, rho, qn, qr,
+                    profit_man, profit_ret,
+                    sol_case, model, comment
+            FROM calculation
+            WHERE tau = ? and a = ? and s = ? and cr = ? and cn = ? and delta = ? and model = ?''',
+            (tau, a, s, cr, cn, delta, model))
+        row = cur.fetchone()
+        if row is None:
+            # nothing found - never calculated
+            return Database.NOT_IN_DB, None
+        wn, pr, pn, rho, qn, qr, profit_man, profit_ret, sol_case, model, comment = (row[i] for i in range(6, 17))
+        if profit_man is None:
+            # found but the solution is None
+            return Database.NO_SOLUTION, None
+        dec = DecisionVariables(model=model, pn=pn, pr=pr, wn=wn, rho=rho, qn=qn, qr=qr)
+        sol = Solution(dec, profit_man, profit_ret, sol_case)
+        return Database.FOUND, sol
+        
+    def write_calculation(self, par, sol, comment=None):
+        tau = par.tau
+        a = par.a
+        s = par.s
+        cr = par.cr
+        cn = par.cn
+        delta = par.delta
+        model = par.model
+        if sol == None:
+            wn, pr, pn, rho, qn, qr, profit_man, profit_ret, case = None, None, None, None, None, None, None, None, None
+        else:
+            wn = sol.dec.wn
+            pr = sol.dec.pr
+            pn = sol.dec.pn
+            rho = sol.dec.rho
+            qn = sol.dec.qn
+            qr = sol.dec.qr
+            profit_man = sol.profit_man
+            profit_ret = sol.profit_ret
+            sol_case = sol.case
+        cur = self.conn.execute(
+            '''INSERT INTO calculation (tau, a, s, cr, cn, delta, 
+                    wn, pr, pn, rho, qn, qr,
+                    profit_man, profit_ret,
+                    sol_case, model, comment, lastmodified)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))''',
+               (tau, a, s, cr, cn, delta, wn, pr, pn,
+                rho, qn, qr, profit_man, profit_ret, sol_case, model, comment))
     
     def commit(self):
         self.conn.commit()
+        
+    def delete_where_comment(self, comment):
+        self.conn.execute('''
+            DELETE FROM calculation
+            WHERE comment = ?''', (comment, ))
+        self.commit()
         
 if __name__ == '__main__':
     db = Database.getInstance()
