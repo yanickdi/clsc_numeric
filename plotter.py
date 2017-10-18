@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 from clsc_numeric import solver
-from clsc_numeric.solver import drange, Parameter, MODEL_1, MODEL_2, ModelOneNumericalSolver, ModelTwoNumericalSolver
+from clsc_numeric.solver import drange, Parameter, MODEL_1, MODEL_2, \
+    ModelOneNumericalSolver, ModelTwoNumericalSolver, SolverProxy
 
 # my color palette:
 RED_DARK = '#a70000'

@@ -1,3 +1,5 @@
+LONGTEST = False
+
 import sys, os
 if __name__ == '__main__': sys.path.append(os.path.abspath('..'))
 import unittest
@@ -52,7 +54,7 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         # self checking if input vars not in case 1 and not in case 2:
         self.assertTrue(self.__input_is_in_case_1(par) and self.__input_is_in_case_2(par))
         sol = solver.optimize(par)
-        self.assertAlmostEqual(sol.profit_ret, 0.00428571) # would be case 2 solution, because is higher than case 1 solution
+        self.assertAlmostEqual(sol.profit_ret, 0.01428571) # would be case 2 solution, because is higher than case 1 solution
         self.assertAlmostEqual(sol.profit_man, 0.02857143) 
         
     def test_case_2_dec_vars(self):
@@ -247,8 +249,9 @@ class TestModelTwoNumericalSolver(unittest.TestCase):
 class TestDatabase(unittest.TestCase):
     def test_write_and_read(self):
         proxy = SolverProxy()
-        par = Parameter(MODEL_2_QUAD, tau=.09, a=0.00146, s=.04, cr=.04, cn=.1, delta=.7956)
-        sol = proxy.read_or_calc_and_write(par)
+        #par = Parameter(MODEL_2_QUAD, tau=.09, a=0.00146, s=.04, cr=.04, cn=.1, delta=.7956)
+        par = Parameter(MODEL_1, tau=0.09, a=0.00146, s=.04, cn=.1)
+        sol = proxy.read_or_calc_and_write(par, comment='unittest')
         proxy.commit()
         print(sol)
         #solver = ModelTwoNumericalSolver()
@@ -264,7 +267,8 @@ class TestDatabase(unittest.TestCase):
     def tearDownClass(cls):
         db = Database()
         db.delete_where_comment('unittest')
-        
+  
+@unittest.skip('')  
 class TestToday(unittest.TestCase):
     def test_right_case(self):
         solver = ModelTwoNumericalSolver()
@@ -273,7 +277,9 @@ class TestToday(unittest.TestCase):
         sol = solver.optimize(par)
         self.assertAlmostEqual(sol.profit_man, 0.1582925507399)
         print(sol.dec)
-             
+
+@unittest.skipIf(LONGTEST==False,
+                     "only in long test")
 class TestGenerator(unittest.TestCase):
     def test_model_1_compare_analytical(self):
         mof = MemoryOutputFile()

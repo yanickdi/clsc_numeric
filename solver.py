@@ -452,6 +452,7 @@ class Parameter:
     def __init__(self, model, tau=None, a=None, s=None, cr=None, cn=None, delta=None):
         if model == MODEL_1:
             self.tau, self.a, self.s, self.cn = tau, a, s, cn
+            self.cr, self.delta = None, None
         else:
             self.tau, self.a, self.s, self.cr, self.cn, self.delta = tau, a, s, cr, cn, delta
         self.model = model
@@ -474,6 +475,7 @@ class DecisionVariables:
     def __init__(self, model, pn=None, pr=None, wn=None, rho=None, qn=None, qr=None, lambda1=None, lambda2=None):
         if model == MODEL_1:
             self.wn, self.pn, self.rho, self.qn = wn, pn, rho, qn
+            self.pr, self.qr = None, None
         else:
             self.pn, self.pr, self.wn, self.rho, self.qn, self.qr = pn, pr, wn, rho, qn, qr
             self.lambda1, self.lambda2 = lambda1, lambda2
@@ -566,12 +568,12 @@ class SolverProxy:
             raise CalculationNotFoundError()
         return sol
         
-    def read_or_calc_and_write(self, par):
+    def read_or_calc_and_write(self, par, comment=None):
         """ doesn't commit after write! """
         state, sol = self.db.read_calculation(par)
         if state == Database.NOT_IN_DB:
             sol = self.calculate(par)
-            self.db.write_calculation(par, sol)
+            self.db.write_calculation(par, sol, comment)
         return sol
         
     def commit(self):
