@@ -344,9 +344,9 @@ class FixedPlot:
     def plot(self):
         #self.plot_profits()
         #self.plot_profits(relative=True)
-        #self.plot_rhos()
+        self.plot_rhos()
         #self.plot_quantities()
-        self.plot_prices()
+        #self.plot_prices()
         #self.plot_wholesale_prices()
         pass        
         
@@ -420,6 +420,7 @@ class FixedPlot:
         ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{N}^{*}$', color=pl2.get_c())
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
+        ax.set_ylabel(r'Effort ($\rho$)')
         plt.show()
 
 
