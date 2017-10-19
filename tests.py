@@ -264,7 +264,7 @@ class TestDatabase(unittest.TestCase):
         #self.assertAlmostEqual(sol_from_db.dec.rho, sol.dec.rho)
         
     @classmethod
-    def tearDownClass(cls):
+    def dtearDownClass(cls):
         db = Database()
         db.delete_where_comment('unittest')
   
