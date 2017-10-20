@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import fsolve, root
 
 
-MODEL_1, MODEL_2, MODEL_2_QUAD = 1, 2, 3
+MODEL_1, MODEL_2, MODEL_2_QUAD, MODEL_1_QUAD = 1, 2, 3, 4
 _CASE_ONE, _CASE_TWO = '1', '2'
 _CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
 ALL_CASES = [_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C]
@@ -553,7 +553,66 @@ class ModelTwoQuadGridSearch:
             return sol
         else:
             return None
+
+class ModelOneQuadGridSearch:
+    def __init__(self):
+        pass
         
+    def _retailer_decision(self, par, wn):
+        tau, a, s, cn = par.tau, par.a, par.s, par.cn
+        rho_1 = (4 * a + (8 * 2**(1/3) * \
+               a**2)/(16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
+               3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
+             1/3) + 2**( \
+              2/3) * (16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
+                3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
+              1/3))/(12 * a)
+        pn_1  = (1+wn)/2
+        rho_2 = 1
+        pn_2 = (1+wn)/2
+        valids = []
+        #if type(rho_1) == complex or type(rho_1) == np.complex128:
+        #    if rho_1.imag < .000001 and rho_1.real > 1:
+        #        rho_1 = rho_1.real
+        #    else:
+        #        rho_1 = -1
+        for pn, rho in ((pn_1, rho_1), (pn_2, rho_2)):
+            qn = 1 - pn
+            if rho == 0: continue
+            ret_profit = qn*(pn-wn)*(1-tau/rho)-a*(rho-1)**2
+            if (rho >= 1 and ret_profit >= 0):
+                valids.append([pn, rho, qn, ret_profit])
+        if len(valids) > 0:
+            return max(valids, key=lambda k: k[3])
+        else:
+            return None
+        
+    def search(self, par):
+        """ Returns a solution object or None if no solution found """
+        max_man_profit = -1
+        #            0:wn  1:pn   2:rho  3:qn  4:ret_profit
+        max_param = None
+        for wn in np.arange(0, 1+.01, .01):
+            wn = float(wn)
+            ret_dec = self._retailer_decision(par, wn)
+            if ret_dec is None: continue
+            pn, rho, qn, ret_prof = ret_dec
+            man_profit = qn*(wn*(1-par.tau/rho))- par.cn + (par.tau/rho) * par.s
+            print(man_profit)
+            if man_profit > max_man_profit:
+                max_man_profit = man_profit
+                max_param = [wn, pn, rho, qn, ret_prof]
+        
+        # if we found something, build a solution object and return
+        if max_man_profit >= 0:
+            dec = DecisionVariables(MODEL_1_QUAD, pn=max_param[1], wn=max_param[0],
+                rho=max_param[2], qn=max_param[3])
+            case = _CASE_ONE if max_param[2] > 1 else _CASE_TWO
+            sol = Solution(dec, max_man_profit, max_param[4], case)
+            return sol
+        else:
+            return None
+            
 class SolverProxy:
     def __init__(self):
         self.db = Database()
