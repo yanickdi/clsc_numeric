@@ -36,6 +36,7 @@ _ALL_CASES_MODEL_2 = [solver._CASE_ONE_A, solver._CASE_ONE_B, solver._CASE_ONE_C
 
 class CountourPlotter:
     def __init__(self, type, params):
+        self.proxy = SolverProxy()
         self.type = type
         self.tau, self.s, self.cr, self.delta = params['tau'], params['s'], params['cr'], params['delta']
         self.step_size_a, self.lower_bound_a, self.upper_bound_a = params['step_size_a'], params['lower_bound_a'], params['upper_bound_a']
@@ -96,15 +97,25 @@ class CountourPlotter:
         self.matrix = np.zeros([self.nr_lines, self.nr_cols])
         solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
         i = 0
+        numall = self.nr_cols * self.nr_lines
+        print(numall)
+        self.proxy.beginWrite()
+        print(self.nr_cols*self.nr_lines)
         for line, col, par_model_1, par_model_2 in self._a_cn_generator():
             # calc solutions
             if par_model_1.a == .0:
                 sol_model_1, sol_model_2 = None, None
             else:
-                sol_model_1 = solver_m1.optimize(par_model_1)
-                sol_model_2 = solver_m2.optimize(par_model_2)
+                #sol_model_1 = solver_m1.optimize(par_model_1)
+                #sol_model_2 = solver_m2.optimize(par_model_2)
+                sol_model_1 = self.proxy.read_or_calc_and_write(par_model_1)
+                sol_model_2 = self.proxy.read_or_calc_and_write(par_model_2)
+                if i % 1000 == 0:
+                    self.proxy.commit()
+                    print(i)
             self.matrix[line, col] = self._calc_func(sol_model_1, sol_model_2, par_model_2)
             i += 1
+        self.proxy.endWrite()
         
     def __rho_calc_func(self, sol_model_1, sol_model_2, par):
         if sol_model_1 is None or sol_model_2 is None:
@@ -275,6 +286,7 @@ class CountourPlotter:
 
 class FixedPlot:
     def __init__(self, filename=None):
+        self.proxy = SolverProxy()
         self.filename = filename
         self.calc()
         
@@ -300,14 +312,16 @@ class FixedPlot:
         self.no_qr = np.zeros(nr_elements)
         self.no_pn = np.zeros(nr_elements)
         self.no_wn = np.zeros(nr_elements)
-        
-        solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
+        self.proxy.beginWrite()
+        #solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
         for i, a in enumerate(self.all_a):
             #a = round(a, 5)
             par_n = Parameter(MODEL_1, tau=.09, a=a, s=0.4*cn, cn=cn)
             par_o = Parameter(MODEL_2, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
-            sol_n = solver_m1.optimize(par_n)
-            sol_o = solver_m2.optimize(par_o)
+            #sol_n = solver_m1.optimize(par_n)
+            #sol_o = solver_m2.optimize(par_o)
+            sol_n = self.proxy.read_or_calc_and_write(par_n)
+            sol_o = self.proxy.read_or_calc_and_write(par_o)
             if sol_o == None or a == 0:
                 self.on_profit_ret[i] = None
                 self.on_profit_man[i] = None
@@ -340,6 +354,7 @@ class FixedPlot:
                 self.no_qn[i] = sol_n.dec.qn
                 self.no_pn[i] = sol_n.dec.pn
                 self.no_wn[i] = sol_n.dec.wn
+        self.proxy.endWrite()
                 
     def plot(self):
         #self.plot_profits()
@@ -420,7 +435,11 @@ class FixedPlot:
         ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{N}^{*}$', color=pl2.get_c())
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
+<<<<<<< HEAD
         ax.set_ylabel(r'Effort ($\rho$)')
+=======
+        ax.set_ylabel('Effort (\rho)')
+>>>>>>> remotes/origin/plot_using_database
         plt.show()
 
 

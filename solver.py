@@ -7,7 +7,7 @@ from scipy.optimize import fsolve, root
 
 
 MODEL_1, MODEL_2, MODEL_2_QUAD = 1, 2, 3
-_CASE_ONE, _CASE_TWO = 1, 2
+_CASE_ONE, _CASE_TWO = '1', '2'
 _CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
 ALL_CASES = [_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C]
 DECIMALS_ALLOW_NN = 14
@@ -589,6 +589,12 @@ class SolverProxy:
             sol = self.model_2_quad_search.search(par)
         return sol
         
+    def beginWrite(self):
+        self.db.beginWrite()
+        
+    def endWrite(self):
+        self.db.endWrite()
+        
 class CalculationNotFoundError (RuntimeError):
     pass
     
@@ -627,13 +633,14 @@ class Database:
         """ Returns two values: (state and solution)"""
         tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
         model = par.model
-        cur = self.conn.execute('''
+        query_str = '''
             SELECT tau, a, s, cr, cn, delta, 
                     wn, pr, pn, rho, qn, qr,
                     profit_man, profit_ret,
                     sol_case, model, comment
             FROM calculation
-            WHERE tau = ? and a = ? and s = ? and cr = ? and cn = ? and delta = ? and model = ?''',
+            WHERE tau is ? and a is ? and s is ? and cr is ? and cn is ? and delta is ? and model is ?'''
+        cur = self.conn.execute(query_str,
             (tau, a, s, cr, cn, delta, model))
         row = cur.fetchone()
         if row is None:
