@@ -450,15 +450,16 @@ class Parameter:
     """
     
     def __init__(self, model, tau=None, a=None, s=None, cr=None, cn=None, delta=None):
-        if model == MODEL_1:
-            self.tau, self.a, self.s, self.cn = tau, a, s, cn
-            self.cr, self.delta = None, None
-        else:
-            self.tau, self.a, self.s, self.cr, self.cn, self.delta = tau, a, s, cr, cn, delta
+        #if model == MODEL_1 or model == MODEL_1_QUAD:
+        #    self.tau, self.a, self.s, self.cn = tau, a, s, cn
+        #    self.cr, self.delta = None, None
+        #else:
+        #    self.tau, self.a, self.s, self.cr, self.cn, self.delta = tau, a, s, cr, cn, delta
+        self.tau, self.a, self.s, self.cr, self.cn, self.delta = tau, a, s, cr, cn, delta
         self.model = model
         
     def __str__(self):
-        if self.model == MODEL_1:
+        if self.model == MODEL_1 or model == MODEL_1_QUAD:
             return 'tau={:.2f}, a={:.4f}, s={:.2f}, cn={:.4f}'.format(self.tau, self.a, self.s, self.cn)
         else:
             return 'tau={:.4f}, a={:.5f}, s={:.4f}, cr={:.4f}, cn={:.4f}, delta={:.4f}'.format(
@@ -473,12 +474,14 @@ class DecisionVariables:
     """
     
     def __init__(self, model, pn=None, pr=None, wn=None, rho=None, qn=None, qr=None, lambda1=None, lambda2=None):
-        if model == MODEL_1:
-            self.wn, self.pn, self.rho, self.qn = wn, pn, rho, qn
-            self.pr, self.qr = None, None
-        else:
-            self.pn, self.pr, self.wn, self.rho, self.qn, self.qr = pn, pr, wn, rho, qn, qr
-            self.lambda1, self.lambda2 = lambda1, lambda2
+        self.pn, self.pr, self.wn, self.rho, self.qn, self.qr = pn, pr, wn, rho, qn, qr
+        self.lambda1, self.lambda2 = lambda1, lambda2
+        #if model == MODEL_1 or model == MODEL_:
+        #    self.wn, self.pn, self.rho, self.qn = wn, pn, rho, qn
+        #    self.pr, self.qr = None, None
+        #else:
+        #    self.pn, self.pr, self.wn, self.rho, self.qn, self.qr = pn, pr, wn, rho, qn, qr
+        #    self.lambda1, self.lambda2 = lambda1, lambda2
         self.model = model
         
     def __str__(self):
@@ -504,7 +507,10 @@ class ModelTwoQuadGridSearch:
     def _retailer_decision(self, par, wn, pr):
         tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
         #rho_1 = (8*2**(1/3)*a**2*(-1 + delta)**2 + 4*a*(-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3) * sqrt(-a**4 *(-1 + delta)**4 *tau *(-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) + (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 6 * sqrt(3) * sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(   2/3))/(12 * a * (-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3)* sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
-        rho_1 = (-16 * (-2)**(1/3) * a**2 * (-1 + delta)**2 +  8 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3) *sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) +  1j * (1j + sqrt( 3)) * (2 * a**2 * (-1 + delta)**2 * (16 *a *(-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  6 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**( 2/3))/(24 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4*  tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
+        if a == 0:
+            rho_1 = 100
+        else:
+            rho_1 = (-16 * (-2)**(1/3) * a**2 * (-1 + delta)**2 +  8 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3) *sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) +  1j * (1j + sqrt( 3)) * (2 * a**2 * (-1 + delta)**2 * (16 *a *(-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  6 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**( 2/3))/(24 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4*  tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         #rho_1 = (8 * 1j *2**(1/3) * (1j + sqrt(3)) * a**2 * (-1 + delta)**2 +   8 * a * (-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 *tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  1/3) + (-1 -   1j * sqrt(3)) * (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   6 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  2/3))/(24 * a *(-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         pn_1  = .5 * (1+wn-delta+pr)
         rho_2 = 1
@@ -560,13 +566,16 @@ class ModelOneQuadGridSearch:
         
     def _retailer_decision(self, par, wn):
         tau, a, s, cn = par.tau, par.a, par.s, par.cn
-        rho_1 = (4 * a + (8 * 2**(1/3) * \
-               a**2)/(16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
-               3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
-             1/3) + 2**( \
-              2/3) * (16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
-                3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
-              1/3))/(12 * a)
+        if a == 0:
+            rho_1 = 100
+        else:
+            rho_1 = (4 * a + (8 * 2**(1/3) * \
+                   a**2)/(16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
+                   3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
+                 1/3) + 2**( \
+                  2/3) * (16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
+                    3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
+                  1/3))/(12 * a)
         pn_1  = (1+wn)/2
         rho_2 = 1
         pn_2 = (1+wn)/2
@@ -598,7 +607,6 @@ class ModelOneQuadGridSearch:
             if ret_dec is None: continue
             pn, rho, qn, ret_prof = ret_dec
             man_profit = qn*(wn*(1-par.tau/rho))- par.cn + (par.tau/rho) * par.s
-            print(man_profit)
             if man_profit > max_man_profit:
                 max_man_profit = man_profit
                 max_param = [wn, pn, rho, qn, ret_prof]
@@ -618,6 +626,7 @@ class SolverProxy:
         self.db = Database()
         self.model_1_solver = ModelOneNumericalSolver()
         self.model_2_solver = ModelTwoNumericalSolver()
+        self.model_1_quad_search = ModelOneQuadGridSearch()
         self.model_2_quad_search = ModelTwoQuadGridSearch()
         
     def read_calculation(self, par):
@@ -646,6 +655,8 @@ class SolverProxy:
             sol = self.model_2_solver.optimize(par)
         elif par.model == MODEL_2_QUAD:
             sol = self.model_2_quad_search.search(par)
+        elif par.model == MODEL_1_QUAD:
+            sol = self.model_1_quad_search.search(par)
         return sol
         
     def beginWrite(self):

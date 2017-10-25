@@ -10,6 +10,7 @@ from matplotlib import cm
 
 from clsc_numeric import solver
 from clsc_numeric.solver import drange, Parameter, MODEL_1, MODEL_2, \
+    MODEL_1_QUAD, MODEL_2_QUAD, \
     ModelOneNumericalSolver, ModelTwoNumericalSolver, SolverProxy
 
 # my color palette:
@@ -99,7 +100,7 @@ class CountourPlotter:
         i = 0
         numall = self.nr_cols * self.nr_lines
         print(numall)
-        self.proxy.beginWrite()
+        #self.proxy.beginWrite()
         print(self.nr_cols*self.nr_lines)
         for line, col, par_model_1, par_model_2 in self._a_cn_generator():
             # calc solutions
@@ -115,7 +116,7 @@ class CountourPlotter:
                     print(i)
             self.matrix[line, col] = self._calc_func(sol_model_1, sol_model_2, par_model_2)
             i += 1
-        self.proxy.endWrite()
+        #self.proxy.endWrite()
         
     def __rho_calc_func(self, sol_model_1, sol_model_2, par):
         if sol_model_1 is None or sol_model_2 is None:
@@ -292,7 +293,7 @@ class FixedPlot:
         
     def calc(self):
         cn = .1
-        self.all_a = np.linspace(0.0, 0.01, num=500)
+        self.all_a = np.linspace(0.0, 0.03, num=500) #origin: num=500, bis 0.01
         nr_elements = len(self.all_a)
         # vectors for 'with online shop':
         self.on_profit_man = np.zeros(nr_elements)
@@ -315,9 +316,10 @@ class FixedPlot:
         self.proxy.beginWrite()
         #solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
         for i, a in enumerate(self.all_a):
+            a = float(a)
             #a = round(a, 5)
-            par_n = Parameter(MODEL_1, tau=.09, a=a, s=0.4*cn, cn=cn)
-            par_o = Parameter(MODEL_2, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
+            par_n = Parameter(MODEL_1_QUAD, tau=.09, a=a, s=0.4*cn, cn=cn)
+            par_o = Parameter(MODEL_2_QUAD, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
             #sol_n = solver_m1.optimize(par_n)
             #sol_o = solver_m2.optimize(par_o)
             sol_n = self.proxy.read_or_calc_and_write(par_n)
@@ -375,6 +377,8 @@ class FixedPlot:
             no_profit_ret = self.no_profit_ret / self.no_profit_man
             on_profit_ret = self.on_profit_ret / self.no_profit_man
             on_profit_man = self.on_profit_man / self.no_profit_man
+        else:
+            no_profit_man, no_profit_ret, on_profit_ret, on_profit_man = self.no_profit_man, self.no_profit_ret, self.on_profit_ret, self.on_profit_man
         
         # with online store:
         pl1,  = ax.plot(self.all_a, on_profit_ret, color='#1b51a6')
@@ -435,11 +439,7 @@ class FixedPlot:
         ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{N}^{*}$', color=pl2.get_c())
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
-<<<<<<< HEAD
         ax.set_ylabel(r'Effort ($\rho$)')
-=======
-        ax.set_ylabel('Effort (\rho)')
->>>>>>> remotes/origin/plot_using_database
         plt.show()
 
 
