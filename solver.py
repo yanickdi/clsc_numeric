@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import fsolve, root
 
 
-MODEL_1, MODEL_2, MODEL_2_QUAD, MODEL_1_QUAD = 1, 2, 3, 4
+MODEL_1, MODEL_2, MODEL_2_QUAD, MODEL_1_QUAD, MODEL_NB = 1, 2, 3, 4, 5
 _CASE_ONE, _CASE_TWO = '1', '2'
 _CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
 ALL_CASES = [_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C]
