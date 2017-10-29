@@ -699,6 +699,7 @@ class SolverProxy:
         self.model_2_solver = ModelTwoNumericalSolver()
         self.model_1_quad_search = ModelOneQuadGridSearch()
         self.model_2_quad_search = ModelTwoQuadGridSearch()
+        self.model_nb_search = ModelNBGridSearch()
         
     def read_calculation(self, par):
         """ Reads a calculation from database. Raises a CalculationNotFoundError if not found. """
@@ -728,6 +729,8 @@ class SolverProxy:
             sol = self.model_2_quad_search.search(par)
         elif par.model == MODEL_1_QUAD:
             sol = self.model_1_quad_search.search(par)
+        elif par.model == MODEL_NB:
+            sol = self.model_nb_search.search(par)
         return sol
         
     def beginWrite(self):
@@ -791,7 +794,10 @@ class Database:
         if profit_man is None:
             # found but the solution is None
             return Database.NO_SOLUTION, None
-        dec = DecisionVariables(model=model, pn=pn, pr=pr, wn=wn, rho=rho, qn=qn, qr=qr)
+        if model == MODEL_NB:
+            dec = DecisionVariables(model=model, pn=pn, pr=pr, wn=wn, rho=rho, qn=qn, qr=b)
+        else:
+            dec = DecisionVariables(model=model, pn=pn, pr=pr, wn=wn, rho=rho, qn=qn, qr=qr)
         sol = Solution(dec, profit_man, profit_ret, sol_case)
         return Database.FOUND, sol
         
@@ -811,7 +817,10 @@ class Database:
             pn = sol.dec.pn
             rho = sol.dec.rho
             qn = sol.dec.qn
-            qr = sol.dec.qr
+            if model == MODEL_NB:
+                qr = sol.dec.b
+            else:
+                qr = sol.dec.qr
             profit_man = sol.profit_man
             profit_ret = sol.profit_ret
             sol_case = sol.case

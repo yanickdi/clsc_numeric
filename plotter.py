@@ -28,7 +28,8 @@ PLOT_CASES_MODEL_ONE = 'cases-model-one'
 PLOT_CASES_MODEL_TWO = 'cases-model-two'
 PLOT_COMPARE_CASES = 'compare-cases'
 PLOT_FIXED_PLOT = 'fixed-plot'
-ALLOWED_PLOTS = PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, PLOT_COMPARE_CASES, PLOT_FIXED_PLOT
+PLOT_SPONT_PLOT = 'spont-plot'
+ALLOWED_PLOTS = PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, PLOT_COMPARE_CASES, PLOT_FIXED_PLOT, PLOT_SPONT_PLOT
 AUTOMATED_PLOTS = 'automated-plots'
 
 _ALL_CASES_MODEL_1 = [solver._CASE_ONE, solver._CASE_TWO]
@@ -258,7 +259,6 @@ class CountourPlotter:
         ax.set_xlabel('a')
         ax.set_ylabel(r'$c_n$')
         
-        
         # Put a text of paramaters below current axis
         if not self.nolegend:
             txt = self.__par_txt()
@@ -293,7 +293,7 @@ class FixedPlot:
         
     def calc(self):
         cn = .1
-        self.all_a = np.linspace(0.0, 0.03, num=500) #origin: num=500, bis 0.01
+        self.all_a = np.linspace(0.0, 0.01, num=500) #origin: num=500, bis 0.01
         nr_elements = len(self.all_a)
         # vectors for 'with online shop':
         self.on_profit_man = np.zeros(nr_elements)
@@ -359,9 +359,9 @@ class FixedPlot:
         self.proxy.endWrite()
                 
     def plot(self):
-        #self.plot_profits()
         #self.plot_profits(relative=True)
-        self.plot_rhos()
+        #self.plot_profits(relative=True)
+        #self.plot_rhos()
         #self.plot_quantities()
         #self.plot_prices()
         #self.plot_wholesale_prices()
@@ -382,16 +382,16 @@ class FixedPlot:
         
         # with online store:
         pl1,  = ax.plot(self.all_a, on_profit_ret, color='#1b51a6')
-        ax.text(self.all_a[-1], on_profit_ret[-1], r'$\pi_{R}^{O}$', color=pl1.get_c())
+        ax.text(self.all_a[-1], on_profit_ret[-1]*1.2, r'$\pi_{R}^{OQ}$', color=pl1.get_c())
         pl2, = ax.plot(self.all_a, on_profit_man, color='#1b51a6')
-        ax.text(self.all_a[-1], on_profit_man[-1], r'$\pi_{M}^{O}$', color=pl2.get_c())
+        ax.text(self.all_a[-1], on_profit_man[-1], r'$\pi_{M}^{OQ}$', color=pl2.get_c())
         #pl3, = ax.plot(self.all_a, on_profit_sc, color='#0d0548')
         #ax.text(self.all_a[-1], on_profit_sc[-1], r'$\pi_{SC}^{O}$', color=pl3.get_c())
         # without online store:
         pl4, = ax.plot(self.all_a, no_profit_ret, color='#ec5300')
-        ax.text(self.all_a[-1], no_profit_ret[-1], r'$\pi_{R}^{N}$', color=pl4.get_c())
+        ax.text(self.all_a[-1], no_profit_ret[-1], r'$\pi_{R}^{NQ}$', color=pl4.get_c())
         pl5, = ax.plot(self.all_a, no_profit_man, color='#db1414')
-        ax.text(self.all_a[-1], no_profit_man[-1], r'$\pi_{M}^{N}$', color=pl5.get_c())
+        ax.text(self.all_a[-1], no_profit_man[-1], r'$\pi_{M}^{NQ}$', color=pl5.get_c())
         #pl6, = ax.plot(self.all_a, no_profit_sc, color='#a70000')
         #ax.text(self.all_a[-1], no_profit_sc[-1], r'$\pi_{SC}^{N}$', color=pl6.get_c())
         ax.set_xlabel('a')
@@ -401,17 +401,17 @@ class FixedPlot:
         fig, ax = plt.subplots()
         # with online store:
         ax.plot(self.all_a, self.on_pn, color=BLUE_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.on_pn[-1]+.01, r'$pn_{O}^{*}$', color=BLUE_MEDIUM)
+        ax.text(self.all_a[-1]*.95, self.on_pn[-1]+.01, r'$pn_{OQ}^{*}$', color=BLUE_MEDIUM)
         ax.plot(self.all_a, self.on_pr, color=BLUE_LIGHT)
-        ax.text(self.all_a[-1]*.95, self.on_pr[-1]+.01, r'$pr_{O}^{*}$', color=BLUE_LIGHT)
+        ax.text(self.all_a[-1]*.95, self.on_pr[-1]-.015, r'$pr_{OQ}^{*}$', color=BLUE_LIGHT)
         # without online store:
         ax.plot(self.all_a, self.no_pn, color=RED_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.no_pn[-1]-.015, r'$pn_{N}^{*}$', color=RED_MEDIUM)
+        ax.text(self.all_a[-1]*.95, self.no_pn[-1]-.015, r'$pn_{NQ}^{*}$', color=RED_MEDIUM)
         #plot wholesale prices:
         ax.plot(self.all_a, self.on_wn, color=RED_DARK)
-        ax.text(self.all_a[-1]*.95, self.on_wn[-1]-.02, r'$wn_{O}^{*}$', color=RED_DARK)
+        ax.text(self.all_a[-1]*.95, self.on_wn[-1]+.01, r'$wn_{OQ}^{*}$', color=RED_DARK)
         ax.plot(self.all_a, self.no_wn, color=BLUE_DARK)
-        ax.text(self.all_a[-1]*.95, self.no_wn[-1]+.015, r'$wn_{N}^{*}$', color=BLUE_DARK)
+        ax.text(self.all_a[-1]*.95, self.no_wn[-1]+.015, r'$wn_{NQ}^{*}$', color=BLUE_DARK)
         
         
         ax.set_xlabel('a')
@@ -422,25 +422,29 @@ class FixedPlot:
         fig, ax = plt.subplots()
         # with online store:
         pl1,  = ax.plot(self.all_a, self.on_qn, color='#1b51a6')
-        ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=pl1.get_c())
+        ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{OQ}^{*}$', color=pl1.get_c())
         pl2, = ax.plot(self.all_a, self.on_qr, color='#1b51a6')
-        ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=pl2.get_c())
+        ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{OQ}^{*}$', color=pl2.get_c())
         # without online store:
         pl3, = ax.plot(self.all_a, self.no_qn, color='#ec5300')
-        ax.text(self.all_a[-1]*.95, self.no_qn[-1]+.01, r'$qn_{N}^{*}$', color=pl3.get_c())
+        ax.text(self.all_a[-1]*.95, self.no_qn[-1]+.01, r'$qn_{NQ}^{*}$', color=pl3.get_c())
         ax.set_xlabel('a')
         plt.show()
         
     def plot_rhos(self):
         fig, ax = plt.subplots()
         pl1,  = ax.plot(self.all_a, self.on_rho, color='#1b51a6')
-        ax.text(self.all_a[-1], self.on_rho[-1]*.7,  r'$\rho_{O}^{*}$', color=pl1.get_c())
+        ax.text(self.all_a[-1], self.on_rho[-1]*.7,  r'$\rho_{OQ}^{*}$', color=pl1.get_c())
         pl2, = ax.plot(self.all_a, self.no_rho, color='#a70000')
-        ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{N}^{*}$', color=pl2.get_c())
+        ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{NQ}^{*}$', color=pl2.get_c())
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
         ax.set_ylabel(r'Effort ($\rho$)')
         plt.show()
+        
+class SpontPlot:
+    def plot(self):
+        pass
 
 
 def __parser_output_file(string):
@@ -540,6 +544,9 @@ if __name__ == '__main__':
     elif plot == PLOT_FIXED_PLOT:
         fixedPlot = FixedPlot()
         fixedPlot.plot()
+    elif plot == PLOT_SPONT_PLOT:
+        spontSplot = SpontPlot()
+        spontPlot.plot()
     else:
         absolute = args.absolute
         if args.output:
