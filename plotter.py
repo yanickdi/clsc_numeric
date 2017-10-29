@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 from clsc_numeric import solver
-from clsc_numeric.solver import drange, Parameter, MODEL_1, MODEL_2, \
+from clsc_numeric.solver import drange, Parameter, MODEL_1, MODEL_2, MODEL_NB,  \
     MODEL_1_QUAD, MODEL_2_QUAD, \
     ModelOneNumericalSolver, ModelTwoNumericalSolver, SolverProxy
 
@@ -289,9 +289,110 @@ class FixedPlot:
     def __init__(self, filename=None):
         self.proxy = SolverProxy()
         self.filename = filename
-        self.calc()
+        self.all_a = [float(a) for a in np.linspace(0.0, 0.01, num=50)]
+        self.nr_elements = len(self.all_a)
+        self.calc_model_nb()
+        self.calc_model_o()
+        self.calc_model_n()
         
-    def calc(self):
+    def calc_model_o(self):
+        # vectors for 'with online shop':
+        self.on_profit_man = np.zeros(self.nr_elements)
+        self.on_profit_ret = np.zeros(self.nr_elements)
+        self.on_rho = np.zeros(self.nr_elements)
+        self.on_qn = np.zeros(self.nr_elements)
+        self.on_qr = np.zeros(self.nr_elements)
+        self.on_pn = np.zeros(self.nr_elements)
+        self.on_pr = np.zeros(self.nr_elements)
+        self.on_wn = np.zeros(self.nr_elements)
+        self.proxy.beginWrite()
+        cn = 0.1
+        for i, a in enumerate(self.all_a):
+            par_o = Parameter(MODEL_2, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
+            sol_o = self.proxy.read_or_calc_and_write(par_o)
+            if sol_o == None or a == 0:
+                self.on_profit_ret[i] = None
+                self.on_profit_man[i] = None
+                self.on_rho[i] = None
+                self.on_qn[i] = None
+                self.on_qr[i] = None
+                self.on_pn[i] = None
+                self.on_pr[i] = None
+                self.on_wn[i] = None
+            else:
+                self.on_profit_ret[i] = sol_o.profit_ret
+                self.on_profit_man[i] = sol_o.profit_man
+                self.on_rho[i] = sol_o.dec.rho
+                self.on_qn[i] = sol_o.dec.qn
+                self.on_qr[i] = sol_o.dec.qr
+                self.on_pn[i] = sol_o.dec.pn
+                self.on_pr[i] = sol_o.dec.pr
+                self.on_wn[i] = sol_o.dec.wn
+        self.proxy.endWrite()
+
+    def calc_model_n(self):
+        # vectors for 'without online shop':
+        self.no_profit_man = np.zeros(self.nr_elements)
+        self.no_profit_ret = np.zeros(self.nr_elements)
+        self.no_rho = np.zeros(self.nr_elements)
+        self.no_qn = np.zeros(self.nr_elements)
+        self.no_qr = np.zeros(self.nr_elements)
+        self.no_pn = np.zeros(self.nr_elements)
+        self.no_wn = np.zeros(self.nr_elements)
+        cn = 0.1
+        self.proxy.beginWrite()
+        for i, a in enumerate(self.all_a):
+            par_n = Parameter(MODEL_1, tau=.09, a=a, s=0.4*cn, cn=cn)
+            sol_n = self.proxy.read_or_calc_and_write(par_n)
+            if sol_n == None or a == 0:
+                self.no_profit_ret[i] = None
+                self.no_profit_man[i] = None
+                self.no_rho[i] = None
+                self.no_qn[i] = None
+                self.no_pn[i] = None
+                self.no_wn[i] = None
+            else:
+                self.no_profit_ret[i] = sol_n.profit_ret
+                self.no_profit_man[i] = sol_n.profit_man
+                self.no_rho[i] = sol_n.dec.rho
+                self.no_qn[i] = sol_n.dec.qn
+                self.no_pn[i] = sol_n.dec.pn
+                self.no_wn[i] = sol_n.dec.wn
+        self.proxy.endWrite()
+    
+    def calc_model_nb(self):
+        # vectors for 'without online shop':
+        self.nb_profit_man = np.zeros(self.nr_elements)
+        self.nb_profit_ret = np.zeros(self.nr_elements)
+        self.nb_rho = np.zeros(self.nr_elements)
+        self.nb_qn = np.zeros(self.nr_elements)
+        self.nb_b = np.zeros(self.nr_elements)
+        self.nb_pn = np.zeros(self.nr_elements)
+        self.nb_wn = np.zeros(self.nr_elements)
+        cn = 0.1
+        self.proxy.beginWrite()
+        for i, a in enumerate(self.all_a):
+            par_nb = Parameter(MODEL_NB, tau=.09, a=a, s=0.4*cn, cn=cn)
+            sol_nb = self.proxy.read_or_calc_and_write(par_nb)
+            if sol_nb == None or a == 0:
+                self.nb_profit_ret[i] = None
+                self.nb_profit_man[i] = None
+                self.nb_rho[i] = None
+                self.nb_qn[i] = None
+                self.nb_b[i] = None
+                self.nb_pn[i] = None
+                self.nb_wn[i] = None
+            else:
+                self.nb_profit_ret[i] = sol_nb.profit_ret
+                self.nb_profit_man[i] = sol_nb.profit_man
+                self.nb_rho[i] = sol_nb.dec.rho
+                self.nb_b[i] = sol_nb.dec.b
+                self.nb_qn[i] = sol_nb.dec.qn
+                self.nb_pn[i] = sol_nb.dec.pn
+                self.nb_wn[i] = sol_nb.dec.wn
+        self.proxy.endWrite()
+        
+    def calc_old(self):
         cn = .1
         self.all_a = np.linspace(0.0, 0.01, num=500) #origin: num=500, bis 0.01
         nr_elements = len(self.all_a)
@@ -365,7 +466,33 @@ class FixedPlot:
         #self.plot_quantities()
         #self.plot_prices()
         #self.plot_wholesale_prices()
-        pass        
+        self.plot_profits_nb_vs_o()
+        pass
+
+    def plot_profits_nb_vs_o(self):
+        fig, ax = plt.subplots()
+        
+        o_profit_man, o_profit_ret, nb_profit_ret, nb_profit_man = self.on_profit_man, self.on_profit_ret, self.nb_profit_ret, self.nb_profit_man
+        
+        # with online store:
+        pl1,  = ax.plot(self.all_a, o_profit_ret, color=RED_DARK)
+        ax.text(self.all_a[-1], o_profit_ret[-1]*1.2, r'$\pi_{R}^{O}$', color=RED_DARK)
+        pl2, = ax.plot(self.all_a, o_profit_man, color=RED_MEDIUM)
+        ax.text(self.all_a[-1], o_profit_man[-1], r'$\pi_{M}^{O}$', color=RED_MEDIUM)
+        
+        # with model nb:
+        ax.plot(self.all_a, nb_profit_ret, color=BLUE_DARK)
+        ax.text(self.all_a[-1], nb_profit_ret[-1], r'$\pi_{R}^{NB}$', color=BLUE_DARK)
+        ax.plot(self.all_a, nb_profit_man, color=BLUE_MEDIUM)
+        ax.text(self.all_a[-1], nb_profit_man[-1], r'$\pi_{M}^{NB}$', color=BLUE_MEDIUM)
+        
+        # with model n:
+        ax.plot(self.all_a, self.no_profit_ret, color=BLUE_DARK, linestyle='dashed')
+        ax.text(self.all_a[-1]*.95, self.no_profit_ret[-1]+.003, r'$\pi_{R}^{N}$', color=BLUE_DARK)
+        ax.plot(self.all_a, self.no_profit_man, color=BLUE_MEDIUM, linestyle='dashed')
+        ax.text(self.all_a[-1]*.95, self.no_profit_man[-1]-.01, r'$\pi_{M}^{N}$', color=BLUE_MEDIUM)
+        ax.set_xlabel('a')
+        plt.show()        
         
     def plot_profits(self, relative=False):
         fig, ax = plt.subplots()
@@ -444,8 +571,10 @@ class FixedPlot:
         
 class SpontPlot:
     def plot(self):
+        print('hello world')
+    
+    def plot_model_nb_vs_o_profits(self):
         pass
-
 
 def __parser_output_file(string):
     if string == 'stdout':
@@ -545,7 +674,7 @@ if __name__ == '__main__':
         fixedPlot = FixedPlot()
         fixedPlot.plot()
     elif plot == PLOT_SPONT_PLOT:
-        spontSplot = SpontPlot()
+        spontPlot = SpontPlot()
         spontPlot.plot()
     else:
         absolute = args.absolute

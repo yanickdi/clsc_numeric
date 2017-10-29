@@ -671,7 +671,7 @@ class ModelNBGridSearch:
         max_man_profit = -1
         max_param = None
         tau, a, s, cn = par.tau, par.a, par.s, par.cn
-        
+        if a == 0: return None
         for wn in np.linspace(cn, 1, num=100):
             for b in np.linspace(0.001, wn, num=100):
                 wn, b = float(wn), float(b)
@@ -795,7 +795,7 @@ class Database:
             # found but the solution is None
             return Database.NO_SOLUTION, None
         if model == MODEL_NB:
-            dec = DecisionVariables(model=model, pn=pn, pr=pr, wn=wn, rho=rho, qn=qn, qr=b)
+            dec = DecisionVariables(model=model, pn=pn, pr=pr, wn=wn, rho=rho, qn=qn, b=qr)
         else:
             dec = DecisionVariables(model=model, pn=pn, pr=pr, wn=wn, rho=rho, qn=qn, qr=qr)
         sol = Solution(dec, profit_man, profit_ret, sol_case)
@@ -810,7 +810,7 @@ class Database:
         delta = par.delta
         model = par.model
         if sol == None:
-            wn, pr, pn, rho, qn, qr, profit_man, profit_ret, case = None, None, None, None, None, None, None, None, None
+            wn, pr, pn, rho, qn, qr, profit_man, profit_ret, sol_case = None, None, None, None, None, None, None, None, None
         else:
             wn = sol.dec.wn
             pr = sol.dec.pr
