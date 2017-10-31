@@ -380,7 +380,8 @@ class TestModelNb(unittest.TestCase):
     def test_something(self):
         search = ModelNBGridSearch()
         cn = 0.1
-        par = Parameter(MODEL_NB, tau=0.09, a=0.001428571, s=0.4*cn, cn=cn)
+        #par = Parameter(MODEL_NB, tau=0.09, a=0.001428571, s=0.4*cn, cn=cn)
+        par = Parameter(MODEL_NB, tau=0.09, a=0.0006122448979591836, s=0.04000000000000001, cn=0.1)
         sol = search.search(par)
         print('wn={} b={}, rho={}, pn={}'.format(sol.dec.wn, sol.dec.b, sol.dec.rho,  sol.dec.pn).replace('.', ','))
         

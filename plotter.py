@@ -289,7 +289,7 @@ class FixedPlot:
     def __init__(self, filename=None):
         self.proxy = SolverProxy()
         self.filename = filename
-        self.all_a = [float(a) for a in np.linspace(0.0, 0.01, num=50)]
+        self.all_a = [float(a) for a in np.linspace(0.0, 0.01, num=100)]
         self.nr_elements = len(self.all_a)
         self.calc_model_nb()
         self.calc_model_o()
@@ -400,9 +400,9 @@ class FixedPlot:
         #self.plot_quantities()
         #self.plot_prices()
         #self.plot_wholesale_prices()
-        #self.plot_profits_nb_vs_o()
+        self.plot_profits_nb_vs_o()
         #self.plot_rhos_nb_vs_o()
-        self.plot_prices_nb_vs_o()
+        #self.plot_prices_nb_vs_o()
         pass
 
     def plot_profits_nb_vs_o(self):

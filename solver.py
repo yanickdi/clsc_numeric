@@ -179,7 +179,6 @@ class ModelTwoNumericalSolver:
                 return False
         elif sol.case in (_CASE_ONE_C, _CASE_TWO_C):
             if not (is_almost_equal(sol.dec.qr - ((par.tau/sol.dec.rho) * sol.dec.qn), 0)):
-                #print(sol.dec.qr, (par.tau/sol.dec.rho) * sol.dec.qn)
                 return False
                 
         # check profits
@@ -666,14 +665,14 @@ class ModelNBGridSearch:
             return max(valids, key=lambda k: k[3])
         else:
             return None
-    
-    def search(self, par):
+            
+    def search_raster(self, par, wn_range, b_range, num=10):
         max_man_profit = -1
         max_param = None
         tau, a, s, cn = par.tau, par.a, par.s, par.cn
         if a == 0: return None
-        for wn in np.linspace(cn, 1, num=100):
-            for b in np.linspace(0.001, wn, num=100):
+        for wn in np.linspace(wn_range[0], wn_range[1], num=num):
+            for b in np.linspace(b_range[0], b_range[1], num=num):
                 wn, b = float(wn), float(b)
                 ret_dec = self.retailer_decision(par, wn, b)
                 if ret_dec is None: continue
@@ -691,6 +690,35 @@ class ModelNBGridSearch:
             return sol
         else:
             return None
+            
+    def update_range(self, point, old_range, raster_size, limit_low, limit_up):
+        new_distance = (old_range[1] - old_range[0]) / raster_size
+        new_low = max(point - new_distance/2, limit_low)
+        new_up = min(point + new_distance/2, limit_up)
+        new_range = [new_low, new_up]
+        return new_range
+    
+    def search(self, par):
+        wn_range = [0, 1]
+        b_range = [0, 1]
+        raster_size = 3
+        max_iter = 10
+        iter = 0
+        best_sol = None
+        
+        while iter < max_iter:
+            sol = self.search_raster(par, wn_range, b_range, num=raster_size)
+            if sol is None:
+                return best_sol
+            profit_delta = sol.profit_man - best_sol.profit_man if best_sol is not None else 1
+            if profit_delta > 0:
+                best_sol = sol
+            # new search range should lie around this point
+            wn_range = self.update_range(best_sol.dec.wn, wn_range, raster_size, 0, 1)
+            b_range = self.update_range(best_sol.dec.b, b_range, raster_size, 0, 1)
+            iter += 1
+        print(best_sol.profit_man)
+        return best_sol
             
 class SolverProxy:
     def __init__(self):
