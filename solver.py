@@ -843,9 +843,4 @@ class Database:
         self.commit()
         
 if __name__ == '__main__':
-    db = Database.getInstance()
-    par = Parameter(MODEL_2, 1, 2, 3, 4, 5, 6)
-    dec = DecisionVariables(MODEL_2, 0, 0, 0, 0, 0, 0)
-    sol = Solution(dec, 1, 1, _CASE_ONE)
-    db.writeParAndSolution(par, sol)
     sys.exit('You cannot call this file directly')

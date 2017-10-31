@@ -7,7 +7,7 @@ from math import sqrt
 
 from clsc_numeric.solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, \
     Parameter, DecisionVariables, MODEL_1, MODEL_2, MODEL_2_QUAD, _CASE_TWO_C, \
-    Database, SolverProxy
+    Database, SolverProxy, ModelNBGridSearch, MODEL_NB
 from clsc_numeric.generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
@@ -375,6 +375,14 @@ class AnalyticalSolver:
         if ret_val[0].qn < 0:
             return (None, None, None)
         return ret_val
+        
+class TestModelNb(unittest.TestCase):
+    def test_something(self):
+        search = ModelNBGridSearch()
+        cn = 0.1
+        par = Parameter(MODEL_NB, tau=0.09, a=0.001428571, s=0.4*cn, cn=cn)
+        sol = search.search(par)
+        print('wn={} b={}, rho={}, pn={}'.format(sol.dec.wn, sol.dec.b, sol.dec.rho,  sol.dec.pn).replace('.', ','))
         
 if __name__ == '__main__':
     unittest.main()

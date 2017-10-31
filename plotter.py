@@ -392,73 +392,7 @@ class FixedPlot:
                 self.nb_wn[i] = sol_nb.dec.wn
         self.proxy.endWrite()
         
-    def calc_old(self):
-        cn = .1
-        self.all_a = np.linspace(0.0, 0.01, num=500) #origin: num=500, bis 0.01
-        nr_elements = len(self.all_a)
-        # vectors for 'with online shop':
-        self.on_profit_man = np.zeros(nr_elements)
-        self.on_profit_ret = np.zeros(nr_elements)
-        self.on_rho = np.zeros(nr_elements)
-        self.on_qn = np.zeros(nr_elements)
-        self.on_qr = np.zeros(nr_elements)
-        self.on_pn = np.zeros(nr_elements)
-        self.on_pr = np.zeros(nr_elements)
-        self.on_wn = np.zeros(nr_elements)
-        
-        # vectors for 'without online shop':
-        self.no_profit_man = np.zeros(nr_elements)
-        self.no_profit_ret = np.zeros(nr_elements)
-        self.no_rho = np.zeros(nr_elements)
-        self.no_qn = np.zeros(nr_elements)
-        self.no_qr = np.zeros(nr_elements)
-        self.no_pn = np.zeros(nr_elements)
-        self.no_wn = np.zeros(nr_elements)
-        self.proxy.beginWrite()
-        #solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
-        for i, a in enumerate(self.all_a):
-            a = float(a)
-            #a = round(a, 5)
-            par_n = Parameter(MODEL_1_QUAD, tau=.09, a=a, s=0.4*cn, cn=cn)
-            par_o = Parameter(MODEL_2_QUAD, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
-            #sol_n = solver_m1.optimize(par_n)
-            #sol_o = solver_m2.optimize(par_o)
-            sol_n = self.proxy.read_or_calc_and_write(par_n)
-            sol_o = self.proxy.read_or_calc_and_write(par_o)
-            if sol_o == None or a == 0:
-                self.on_profit_ret[i] = None
-                self.on_profit_man[i] = None
-                self.on_rho[i] = None
-                self.on_qn[i] = None
-                self.on_qr[i] = None
-                self.on_pn[i] = None
-                self.on_pr[i] = None
-                self.on_wn[i] = None
-            else:
-                self.on_profit_ret[i] = sol_o.profit_ret
-                self.on_profit_man[i] = sol_o.profit_man
-                self.on_rho[i] = sol_o.dec.rho
-                self.on_qn[i] = sol_o.dec.qn
-                self.on_qr[i] = sol_o.dec.qr
-                self.on_pn[i] = sol_o.dec.pn
-                self.on_pr[i] = sol_o.dec.pr
-                self.on_wn[i] = sol_o.dec.wn
-            if sol_n == None or a == 0:
-                self.no_profit_ret[i] = None
-                self.no_profit_man[i] = None
-                self.no_rho[i] = None
-                self.no_qn[i] = None
-                self.no_pn[i] = None
-                self.no_wn[i] = None
-            else:
-                self.no_profit_ret[i] = sol_n.profit_ret
-                self.no_profit_man[i] = sol_n.profit_man
-                self.no_rho[i] = sol_n.dec.rho
-                self.no_qn[i] = sol_n.dec.qn
-                self.no_pn[i] = sol_n.dec.pn
-                self.no_wn[i] = sol_n.dec.wn
-        self.proxy.endWrite()
-                
+
     def plot(self):
         #self.plot_profits(relative=True)
         #self.plot_profits(relative=True)
@@ -466,7 +400,9 @@ class FixedPlot:
         #self.plot_quantities()
         #self.plot_prices()
         #self.plot_wholesale_prices()
-        self.plot_profits_nb_vs_o()
+        #self.plot_profits_nb_vs_o()
+        #self.plot_rhos_nb_vs_o()
+        self.plot_prices_nb_vs_o()
         pass
 
     def plot_profits_nb_vs_o(self):
@@ -492,7 +428,55 @@ class FixedPlot:
         ax.plot(self.all_a, self.no_profit_man, color=BLUE_MEDIUM, linestyle='dashed')
         ax.text(self.all_a[-1]*.95, self.no_profit_man[-1]-.01, r'$\pi_{M}^{N}$', color=BLUE_MEDIUM)
         ax.set_xlabel('a')
-        plt.show()        
+        plt.show()
+
+    def plot_rhos_nb_vs_o(self):
+        fig, ax = plt.subplots()
+        
+        # with online store:
+        ax.plot(self.all_a, self.on_rho, color=RED_DARK, label=r'$\rho_{*}^{O}$')
+        #ax.text(self.all_a[-1], self.on_rho[-1]*1.2, r'$\rho_{*}^{O}$', color=RED_DARK)
+        
+        # with model nb:
+        ax.plot(self.all_a, self.nb_rho, color=BLUE_DARK, label=r'$\rho_{*}^{NB}$')
+        #ax.text(self.all_a[-1], self.nb_rho[-1], r'$\rho_{*}^{NB}$', color=BLUE_DARK)
+        
+        # with model n:
+        ax.plot(self.all_a, self.no_rho, color=BLUE_DARK, linestyle='dashed', label=r'$\rho_{*}^{N}$')
+        #ax.text(self.all_a[-1]*.95, self.no_rho[-1]+.003, r'$\rho_{*}^{N}$', color=BLUE_DARK)
+        ax.set_xlabel('a')
+        ax.set_ylabel(r'Effort ($\rho$)')
+        ax.legend()
+        plt.show()
+        
+    def plot_prices_nb_vs_o(self):
+        fig, ax = plt.subplots()
+        
+        # with online store:
+        ax.plot(self.all_a, self.on_pn, color=RED_DARK, label=r'$pn_{*}^{O}$')
+        ax.text(self.all_a[-1], self.on_pn[-1], r'$pn_{*}^{O}$', color=RED_DARK)
+        
+        ax.plot(self.all_a, self.on_wn, color=RED_LIGHT, label=r'$wn_{*}^{O}$')
+        ax.text(self.all_a[-1], self.on_wn[-1], r'$wn_{*}^{O}$', color=RED_LIGHT)
+        
+        
+        # with model nb:
+        ax.plot(self.all_a, self.nb_pn, color=BLUE_DARK, label=r'$pn_{*}^{NB}$')
+        ax.text(self.all_a[-1], self.nb_pn[-1], r'$pn_{*}^{NB}$', color=BLUE_DARK)
+        
+        ax.plot(self.all_a, self.nb_b, color=BLUE_MEDIUM, label=r'$b_{*}^{NB}$')
+        ax.text(self.all_a[-1], self.nb_b[-1], r'$b_{*}^{NB}$', color=BLUE_MEDIUM)
+        
+        ax.plot(self.all_a, self.nb_wn, color=BLUE_LIGHT, label=r'$wn_{*}^{NB}$')
+        ax.text(self.all_a[-1], self.nb_wn[-1], r'$wn_{*}^{NB}$', color=BLUE_LIGHT)
+        
+        # with model n:
+        #ax.plot(self.all_a, self.no_rho, color=BLUE_DARK, linestyle='dashed', label=r'$\rho_{*}^{N}$')
+        #ax.text(self.all_a[-1]*.95, self.no_rho[-1]+.003, r'$\rho_{*}^{N}$', color=BLUE_DARK)
+        ax.set_xlabel('a')
+        ax.set_xlim([0, 0.011])
+        #ax.legend()
+        plt.show()
         
     def plot_profits(self, relative=False):
         fig, ax = plt.subplots()
