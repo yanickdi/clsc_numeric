@@ -6,8 +6,8 @@ import unittest
 from math import sqrt
 
 from clsc_numeric.solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, \
-    Parameter, DecisionVariables, MODEL_1, MODEL_2, MODEL_2_QUAD, _CASE_TWO_C, \
-    Database, SolverProxy, ModelNBGridSearch, MODEL_NB
+    Parameter, DecisionVariables, MODEL_1, MODEL_2, MODEL_1_QUAD, MODEL_2_QUAD, _CASE_TWO_C, \
+    Database, SolverProxy, ModelNBGridSearch, MODEL_NB, ModelOneQuadGridSearch
 from clsc_numeric.generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
@@ -385,6 +385,15 @@ class TestModelNb(unittest.TestCase):
         self.assertAlmostEqual(sol.dec.rho, 5.578679582408612)
         self.assertAlmostEqual(sol.profit_man, 0.09939780698178023)
         self.assertAlmostEqual(sol.profit_ret, 0.04771325551393344)
- 
+
+class TestModelOneQuadGridSearch(unittest.TestCase):
+    def test_something(self):
+        search = ModelOneQuadGridSearch()
+        par = Parameter(MODEL_1_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1)
+        sol = search.search(par)
+        self.assertAlmostEqual(sol.dec.rho, 1.3646637305717777)
+        self.assertAlmostEqual(sol.profit_man, 0.01939422340564826)
+        self.assertAlmostEqual(sol.profit_ret, 0.05782738169864521)
+        
 if __name__ == '__main__':
     unittest.main()

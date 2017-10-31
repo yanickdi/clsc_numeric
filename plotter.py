@@ -294,6 +294,73 @@ class FixedPlot:
         self.calc_model_nb()
         self.calc_model_o()
         self.calc_model_n()
+        self.calc_model_oq()
+        self.calc_model_nq()
+        
+    def calc_model_oq(self):
+        # vectors for 'with online shop quadratic':
+        self.oq_profit_man = np.zeros(self.nr_elements)
+        self.oq_profit_ret = np.zeros(self.nr_elements)
+        self.oq_rho = np.zeros(self.nr_elements)
+        self.oq_qn = np.zeros(self.nr_elements)
+        self.oq_qr = np.zeros(self.nr_elements)
+        self.oq_pn = np.zeros(self.nr_elements)
+        self.oq_pr = np.zeros(self.nr_elements)
+        self.oq_wn = np.zeros(self.nr_elements)
+        self.proxy.beginWrite()
+        cn = 0.1
+        for i, a in enumerate(self.all_a):
+            par_oq = Parameter(MODEL_2_QUAD, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
+            sol_oq = self.proxy.read_or_calc_and_write(par_oq)
+            if sol_oq == None or a == 0:
+                self.oq_profit_ret[i] = None
+                self.oq_profit_man[i] = None
+                self.oq_rho[i] = None
+                self.oq_qn[i] = None
+                self.oq_qr[i] = None
+                self.oq_pn[i] = None
+                self.oq_pr[i] = None
+                self.oq_wn[i] = None
+            else:
+                self.oq_profit_ret[i] = sol_oq.profit_ret
+                self.oq_profit_man[i] = sol_oq.profit_man
+                self.oq_rho[i] = sol_oq.dec.rho
+                self.oq_qn[i] = sol_oq.dec.qn
+                self.oq_qr[i] = sol_oq.dec.qr
+                self.oq_pn[i] = sol_oq.dec.pn
+                self.oq_pr[i] = sol_oq.dec.pr
+                self.oq_wn[i] = sol_oq.dec.wn
+        self.proxy.endWrite()
+        
+    def calc_model_nq(self):
+        # vectors for 'without online shop quadratic':
+        self.nq_profit_man = np.zeros(self.nr_elements)
+        self.nq_profit_ret = np.zeros(self.nr_elements)
+        self.nq_rho = np.zeros(self.nr_elements)
+        self.nq_qn = np.zeros(self.nr_elements)
+        self.nq_qr = np.zeros(self.nr_elements)
+        self.nq_pn = np.zeros(self.nr_elements)
+        self.nq_wn = np.zeros(self.nr_elements)
+        cn = 0.1
+        self.proxy.beginWrite()
+        for i, a in enumerate(self.all_a):
+            par_nq = Parameter(MODEL_1_QUAD, tau=.09, a=a, s=0.4*cn, cn=cn)
+            sol_nq = self.proxy.read_or_calc_and_write(par_nq)
+            if sol_nq == None or a == 0:
+                self.nq_profit_ret[i] = None
+                self.nq_profit_man[i] = None
+                self.nq_rho[i] = None
+                self.nq_qn[i] = None
+                self.nq_pn[i] = None
+                self.nq_wn[i] = None
+            else:
+                self.nq_profit_ret[i] = sol_nq.profit_ret
+                self.nq_profit_man[i] = sol_nq.profit_man
+                self.nq_rho[i] = sol_nq.dec.rho
+                self.nq_qn[i] = sol_nq.dec.qn
+                self.nq_pn[i] = sol_nq.dec.pn
+                self.nq_wn[i] = sol_nq.dec.wn
+        self.proxy.endWrite()
         
     def calc_model_o(self):
         # vectors for 'with online shop':
@@ -394,15 +461,21 @@ class FixedPlot:
         
 
     def plot(self):
+        ## ORIGINAL MODELS:
         #self.plot_profits(relative=True)
         #self.plot_profits(relative=True)
         #self.plot_rhos()
         #self.plot_quantities()
         #self.plot_prices()
-        #self.plot_wholesale_prices()
+        
+        ## MODEL NB VS O:
         #self.plot_profits_nb_vs_o()
         #self.plot_rhos_nb_vs_o()
-        self.plot_prices_nb_vs_o()
+        #self.plot_prices_nb_vs_o()
+        
+        ## QUADRATIC MODEL:
+        self.plot_rhos_nq_vs_oq()
+        
         pass
 
     def plot_profits_nb_vs_o(self):
@@ -493,16 +566,16 @@ class FixedPlot:
         
         # with online store:
         pl1,  = ax.plot(self.all_a, on_profit_ret, color='#1b51a6')
-        ax.text(self.all_a[-1], on_profit_ret[-1]*1.2, r'$\pi_{R}^{OQ}$', color=pl1.get_c())
+        ax.text(self.all_a[-1], on_profit_ret[-1]*1.2, r'$\pi_{R}^{O}$', color=pl1.get_c())
         pl2, = ax.plot(self.all_a, on_profit_man, color='#1b51a6')
-        ax.text(self.all_a[-1], on_profit_man[-1], r'$\pi_{M}^{OQ}$', color=pl2.get_c())
+        ax.text(self.all_a[-1], on_profit_man[-1], r'$\pi_{M}^{O}$', color=pl2.get_c())
         #pl3, = ax.plot(self.all_a, on_profit_sc, color='#0d0548')
         #ax.text(self.all_a[-1], on_profit_sc[-1], r'$\pi_{SC}^{O}$', color=pl3.get_c())
         # without online store:
         pl4, = ax.plot(self.all_a, no_profit_ret, color='#ec5300')
-        ax.text(self.all_a[-1], no_profit_ret[-1], r'$\pi_{R}^{NQ}$', color=pl4.get_c())
+        ax.text(self.all_a[-1], no_profit_ret[-1], r'$\pi_{R}^{N}$', color=pl4.get_c())
         pl5, = ax.plot(self.all_a, no_profit_man, color='#db1414')
-        ax.text(self.all_a[-1], no_profit_man[-1], r'$\pi_{M}^{NQ}$', color=pl5.get_c())
+        ax.text(self.all_a[-1], no_profit_man[-1], r'$\pi_{M}^{N}$', color=pl5.get_c())
         #pl6, = ax.plot(self.all_a, no_profit_sc, color='#a70000')
         #ax.text(self.all_a[-1], no_profit_sc[-1], r'$\pi_{SC}^{N}$', color=pl6.get_c())
         ax.set_xlabel('a')
@@ -512,17 +585,17 @@ class FixedPlot:
         fig, ax = plt.subplots()
         # with online store:
         ax.plot(self.all_a, self.on_pn, color=BLUE_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.on_pn[-1]+.01, r'$pn_{OQ}^{*}$', color=BLUE_MEDIUM)
+        ax.text(self.all_a[-1]*.95, self.on_pn[-1]+.01, r'$pn_{O}^{*}$', color=BLUE_MEDIUM)
         ax.plot(self.all_a, self.on_pr, color=BLUE_LIGHT)
-        ax.text(self.all_a[-1]*.95, self.on_pr[-1]-.015, r'$pr_{OQ}^{*}$', color=BLUE_LIGHT)
+        ax.text(self.all_a[-1]*.95, self.on_pr[-1]-.015, r'$pr_{O}^{*}$', color=BLUE_LIGHT)
         # without online store:
         ax.plot(self.all_a, self.no_pn, color=RED_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.no_pn[-1]-.015, r'$pn_{NQ}^{*}$', color=RED_MEDIUM)
+        ax.text(self.all_a[-1]*.95, self.no_pn[-1]-.015, r'$pn_{N}^{*}$', color=RED_MEDIUM)
         #plot wholesale prices:
         ax.plot(self.all_a, self.on_wn, color=RED_DARK)
-        ax.text(self.all_a[-1]*.95, self.on_wn[-1]+.01, r'$wn_{OQ}^{*}$', color=RED_DARK)
+        ax.text(self.all_a[-1]*.95, self.on_wn[-1]+.01, r'$wn_{O}^{*}$', color=RED_DARK)
         ax.plot(self.all_a, self.no_wn, color=BLUE_DARK)
-        ax.text(self.all_a[-1]*.95, self.no_wn[-1]+.015, r'$wn_{NQ}^{*}$', color=BLUE_DARK)
+        ax.text(self.all_a[-1]*.95, self.no_wn[-1]+.015, r'$wn_{N}^{*}$', color=BLUE_DARK)
         
         
         ax.set_xlabel('a')
@@ -533,21 +606,34 @@ class FixedPlot:
         fig, ax = plt.subplots()
         # with online store:
         pl1,  = ax.plot(self.all_a, self.on_qn, color='#1b51a6')
-        ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{OQ}^{*}$', color=pl1.get_c())
+        ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=pl1.get_c())
         pl2, = ax.plot(self.all_a, self.on_qr, color='#1b51a6')
-        ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{OQ}^{*}$', color=pl2.get_c())
+        ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=pl2.get_c())
         # without online store:
         pl3, = ax.plot(self.all_a, self.no_qn, color='#ec5300')
-        ax.text(self.all_a[-1]*.95, self.no_qn[-1]+.01, r'$qn_{NQ}^{*}$', color=pl3.get_c())
+        ax.text(self.all_a[-1]*.95, self.no_qn[-1]+.01, r'$qn_{N}^{*}$', color=pl3.get_c())
         ax.set_xlabel('a')
         plt.show()
         
     def plot_rhos(self):
         fig, ax = plt.subplots()
         pl1,  = ax.plot(self.all_a, self.on_rho, color='#1b51a6')
-        ax.text(self.all_a[-1], self.on_rho[-1]*.7,  r'$\rho_{OQ}^{*}$', color=pl1.get_c())
+        ax.text(self.all_a[-1], self.on_rho[-1]*.7,  r'$\rho_{O}^{*}$', color=pl1.get_c())
         pl2, = ax.plot(self.all_a, self.no_rho, color='#a70000')
-        ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{NQ}^{*}$', color=pl2.get_c())
+        ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{N}^{*}$', color=pl2.get_c())
+        ax.set_ylim([0, 5])
+        ax.set_xlabel('a')
+        ax.set_ylabel(r'Effort ($\rho$)')
+        plt.show()
+        
+    def plot_rhos_nq_vs_oq(self):
+        """ no onlineshop quadratic vs. onlineshop quadratic """
+        fig, ax = plt.subplots()
+        pl1,  = ax.plot(self.all_a, self.oq_rho, color='#1b51a6')
+        ax.text(self.all_a[-1], self.oq_rho[-1]*.7,  r'$\rho_{OQ}^{*}$', color=pl1.get_c())
+        
+        pl2, = ax.plot(self.all_a, self.nq_rho, color='#a70000')
+        ax.text(self.all_a[-1], self.nq_rho[-1]*1.3, r'$\rho_{NQ}^{*}$', color=pl2.get_c())
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
         ax.set_ylabel(r'Effort ($\rho$)')
