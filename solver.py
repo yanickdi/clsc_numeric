@@ -620,10 +620,10 @@ class ModelOneQuadGridSearch:
             return sol
         else:
             return None
-            
-class ModelNBGridSearch:
 
-    def pn_rho(self, wn, b, a, s, tau):
+class ModelNBGridSearch:
+    @staticmethod
+    def _pn_rho(wn, b, a, s, tau):
         """ Returns all valid (pn, rho) combinations """
         #FortranForm[ sol[[1]][[1]][[2]] ]
         # erste tests zeigen übrigens, dass nur rho_3 zu > 1 führt
@@ -651,9 +651,10 @@ class ModelNBGridSearch:
                 valids.append( (pn[i].real, rho[i].real, i) )
         return valids
         
-    def retailer_decision(self, par, wn, b):
+    @staticmethod
+    def _retailer_decision(par, wn, b):
         a = par.a; s = par.s; tau = par.tau
-        valid_pn_rhos = self.pn_rho(wn, b, a, s, tau)
+        valid_pn_rhos = ModelNBGridSearch._pn_rho(wn, b, a, s, tau)
         valids = []
         for pn, rho, case_ in valid_pn_rhos:
             qn = 1 - pn
@@ -665,60 +666,30 @@ class ModelNBGridSearch:
             return max(valids, key=lambda k: k[3])
         else:
             return None
-            
-    def search_raster(self, par, wn_range, b_range, num=10):
-        max_man_profit = -1
-        max_param = None
-        tau, a, s, cn = par.tau, par.a, par.s, par.cn
-        if a == 0: return None
-        for wn in np.linspace(wn_range[0], wn_range[1], num=num):
-            for b in np.linspace(b_range[0], b_range[1], num=num):
-                wn, b = float(wn), float(b)
-                ret_dec = self.retailer_decision(par, wn, b)
-                if ret_dec is None: continue
-                pn, rho, qn, ret_prof = ret_dec
-                man_profit = qn*(wn - cn - (tau/rho)*b + (tau/rho)*s)
-                if man_profit > max_man_profit:
-                    max_man_profit = man_profit
-                    max_param = [wn, b, pn, rho, qn, ret_prof]
-        # if we found something, build a solution object and return
-        if max_man_profit >= 0:
-            dec = DecisionVariables(MODEL_NB, pn=max_param[2], b=max_param[1], wn=max_param[0],
-                rho=max_param[3], qn=max_param[4])
-            case = _CASE_ONE if max_param[3] > 1 else _CASE_TWO
-            sol = Solution(dec, max_man_profit, max_param[5], case)
-            return sol
-        else:
-            return None
-            
-    def update_range(self, point, old_range, raster_size, limit_low, limit_up):
-        new_distance = (old_range[1] - old_range[0]) / raster_size
-        new_low = max(point - new_distance/2, limit_low)
-        new_up = min(point + new_distance/2, limit_up)
-        new_range = [new_low, new_up]
-        return new_range
     
+    @staticmethod
+    def _grid_search_func(par, wn, b):
+        ret_dec = ModelNBGridSearch._retailer_decision(par, wn, b)
+        if ret_dec is None: return None, None
+        pn, rho, qn, ret_prof = ret_dec
+        man_profit = qn*(wn - par.cn - (par.tau/rho)*b + (par.tau/rho)*par.s)
+        return man_profit, (wn, b, pn, rho, qn, man_profit, ret_prof)
+        
     def search(self, par):
+        if par.a == 0: return None
         wn_range = [0, 1]
         b_range = [0, 1]
         raster_size = 3
-        max_iter = 10
-        iter = 0
-        best_sol = None
-        
-        while iter < max_iter:
-            sol = self.search_raster(par, wn_range, b_range, num=raster_size)
-            if sol is None:
-                return best_sol
-            profit_delta = sol.profit_man - best_sol.profit_man if best_sol is not None else 1
-            if profit_delta > 0:
-                best_sol = sol
-            # new search range should lie around this point
-            wn_range = self.update_range(best_sol.dec.wn, wn_range, raster_size, 0, 1)
-            b_range = self.update_range(best_sol.dec.b, b_range, raster_size, 0, 1)
-            iter += 1
-        return best_sol
-        
+        iter = 10
+        sol_tuple = GridSearch2D.maximize(ModelNBGridSearch._grid_search_func,
+            par, wn_range, b_range, raster_size, iter)
+        if sol_tuple is None: return None
+        dec = DecisionVariables(MODEL_NB, pn=sol_tuple[2], b=sol_tuple[1],
+            wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4])
+        case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
+        sol = Solution(dec, sol_tuple[5], sol_tuple[6], case)
+        return sol
+  
 class GridSearch2D:
     """
         This class offers a grid search maximizing a

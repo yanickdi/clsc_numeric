@@ -400,9 +400,9 @@ class FixedPlot:
         #self.plot_quantities()
         #self.plot_prices()
         #self.plot_wholesale_prices()
-        self.plot_profits_nb_vs_o()
+        #self.plot_profits_nb_vs_o()
         #self.plot_rhos_nb_vs_o()
-        #self.plot_prices_nb_vs_o()
+        self.plot_prices_nb_vs_o()
         pass
 
     def plot_profits_nb_vs_o(self):

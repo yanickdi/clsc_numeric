@@ -385,7 +385,6 @@ class TestModelNb(unittest.TestCase):
         self.assertAlmostEqual(sol.dec.rho, 5.578679582408612)
         self.assertAlmostEqual(sol.profit_man, 0.09939780698178023)
         self.assertAlmostEqual(sol.profit_ret, 0.04771325551393344)
-        #print('wn={} b={}, rho={}, pn={}'.format(sol.dec.wn, sol.dec.b, sol.dec.rho,  sol.dec.pn).replace('.', ','))
-        
+ 
 if __name__ == '__main__':
     unittest.main()
