@@ -717,9 +717,68 @@ class ModelNBGridSearch:
             wn_range = self.update_range(best_sol.dec.wn, wn_range, raster_size, 0, 1)
             b_range = self.update_range(best_sol.dec.b, b_range, raster_size, 0, 1)
             iter += 1
-        print(best_sol.profit_man)
         return best_sol
+        
+class GridSearch2D:
+    """
+        This class offers a grid search maximizing a
+        for 2 dimensional concave function
+        
+        The function to optimize `func` must accept 3 arguments:
+            (func_arg, x, y) - where func_arg is passed through
+        The function must return 2 values:
+            the first is a numerical object that supports the > operator
+            the second is an object that will be finally be returned in case of a maximium
             
+        The function must return None, None if there is no solution for a given x,y
+    """
+    
+    @staticmethod
+    def maximize(func, func_arg, x_start_range, y_start_range, raster_size, iterations):
+        x_lim, y_lim = x_start_range, y_start_range
+        x_range, y_range = x_start_range[:], y_start_range[:]
+        best_f_val, best_f_obj = None, None
+        best_x, best_y = None, None
+        for iter in range(iterations):
+            f_val, f_obj, f_x, f_y = GridSearch2D._search_raster(
+                        func, func_arg, x_range, y_range, raster_size)
+            if f_val is None: return best_f_obj
+            
+            # update best values if found
+            if best_f_val is None or f_val > best_f_val:
+                best_f_val, best_f_obj, best_x, best_y = f_val, f_obj, f_x, f_y
+                
+            # update new search ranges
+            x_range = GridSearch2D._range(best_x, x_range, raster_size, x_lim[0], x_lim[1])
+            y_range = GridSearch2D._range(best_y, y_range, raster_size, y_lim[0], y_lim[1])
+        return best_f_obj
+        
+    @staticmethod
+    def _range(point, old_range, raster_size, limit_low, limit_up):
+        new_distance = (old_range[1] - old_range[0]) / raster_size
+        new_low = max(point - new_distance/2, limit_low)
+        new_up = min(point + new_distance/2, limit_up)
+        new_range = [new_low, new_up]
+        return new_range
+        
+    @staticmethod
+    def _search_raster(func, func_arg, x_range, y_range, raster_size):
+        """
+            this helper method creates the raster, calls the func and returns
+            both returned best values and corresponding x and y val
+        """
+        best_f_val, best_f_obj, best_x, best_y = None, None, None, None
+        for x in np.linspace(x_range[0], x_range[1], num=raster_size):
+            for y in np.linspace(y_range[0], y_range[1], num=raster_size):
+                x, y = float(x), float(y)
+                # call our function
+                f_val, f_obj = func(func_arg, x, y)
+                if f_val == None: continue
+                if best_f_val is None or f_val > best_f_val:
+                    best_f_val, best_f_obj = f_val, f_obj
+                    best_x, best_y = x, y
+        return best_f_val, best_f_obj, best_x, best_y
+
 class SolverProxy:
     def __init__(self):
         self.db = Database()

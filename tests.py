@@ -276,7 +276,6 @@ class TestToday(unittest.TestCase):
         par = Parameter(MODEL_2, tau=.09, a=0.00146, s=.04, cr=.04, cn=.1, delta=.7956)
         sol = solver.optimize(par)
         self.assertAlmostEqual(sol.profit_man, 0.1582925507399)
-        print(sol.dec)
 
 @unittest.skipIf(LONGTEST==False,
                      "only in long test")
@@ -379,11 +378,14 @@ class AnalyticalSolver:
 class TestModelNb(unittest.TestCase):
     def test_something(self):
         search = ModelNBGridSearch()
-        cn = 0.1
-        #par = Parameter(MODEL_NB, tau=0.09, a=0.001428571, s=0.4*cn, cn=cn)
-        par = Parameter(MODEL_NB, tau=0.09, a=0.0006122448979591836, s=0.04000000000000001, cn=0.1)
+        par = Parameter(MODEL_NB, tau=0.09, a=0.000505050505050505, s=0.04000000000000001, cn=0.1)
         sol = search.search(par)
-        print('wn={} b={}, rho={}, pn={}'.format(sol.dec.wn, sol.dec.b, sol.dec.rho,  sol.dec.pn).replace('.', ','))
+        self.assertAlmostEqual(sol.dec.b, 0)
+        self.assertAlmostEqual(sol.dec.wn, 0.5401615607376925)
+        self.assertAlmostEqual(sol.dec.rho, 5.578679582408612)
+        self.assertAlmostEqual(sol.profit_man, 0.09939780698178023)
+        self.assertAlmostEqual(sol.profit_ret, 0.04771325551393344)
+        #print('wn={} b={}, rho={}, pn={}'.format(sol.dec.wn, sol.dec.b, sol.dec.rho,  sol.dec.pn).replace('.', ','))
         
 if __name__ == '__main__':
     unittest.main()
