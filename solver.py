@@ -561,30 +561,20 @@ class ModelTwoQuadGridSearch:
             return None
 
 class ModelOneQuadGridSearch:
-    def __init__(self):
-        pass
-        
-    def _retailer_decision(self, par, wn):
+    @staticmethod
+    def _retailer_decision(par, wn):
         tau, a, s, cn = par.tau, par.a, par.s, par.cn
-        if a == 0:
-            rho_1 = 100
-        else:
-            rho_1 = (4 * a + (8 * 2**(1/3) * \
-                   a**2)/(16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
-                   3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
-                 1/3) + 2**( \
-                  2/3) * (16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
-                    3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
-                  1/3))/(12 * a)
+        rho_1 = (4 * a + (8 * 2**(1/3) * \
+               a**2)/(16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
+               3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
+             1/3) + 2**( \
+              2/3) * (16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
+                3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
+              1/3))/(12 * a)
         pn_1  = (1+wn)/2
         rho_2 = 1
         pn_2 = (1+wn)/2
         valids = []
-        #if type(rho_1) == complex or type(rho_1) == np.complex128:
-        #    if rho_1.imag < .000001 and rho_1.real > 1:
-        #        rho_1 = rho_1.real
-        #    else:
-        #        rho_1 = -1
         for pn, rho in ((pn_1, rho_1), (pn_2, rho_2)):
             qn = 1 - pn
             if rho == 0: continue
@@ -596,7 +586,30 @@ class ModelOneQuadGridSearch:
         else:
             return None
         
+    @staticmethod
+    def _grid_search_func(par, wn, _):
+        ret_dec = ModelOneQuadGridSearch._retailer_decision(par, wn)
+        if ret_dec is None: return None, None
+        pn, rho, qn, ret_prof = ret_dec
+        man_profit = qn*(wn*(1-par.tau/rho))- par.cn + (par.tau/rho) * par.s
+        return man_profit, (wn, pn, rho, qn, man_profit, ret_prof)
+        
     def search(self, par):
+        if par.a == 0: return None
+        wn_range = [0, 1]
+        y_range = [0, 0] #not there
+        raster_size = 3
+        iter = 10
+        sol_tuple = GridSearch2D.maximize(ModelOneQuadGridSearch._grid_search_func,
+            par, wn_range, y_range, raster_size, iter)
+        if sol_tuple is None: return None
+        dec = DecisionVariables(MODEL_1_QUAD, pn=sol_tuple[1], wn=sol_tuple[0],
+                rho=sol_tuple[2], qn=sol_tuple[3])
+        case = _CASE_ONE if sol_tuple[2] > 1 else _CASE_TWO
+        sol = Solution(dec, sol_tuple[4], sol_tuple[5], case)
+        return sol
+    
+    def search_old(self, par):
         """ Returns a solution object or None if no solution found """
         max_man_profit = -1
         #            0:wn  1:pn   2:rho  3:qn  4:ret_profit
@@ -739,8 +752,9 @@ class GridSearch2D:
             both returned best values and corresponding x and y val
         """
         best_f_val, best_f_obj, best_x, best_y = None, None, None, None
+        y_num = raster_size if y_range[0] != y_range[1] else 1
         for x in np.linspace(x_range[0], x_range[1], num=raster_size):
-            for y in np.linspace(y_range[0], y_range[1], num=raster_size):
+            for y in np.linspace(y_range[0], y_range[1], num=y_num):
                 x, y = float(x), float(y)
                 # call our function
                 f_val, f_obj = func(func_arg, x, y)
