@@ -500,17 +500,15 @@ def drange(start, end, step_size):
         yield r
         r += step_size
         
+def almost_equal(first, sec, tol=0.001):
+    return abs(first-sec) < tol
+
 class ModelTwoQuadGridSearch:
-    def __init__(self):
-        pass
-        
-    def _retailer_decision(self, par, wn, pr):
+    @staticmethod
+    def _retailer_decision(par, wn, pr):
         tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
         #rho_1 = (8*2**(1/3)*a**2*(-1 + delta)**2 + 4*a*(-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3) * sqrt(-a**4 *(-1 + delta)**4 *tau *(-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) + (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 6 * sqrt(3) * sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(   2/3))/(12 * a * (-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3)* sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
-        if a == 0:
-            rho_1 = 100
-        else:
-            rho_1 = (-16 * (-2)**(1/3) * a**2 * (-1 + delta)**2 +  8 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3) *sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) +  1j * (1j + sqrt( 3)) * (2 * a**2 * (-1 + delta)**2 * (16 *a *(-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  6 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**( 2/3))/(24 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4*  tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
+        rho_1 = (-16 * (-2)**(1/3) * a**2 * (-1 + delta)**2 +  8 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3) *sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) +  1j * (1j + sqrt( 3)) * (2 * a**2 * (-1 + delta)**2 * (16 *a *(-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  6 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**( 2/3))/(24 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4*  tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         #rho_1 = (8 * 1j *2**(1/3) * (1j + sqrt(3)) * a**2 * (-1 + delta)**2 +   8 * a * (-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 *tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  1/3) + (-1 -   1j * sqrt(3)) * (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   6 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  2/3))/(24 * a *(-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         pn_1  = .5 * (1+wn-delta+pr)
         rho_2 = 1
@@ -528,37 +526,34 @@ class ModelTwoQuadGridSearch:
             ret_profit = qn*(pn-wn)*(1-par.tau/rho)-par.a*(rho-1)**2
             if (0 <= qr <= (par.tau/rho)*qn) and rho >= 1 and ret_profit >= 0:
                 valids.append([pn, rho, qn, qr, ret_profit])
+        #print('here')
         if len(valids) > 0:
             return max(valids, key=lambda k: k[4])
         else:
             return None
                 
-        
     def search(self, par):
-        """ Returns a solution object or None if no solution found """
-        max_man_profit = -1
-        #            0:wn   1:pr  2:pn 3:rho 4:qn  5:qr  6:ret_profit
-        max_param = None
-        for wn in np.arange(0, 1+.01, .01):
-            for pr in np.arange(0, 1+.01, .01):
-                wn, pr = float(wn), float(pr)
-                ret_dec = self._retailer_decision(par, wn, pr)
-                if ret_dec is None: continue
-                pn, rho, qn, qr, ret_prof = ret_dec
-                man_profit = qn*(wn*(1-par.tau/rho)-par.cn) + qr*(pr-par.cr)+((par.tau/rho)*qn - qr)*par.s
-                if man_profit > max_man_profit:
-                    max_man_profit = man_profit
-                    max_param = [wn, pr, pn, rho, qn, qr, ret_prof]
-        
-        # if we found something, build a solution object and return
-        if max_man_profit >= 0:
-            dec = DecisionVariables(MODEL_2_QUAD, pn=max_param[2], pr=max_param[1], wn=max_param[0],
-                rho=max_param[3], qn=max_param[4], qr=max_param[5])
-            case = _CASE_ONE if max_param[3] > 1 else _CASE_TWO
-            sol = Solution(dec, max_man_profit, max_param[6], case)
-            return sol
-        else:
-            return None
+        if par.a == 0: return None
+        wn_range = [0, 1]
+        pr_range = [0, 1]
+        raster_size = 20
+        iter = 10
+        sol_tuple = GridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
+            par, wn_range, pr_range, raster_size, iter)
+        if sol_tuple is None: return None
+        dec = DecisionVariables(MODEL_2_QUAD, pn=sol_tuple[2], pr=sol_tuple[1],
+            wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4], qr=sol_tuple[5])
+        case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
+        sol = Solution(dec, sol_tuple[6], sol_tuple[7], case)
+        return sol
+    
+    @staticmethod
+    def _grid_search_func(par, wn, pr):
+        ret_dec = ModelTwoQuadGridSearch._retailer_decision(par, wn, pr)
+        if ret_dec is None: return None, None
+        pn, rho, qn, qr, ret_prof = ret_dec
+        man_profit = qn*(wn*(1-par.tau/rho)-par.cn) + qr*(pr-par.cr)+((par.tau/rho)*qn - qr)*par.s
+        return man_profit, (wn, pr, pn, rho, qn, qr, man_profit, ret_prof)
 
 class ModelOneQuadGridSearch:
     @staticmethod

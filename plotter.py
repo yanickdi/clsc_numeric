@@ -474,8 +474,8 @@ class FixedPlot:
         #self.plot_prices_nb_vs_o()
         
         ## QUADRATIC MODEL:
-        self.plot_rhos_nq_vs_oq()
-        
+        #self.plot_rhos_nq_vs_oq()
+        self.plot_prices_nq_vs_oq()
         pass
 
     def plot_profits_nb_vs_o(self):
@@ -596,10 +596,7 @@ class FixedPlot:
         ax.text(self.all_a[-1]*.95, self.on_wn[-1]+.01, r'$wn_{O}^{*}$', color=RED_DARK)
         ax.plot(self.all_a, self.no_wn, color=BLUE_DARK)
         ax.text(self.all_a[-1]*.95, self.no_wn[-1]+.015, r'$wn_{N}^{*}$', color=BLUE_DARK)
-        
-        
         ax.set_xlabel('a')
-        
         plt.show()
         
     def plot_quantities(self):
@@ -637,6 +634,24 @@ class FixedPlot:
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
         ax.set_ylabel(r'Effort ($\rho$)')
+        plt.show()
+        
+    def plot_prices_nq_vs_oq(self):
+        fig, ax = plt.subplots()
+        # with online store:
+        ax.plot(self.all_a, self.oq_pn, color=BLUE_MEDIUM)
+        ax.text(self.all_a[-1]*.95, self.on_pn[-1]+.01, r'$pn_{OQ}^{*}$', color=BLUE_MEDIUM)
+        ax.plot(self.all_a, self.oq_pr, color=BLUE_LIGHT)
+        ax.text(self.all_a[-1]*.95, self.on_pr[-1]-.015, r'$pr_{OQ}^{*}$', color=BLUE_LIGHT)
+        # without online store:
+        ax.plot(self.all_a, self.nq_pn, color=RED_MEDIUM)
+        ax.text(self.all_a[-1]*.95, self.no_pn[-1]-.015, r'$pn_{NQ}^{*}$', color=RED_MEDIUM)
+        #plot wholesale prices:
+        ax.plot(self.all_a, self.oq_wn, color=RED_DARK)
+        ax.text(self.all_a[-1]*.95, self.on_wn[-1]+.01, r'$wn_{OQ}^{*}$', color=RED_DARK)
+        ax.plot(self.all_a, self.nq_wn, color=BLUE_DARK)
+        ax.text(self.all_a[-1]*.95, self.no_wn[-1]+.015, r'$wn_{NQ}^{*}$', color=BLUE_DARK)
+        ax.set_xlabel('a')
         plt.show()
         
 class SpontPlot:
