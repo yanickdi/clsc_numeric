@@ -395,10 +395,17 @@ class TestModelOneQuadGridSearch(unittest.TestCase):
         self.assertAlmostEqual(sol.profit_man, 0.019402335105988777)
         
 class TestModelTwoQuadGridSearch(unittest.TestCase):
+    def test_another(self):
+        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0024489795918367346, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+        proxy = SolverProxy()
+        sol = proxy.read_or_calc_and_write(par)
+        print(sol)
+
     def test_something(self):
         search = ModelTwoQuadGridSearch()
         par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         sol = search.search(par)
+        print(sol.dec.qr)
         self.assertIsNotNone(sol)
         #self.assertAlmostEqual(sol.profit_man, 0.15633558093176322)
         
