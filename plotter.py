@@ -465,7 +465,7 @@ class FixedPlot:
     def plot(self):
         ## ORIGINAL MODELS:
         #self.plot_profits(relative=True)
-        self.plot_rhos()
+        #self.plot_rhos()
         #self.plot_quantities()
         #self.plot_prices()
         
@@ -478,7 +478,7 @@ class FixedPlot:
         #self.plot_profits_nq_vs_oq()
         #self.plot_rhos_nq_vs_oq()
         #self.plot_prices_nq_vs_oq()
-        #self.plot_quantities_nq_vs_oq()
+        self.plot_quantities_nq_vs_oq()
         pass
 
     def plot_profits_nb_vs_o(self):

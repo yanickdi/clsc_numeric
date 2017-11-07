@@ -459,7 +459,7 @@ class Parameter:
         self.model = model
         
     def __str__(self):
-        if self.model == MODEL_1 or model == MODEL_1_QUAD:
+        if self.model == MODEL_1 or self.model == MODEL_1_QUAD or self.model == MODEL_NB:
             return 'tau={:.2f}, a={:.4f}, s={:.2f}, cn={:.4f}'.format(self.tau, self.a, self.s, self.cn)
         else:
             return 'tau={:.4f}, a={:.5f}, s={:.4f}, cr={:.4f}, cn={:.4f}, delta={:.4f}'.format(
@@ -487,6 +487,8 @@ class DecisionVariables:
     def __str__(self):
         if self.model == MODEL_1:
             return 'wn={:.5f}, pn={:.5f}, rho={:.5f}, qn={:.5f}'.format(self.wn, self.pn, self.rho, self.qn)
+        elif self.model == MODEL_NB:
+            return 'wn={:.5f}, b={:.3f}, pn={:.5f}, rho={:.5f}, qn={:.5f}'.format(self.wn, self.b, self.pn, self.rho, self.qn)
         else:
             return 'pn={:.5f}, pr={:.5f}, wn={:.5f}, rho={:.5f}, qn={:.5f}, qr={:.5f}'.format(self.pn, self.pr, self.wn, self.rho, self.qn, self.qr)
     
@@ -527,7 +529,6 @@ class ModelTwoQuadGridSearch:
             ret_profit = qn*(pn-wn)*(1-par.tau/rho)-par.a*(rho-1)**2
             if (0 <= qr <= (par.tau/rho)*qn) and rho >= 1 and ret_profit >= 0:
                 valids.append([pn, rho, qn, qr, ret_profit])
-        #print('here')
         if len(valids) > 0:
             return max(valids, key=lambda k: k[4])
         else:
@@ -537,8 +538,8 @@ class ModelTwoQuadGridSearch:
         if par.a == 0: return None
         wn_range = [0, 1]
         pr_range = [0, 1]
-        raster_size = 10
-        iter = 10
+        raster_size = 50
+        iter = 2
         sol_tuple = GridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
             par, wn_range, pr_range, raster_size, iter)
         if sol_tuple is None: return None
@@ -594,8 +595,8 @@ class ModelOneQuadGridSearch:
         if par.a == 0: return None
         wn_range = [0, 1]
         y_range = [0, 0] #not there
-        raster_size = 3
-        iter = 10
+        raster_size = 4
+        iter = 13
         sol_tuple = GridSearch2D.maximize(ModelOneQuadGridSearch._grid_search_func,
             par, wn_range, y_range, raster_size, iter)
         if sol_tuple is None: return None
@@ -678,6 +679,7 @@ class ModelNBGridSearch:
     
     @staticmethod
     def _grid_search_func(par, wn, b):
+        if b > wn: return None, None
         ret_dec = ModelNBGridSearch._retailer_decision(par, wn, b)
         if ret_dec is None: return None, None
         pn, rho, qn, ret_prof = ret_dec
@@ -688,7 +690,7 @@ class ModelNBGridSearch:
         if par.a == 0: return None
         wn_range = [0, 1]
         b_range = [0, 1]
-        raster_size = 3
+        raster_size = 10
         iter = 10
         sol_tuple = GridSearch2D.maximize(ModelNBGridSearch._grid_search_func,
             par, wn_range, b_range, raster_size, iter)
@@ -701,16 +703,16 @@ class ModelNBGridSearch:
   
 class GridSearch2D:
     """
-        This class offers a grid search maximizing a
-        for 2 dimensional concave function
+    This class offers a grid search maximizing a
+    for 2 dimensional concave function
+    
+    The function to optimize `func` must accept 3 arguments:
+        (func_arg, x, y) - where func_arg is passed through
+    The function must return 2 values:
+        the first is a numerical object that supports the > operator
+        the second is an object that will be finally be returned in case of a maximium
         
-        The function to optimize `func` must accept 3 arguments:
-            (func_arg, x, y) - where func_arg is passed through
-        The function must return 2 values:
-            the first is a numerical object that supports the > operator
-            the second is an object that will be finally be returned in case of a maximium
-            
-        The function must return None, None if there is no solution for a given x,y
+    The function must return None, None if there is no solution for a given x,y
     """
     
     @staticmethod
@@ -747,7 +749,10 @@ class GridSearch2D:
         Returns:
             [new_low, new_up]
         """
-        new_distance = (old_range[1] - old_range[0]) / raster_size
+        # new distance must at least contain the old neighbour of `point`
+        old_distance_of_one_raster = (old_range[1] - old_range[0]) / raster_size
+        new_distance = old_distance_of_one_raster * 2
+        # we must not exceed global limits
         new_low = max(point - new_distance/2, limit_low)
         new_up = min(point + new_distance/2, limit_up)
         new_range = [new_low, new_up]

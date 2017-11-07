@@ -378,14 +378,19 @@ class AnalyticalSolver:
         
 class TestModelNb(unittest.TestCase):
     def test_something(self):
-        search = ModelNBGridSearch()
-        par = Parameter(MODEL_NB, tau=0.09, a=0.000505050505050505, s=0.04000000000000001, cn=0.1)
-        sol = search.search(par)
-        self.assertAlmostEqual(sol.dec.b, 0)
-        self.assertAlmostEqual(sol.dec.wn, 0.5401615607376925)
-        self.assertAlmostEqual(sol.dec.rho, 5.578679582408612)
-        self.assertAlmostEqual(sol.profit_man, 0.09939780698178023)
-        self.assertAlmostEqual(sol.profit_ret, 0.04771325551393344)
+        proxy = SolverProxy()
+        #par_nb = Parameter(MODEL_NB, tau=0.09, a=0.0069387755102040816, s=0.04000000000000001, cn=0.1)
+        par_nb = Parameter(MODEL_NB, tau=0.09, a=0.0069387755102040816, s=0.04000000000000001, cn=0.1)
+        par_n = Parameter(MODEL_1, tau=0.09, a=0.0069387755102040816, s=0.04000000000000001, cn=0.1)
+        sol_nb = proxy.calculate(par_nb)
+        sol_n = proxy.calculate(par_n)
+        print(sol_nb.profit_man)
+        self.assertTrue(sol_nb.profit_man > sol_n.profit_man)
+        #self.assertAlmostEqual(sol.dec.b, 0)
+        #self.assertAlmostEqual(sol.dec.wn, 0.5401615607376925)
+        #self.assertAlmostEqual(sol.dec.rho, 5.578679582408612)
+        #self.assertTrue(sol.profit_man - 0.09939780698178023 > 0)
+        #self.assertAlmostEqual(sol.profit_ret, 0.04771325551393344)
 
 class TestModelOneQuadGridSearch(unittest.TestCase):
     def test_something(self):
@@ -406,7 +411,7 @@ class TestModelTwoQuadGridSearch(unittest.TestCase):
         #par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.006, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         sol = search.search(par)
-        print(sol.dec.qr)
+        print(sol.dec.rho)
         self.assertIsNotNone(sol)
         #self.assertAlmostEqual(sol.profit_man, 0.15633558093176322)
         
