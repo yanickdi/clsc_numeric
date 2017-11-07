@@ -538,10 +538,11 @@ class ModelTwoQuadGridSearch:
         if par.a == 0: return None
         wn_range = [0, 1]
         pr_range = [0, 1]
-        raster_size = 50
-        iter = 2
+        raster_size = 10
+        raster_start_size = 50
+        iter = 10
         sol_tuple = GridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
-            par, wn_range, pr_range, raster_size, iter)
+            par, wn_range, pr_range, raster_size, iter, raster_start_size=raster_start_size)
         if sol_tuple is None: return None
         dec = DecisionVariables(MODEL_2_QUAD, pn=sol_tuple[2], pr=sol_tuple[1],
             wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4], qr=sol_tuple[5])
@@ -716,14 +717,16 @@ class GridSearch2D:
     """
     
     @staticmethod
-    def maximize(func, func_arg, x_start_range, y_start_range, raster_size, iterations):
+    def maximize(func, func_arg, x_start_range, y_start_range, raster_size, iterations, raster_start_size=None):
+        raster_start_size = raster_size if raster_start_size is None else raster_start_size
         x_lim, y_lim = x_start_range, y_start_range
         x_range, y_range = x_start_range[:], y_start_range[:]
         best_f_val, best_f_obj = None, None
         best_x, best_y = None, None
         for iter in range(iterations):
+            raster_it_size = raster_size if iter > 1 else raster_start_size
             f_val, f_obj, f_x, f_y = GridSearch2D._search_raster(
-                        func, func_arg, x_range, y_range, raster_size)
+                        func, func_arg, x_range, y_range, raster_it_size)
             if f_val is None: return best_f_obj
             
             # update best values if found
@@ -731,8 +734,8 @@ class GridSearch2D:
                 best_f_val, best_f_obj, best_x, best_y = f_val, f_obj, f_x, f_y
                 
             # update new search ranges
-            x_range = GridSearch2D._range(best_x, x_range, raster_size, x_lim[0], x_lim[1])
-            y_range = GridSearch2D._range(best_y, y_range, raster_size, y_lim[0], y_lim[1])
+            x_range = GridSearch2D._range(best_x, x_range, raster_it_size, x_lim[0], x_lim[1])
+            y_range = GridSearch2D._range(best_y, y_range, raster_it_size, y_lim[0], y_lim[1])
         return best_f_obj
         
     @staticmethod

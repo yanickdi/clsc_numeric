@@ -475,9 +475,9 @@ class FixedPlot:
         #self.plot_prices_nb_vs_o()
         
         ## QUADRATIC MODEL:
-        #self.plot_profits_nq_vs_oq()
-        #self.plot_rhos_nq_vs_oq()
-        #self.plot_prices_nq_vs_oq()
+        self.plot_profits_nq_vs_oq()
+        self.plot_rhos_nq_vs_oq()
+        self.plot_prices_nq_vs_oq()
         self.plot_quantities_nq_vs_oq()
         pass
 
@@ -504,6 +504,7 @@ class FixedPlot:
         ax.plot(self.all_a, self.no_profit_man, color=BLUE_MEDIUM, linestyle='dashed')
         ax.text(self.all_a[-1]*.95, self.no_profit_man[-1]-.01, r'$\pi_{M}^{N}$', color=BLUE_MEDIUM)
         ax.set_xlabel('a')
+        ax.set_xlim([0, 0.011])
         plt.show()
 
     def plot_rhos_nb_vs_o(self):
@@ -608,7 +609,7 @@ class FixedPlot:
         ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=pl1.get_c())
         pl2, = ax.plot(self.all_a, self.on_qr, color='#1b51a6')
         ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=pl2.get_c())
-        ax.plot(self.all_a, self.on_max_qr, linestyle='dashed')
+        ax.plot(self.all_a, self.on_max_qr, linestyle='dashed', color='black')
         
         # without online store:
         pl3, = ax.plot(self.all_a, self.no_qn, color='#ec5300')
@@ -638,6 +639,7 @@ class FixedPlot:
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
         ax.set_ylabel(r'Effort ($\rho$)')
+        ax.set_xlim([0, 0.011])
         plt.show()
         
     def plot_prices_nq_vs_oq(self):
@@ -667,7 +669,7 @@ class FixedPlot:
         ax.plot(self.all_a, self.oq_qr, color=RED_LIGHT)
         ax.text(self.all_a[-1]*.95, self.oq_qr[-1]+.01, r'$qr_{OQ}^{*}$', color=RED_LIGHT)
         
-        ax.plot(self.all_a, self.oq_max_qr, linestyle='', marker='x')
+        ax.plot(self.all_a, self.oq_max_qr, linestyle='dashed', color='black')
         
         
         # without online store quadratic:

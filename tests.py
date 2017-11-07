@@ -411,7 +411,7 @@ class TestModelTwoQuadGridSearch(unittest.TestCase):
         #par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.006, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         sol = search.search(par)
-        print(sol.dec.rho)
+        print(sol.profit_man)
         self.assertIsNotNone(sol)
         #self.assertAlmostEqual(sol.profit_man, 0.15633558093176322)
         
