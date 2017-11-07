@@ -403,7 +403,8 @@ class TestModelTwoQuadGridSearch(unittest.TestCase):
 
     def test_something(self):
         search = ModelTwoQuadGridSearch()
-        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+        #par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.006, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         sol = search.search(par)
         print(sol.dec.qr)
         self.assertIsNotNone(sol)

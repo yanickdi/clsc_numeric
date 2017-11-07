@@ -511,6 +511,7 @@ class ModelTwoQuadGridSearch:
         rho_1 = (-16 * (-2)**(1/3) * a**2 * (-1 + delta)**2 +  8 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3) *sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) +  1j * (1j + sqrt( 3)) * (2 * a**2 * (-1 + delta)**2 * (16 *a *(-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  6 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**( 2/3))/(24 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4*  tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         #rho_1 = (8 * 1j *2**(1/3) * (1j + sqrt(3)) * a**2 * (-1 + delta)**2 +   8 * a * (-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 *tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  1/3) + (-1 -   1j * sqrt(3)) * (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   6 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  2/3))/(24 * a *(-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         pn_1  = .5 * (1+wn-delta+pr)
+        
         rho_2 = 1
         pn_2 = .5 * (1+wn-delta+pr)
         valids = []
@@ -536,7 +537,7 @@ class ModelTwoQuadGridSearch:
         if par.a == 0: return None
         wn_range = [0, 1]
         pr_range = [0, 1]
-        raster_size = 20
+        raster_size = 10
         iter = 10
         sol_tuple = GridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
             par, wn_range, pr_range, raster_size, iter)
@@ -734,6 +735,18 @@ class GridSearch2D:
         
     @staticmethod
     def _range(point, old_range, raster_size, limit_low, limit_up):
+        """ Returns a new 1-dimensional search range for deeper search
+            
+        Args:
+            point (float): The (old) best solution was found at this point
+            old_range ((float, float)): A tuple that describes the old range
+            raster_size (int): The amount of search points at the (old) range
+            limit_low (float): This is the lower limit of our global search range
+            limit_up (float): Upper limit of global search range
+            
+        Returns:
+            [new_low, new_up]
+        """
         new_distance = (old_range[1] - old_range[0]) / raster_size
         new_low = max(point - new_distance/2, limit_low)
         new_up = min(point + new_distance/2, limit_up)
