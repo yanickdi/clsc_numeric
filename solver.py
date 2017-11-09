@@ -504,6 +504,60 @@ def drange(start, end, step_size):
         
 def almost_equal(first, sec, tol=0.001):
     return abs(first-sec) < tol
+    
+class ModelTwoQuadGridTester:
+    def __init__(self, par):
+        self.par = par
+        self.points = []
+        
+    def plot(self):
+        sol = self.search()
+        np_arr = np.zeros([len(self.points), 3])
+        # create numpy arrays
+        for i, (wn, pr, prof) in enumerate(self.points):
+            prof_val = prof if prof is not None else -100
+            np_arr[i, :] = [wn, pr, prof_val]
+        best_points = np.zeros((len(self.caller_info), 2))
+        for i, iter_inf in enumerate(self.caller_info):
+            best_points[i:] = (iter_inf['best_x'], iter_inf['best_y'])
+            
+        from matplotlib import pyplot as plt
+        valids = np_arr[np_arr[:, 2] > -100]
+        non_valids =np_arr[np_arr[:, 2] <= -100]
+        plt.plot(valids[:, 0], valids[:, 1], linestyle='', marker='o', color='green')
+        plt.plot(non_valids[:, 0], non_valids[:, 1], linestyle='', marker='x', color='red')
+        plt.plot(best_points[:, 0], best_points[:, 1], linestyle='', marker='*', color='blue')
+        plt.show()
+        
+    def search(self):
+        if self.par.a == 0: return None
+        wn_range = [0, 1]
+        pr_range = [0, 1]
+        raster_size = 21
+        raster_start_size = 101
+        iter = 10
+        self.caller_info = []
+        sol_tuple = ImprovedGridSearch2D.maximize(self._grid_search_func,
+            self.par, wn_range, pr_range, raster_size, iter, raster_start_size=raster_start_size, caller_info=self.caller_info)
+        if sol_tuple is None: return None
+        dec = DecisionVariables(MODEL_2_QUAD, pn=sol_tuple[2], pr=sol_tuple[1],
+            wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4], qr=sol_tuple[5])
+        case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
+        sol = Solution(dec, sol_tuple[6], sol_tuple[7], case)
+        return sol
+        
+    def _grid_search_func(self, par, wn, pr):
+        ret_dec = ModelTwoQuadGridSearch._retailer_decision(par, wn, pr)
+        if ret_dec is not None:
+            pn, rho, qn, qr, ret_prof = ret_dec
+            man_profit = qn*(wn*(1-self.par.tau/rho)-par.cn) + qr*(pr-self.par.cr)+((self.par.tau/rho)*qn - qr)*self.par.s
+            self.points.append([wn, pr, man_profit])
+            return man_profit, (wn, pr, pn, rho, qn, qr, man_profit, ret_prof)
+        else:
+            self.points.append([wn, pr, None])
+            return None, None
+        
+        
 
 class ModelTwoQuadGridSearch:
     @staticmethod
@@ -538,10 +592,10 @@ class ModelTwoQuadGridSearch:
         if par.a == 0: return None
         wn_range = [0, 1]
         pr_range = [0, 1]
-        raster_size = 10
-        raster_start_size = 50
+        raster_size = 21
+        raster_start_size = 101
         iter = 10
-        sol_tuple = GridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
+        sol_tuple = ImprovedGridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
             par, wn_range, pr_range, raster_size, iter, raster_start_size=raster_start_size)
         if sol_tuple is None: return None
         dec = DecisionVariables(MODEL_2_QUAD, pn=sol_tuple[2], pr=sol_tuple[1],
@@ -724,7 +778,7 @@ class GridSearch2D:
         best_f_val, best_f_obj = None, None
         best_x, best_y = None, None
         for iter in range(iterations):
-            raster_it_size = raster_size if iter > 1 else raster_start_size
+            raster_it_size = raster_size if iter >= 1 else raster_start_size
             f_val, f_obj, f_x, f_y = GridSearch2D._search_raster(
                         func, func_arg, x_range, y_range, raster_it_size)
             if f_val is None: return best_f_obj
@@ -759,6 +813,101 @@ class GridSearch2D:
         new_low = max(point - new_distance/2, limit_low)
         new_up = min(point + new_distance/2, limit_up)
         new_range = [new_low, new_up]
+        
+        return new_range
+        
+    @staticmethod
+    def _search_raster(func, func_arg, x_range, y_range, raster_size):
+        """
+            this helper method creates the raster, calls the func and returns
+            both returned best values and corresponding x and y val
+        """
+        best_f_val, best_f_obj, best_x, best_y = None, None, None, None
+        y_num = raster_size if y_range[0] != y_range[1] else 1
+        for x in np.linspace(x_range[0], x_range[1], num=raster_size):
+            for y in np.linspace(y_range[0], y_range[1], num=y_num):
+                x, y = float(x), float(y)
+                # call our function
+                f_val, f_obj = func(func_arg, x, y)
+                if f_val == None: continue
+                if best_f_val is None or f_val > best_f_val:
+                    best_f_val, best_f_obj = f_val, f_obj
+                    best_x, best_y = x, y
+        return best_f_val, best_f_obj, best_x, best_y
+        
+class ImprovedGridSearch2D:
+    """
+    This class offers a grid search maximizing a
+    for 2 dimensional concave function
+    
+    The function to optimize `func` must accept 3 arguments:
+        (func_arg, x, y) - where func_arg is passed through
+    The function must return 2 values:
+        the first is a numerical object that supports the > operator
+        the second is an object that will be finally be returned in case of a maximium
+        
+    The function must return None, None if there is no solution for a given x,y
+    """
+    
+    @staticmethod
+    def maximize(func, func_arg, x_start_range, y_start_range, raster_size, iterations, raster_start_size=None, caller_info=[]):
+        raster_start_size = raster_size if raster_start_size is None else raster_start_size
+        x_lim, y_lim = x_start_range, y_start_range
+        x_range, y_range = x_start_range[:], y_start_range[:]
+        best_f_val, best_f_obj = None, None
+        best_x, best_y = None, None
+        for iter in range(iterations):
+            raster_it_size = raster_size if iter >= 1 else raster_start_size
+            f_val, f_obj, f_x, f_y = ImprovedGridSearch2D._search_raster(
+                        func, func_arg, x_range, y_range, raster_it_size)
+            if f_val is None: return best_f_obj
+            
+            # update best values if found
+            if best_f_val is None or f_val > best_f_val:
+                best_f_val, best_f_obj, best_x, best_y = f_val, f_obj, f_x, f_y
+                
+            # update new search ranges
+            x_range, y_range = ImprovedGridSearch2D._range((best_x, best_y), (x_range, y_range), raster_it_size, (x_lim[0], y_lim[0]), (x_lim[1], y_lim[1]))
+            #y_range = ImprovedGridSearch2D._range(best_y, y_range, raster_it_size, y_lim[0], y_lim[1])
+            
+            # log some info for debugging purpose
+            caller_info.append({'best_x': best_x, 'best_y' : best_y})
+        return best_f_obj
+        
+    @staticmethod
+    def _range(point, old_range, raster_size, limit_low, limit_up):
+        """ Returns a new 1-dimensional search range for deeper search
+            
+        Args:
+            point (float, float): The (old) best solution was found at this point (x,y)
+            old_range ((float, float), (float, float)): A tuple that describes the old range ((x_low, x_up), (y_low, y_up))
+            raster_size (int): The amount of search points at the (old) range
+            limit_low (float, float): This is the lower limit of our global search range
+            limit_up (float, float): Upper limit of global search range (x,y)
+            
+        Returns:
+            [[new_x_low, new_x_up], [new_y_low, new_y_up]]
+        """
+        assert old_range[0][0] <= point[0] <= old_range[0][1]
+        # new distance must at least contain the old neighbour of `point`
+        old_distance_of_one_raster = (old_range[0][1] - old_range[0][0]) / (raster_size-1)
+        # are we at the edge? if yes - do not zoom in!
+        if point[0] == old_range[0][0] or point[0] == old_range[0][1] or point[1] == old_range[1][0] or point[1] == old_range[1][1]:
+            print('edge in point', point)
+            #print('old range was', old_range)
+            new_low_x = max(point[0] - old_distance_of_one_raster*(raster_size-1), limit_low[0])
+            new_up_x = min(point[0] + old_distance_of_one_raster*(raster_size-1), limit_up[0])
+            new_low_y = max(point[1] - old_distance_of_one_raster*(raster_size-1), limit_low[1])
+            new_up_y = min(point[1] + old_distance_of_one_raster*(raster_size-1), limit_up[1])
+        else:
+            # zoom in
+            new_distance = old_distance_of_one_raster * 2
+            # we must not exceed global limits
+            new_low_x = max(point[0] - new_distance/2, limit_low[0])
+            new_up_x = min(point[0] + new_distance/2, limit_up[0])
+            new_low_y = max(point[1] - new_distance/2, limit_low[1])
+            new_up_y = min(point[1] + new_distance/2, limit_up[1])
+        new_range = [(new_low_x, new_up_x), (new_low_y, new_up_y)]
         return new_range
         
     @staticmethod
@@ -928,7 +1077,11 @@ class Database:
         self.conn.execute('''
             DELETE FROM calculation
             WHERE comment = ?''', (comment, ))
-        self.commit()
+        self.commit()        
         
 if __name__ == '__main__':
-    sys.exit('You cannot call this file directly')
+    #sys.exit('You cannot call this file directly')
+    par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.002142857142857143, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+    blub = ModelTwoQuadGridTester(par)
+    blub.plot()
+     

@@ -289,7 +289,7 @@ class FixedPlot:
     def __init__(self, filename=None):
         self.proxy = SolverProxy()
         self.filename = filename
-        self.all_a = [float(a) for a in np.linspace(0.0, 0.01, num=50)]
+        self.all_a = [float(a) for a in np.linspace(0.0, 0.005, num=50)]
         self.nr_elements = len(self.all_a)
         self.calc_model_nb()
         self.calc_model_o()
@@ -475,10 +475,10 @@ class FixedPlot:
         #self.plot_prices_nb_vs_o()
         
         ## QUADRATIC MODEL:
-        self.plot_profits_nq_vs_oq()
-        self.plot_rhos_nq_vs_oq()
+        #self.plot_profits_nq_vs_oq()
+        #self.plot_rhos_nq_vs_oq()
         self.plot_prices_nq_vs_oq()
-        self.plot_quantities_nq_vs_oq()
+        #self.plot_quantities_nq_vs_oq()
         pass
 
     def plot_profits_nb_vs_o(self):
@@ -582,6 +582,7 @@ class FixedPlot:
         #pl6, = ax.plot(self.all_a, no_profit_sc, color='#a70000')
         #ax.text(self.all_a[-1], no_profit_sc[-1], r'$\pi_{SC}^{N}$', color=pl6.get_c())
         ax.set_xlabel('a')
+        if relative: ax.set_ylabel(r'ratio of profit to $\pi_{M}^{N}$')
         plt.show()
         
     def plot_prices(self):
@@ -609,7 +610,9 @@ class FixedPlot:
         ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=pl1.get_c())
         pl2, = ax.plot(self.all_a, self.on_qr, color='#1b51a6')
         ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=pl2.get_c())
-        ax.plot(self.all_a, self.on_max_qr, linestyle='dashed', color='black')
+        ax.plot(self.all_a[::4], self.on_max_qr[::4], linestyle='', marker='h', alpha=.4, \
+            color='black', label='returns of primary market')
+        ax.legend(loc='lower right', fontsize=6)
         
         # without online store:
         pl3, = ax.plot(self.all_a, self.no_qn, color='#ec5300')
@@ -669,8 +672,9 @@ class FixedPlot:
         ax.plot(self.all_a, self.oq_qr, color=RED_LIGHT)
         ax.text(self.all_a[-1]*.95, self.oq_qr[-1]+.01, r'$qr_{OQ}^{*}$', color=RED_LIGHT)
         
-        ax.plot(self.all_a, self.oq_max_qr, linestyle='dashed', color='black')
-        
+        ax.plot(self.all_a[::4], self.oq_max_qr[::4], linestyle='', marker='h', alpha=.4, \
+            color='black', label='returns of primary market')
+        ax.legend(loc='lower right', fontsize=6)
         
         # without online store quadratic:
         ax.plot(self.all_a, self.no_qn, color=BLUE_DARK)
