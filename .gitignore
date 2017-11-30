@@ -107,3 +107,14 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+
+# latex gschichtln
+.idea
+*.aux
+*.pdf
+output.tex
+*.synctex.gz
+*.db
+*.db.*
+latex.bat

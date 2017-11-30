@@ -4,11 +4,12 @@ from cmath import sqrt as Sqrt
 import sqlite3
 
 import numpy as np
-from scipy.optimize import fsolve, root
+from scipy.optimize import fsolve, root, minimize
 
 
 MODEL_1, MODEL_2, MODEL_2_QUAD, MODEL_1_QUAD, MODEL_NB = 1, 2, 3, 4, 5
 _CASE_ONE, _CASE_TWO = '1', '2'
+_UNDEFINED_CASE = '0'
 _CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
 ALL_CASES = [_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C]
 DECIMALS_ALLOW_NN = 14
@@ -360,6 +361,7 @@ class ModelOneNumericalSolver:
         ## test two cases:
         #       case 1 - rho is >= 1
         #       case 2 - rho is == 1
+        if par.a == 0: return None
         
         dec_vars_case_1 = self._optimize_case_one(par)
         prof_man_case_1, prof_ret_case_1 = self.calc_profits(par, dec_vars_case_1)
@@ -505,10 +507,43 @@ def drange(start, end, step_size):
 def almost_equal(first, sec, tol=0.001):
     return abs(first-sec) < tol
     
-class ModelTwoQuadGridTester:
+class ModelTwoGridTester:
     def __init__(self, par):
         self.par = par
         self.points = []
+        
+    def plot_profit_surface(self):
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        
+        sol = self.search()
+        np_arr = np.zeros([len(self.points), 3])
+        # create numpy arrays
+        for i, (wn, pr, prof) in enumerate(self.points):
+            prof_val = prof if prof is not None else -100
+            np_arr[i, :] = [wn, pr, prof_val]
+        best_points = np.zeros((len(self.caller_info), 2))
+        for i, iter_inf in enumerate(self.caller_info):
+            best_points[i:] = (iter_inf['best_x'], iter_inf['best_y'])
+            
+        from matplotlib import pyplot as plt
+        valids = np_arr[np_arr[:, 2] > -100]
+        non_valids =np_arr[np_arr[:, 2] <= -100]
+        #plt.plot(valids[:, 0], valids[:, 1], linestyle='', marker='o', color='green')
+        #ax.plot(valids[:, 0], valids[:, 1], valids[:, 2], linestyle='', marker='o', color='green')
+        ax.plot_trisurf(valids[:, 0], valids[:, 1], valids[:, 2])
+        #plt.plot(non_valids[:, 0], non_valids[:, 1], linestyle='', marker='x', color='red')
+        #plt.plot(best_points[:, 0], best_points[:, 1], linestyle='', marker='*', color='blue')
+        #ax.show3d()
+        ax.plot([0.5385829601790], [0.4856783722067], [0.1607711822739], linestyle='', marker='o', color='blue')
+        ax.plot([sol.dec.wn], [sol.dec.pr], [sol.profit_man], linestyle='', marker='o', color='red')
+        #ax.set_xlim(0.5, 0.6)
+        #ax.set_ylim(0.4, 0.6)
+        #ax.set_zlim(0, 0.3)
+        plt.show()
+        
         
     def plot(self):
         sol = self.search()
@@ -524,18 +559,21 @@ class ModelTwoQuadGridTester:
         from matplotlib import pyplot as plt
         valids = np_arr[np_arr[:, 2] > -100]
         non_valids =np_arr[np_arr[:, 2] <= -100]
-        plt.plot(valids[:, 0], valids[:, 1], linestyle='', marker='o', color='green')
-        plt.plot(non_valids[:, 0], non_valids[:, 1], linestyle='', marker='x', color='red')
-        plt.plot(best_points[:, 0], best_points[:, 1], linestyle='', marker='*', color='blue')
+        plt.plot(valids[:, 0], valids[:, 1], linestyle='', marker='o', color='green', label='looked at')
+        plt.plot(non_valids[:, 0], non_valids[:, 1], linestyle='', marker='x', color='red', label='no sol')
+        plt.plot(best_points[:, 0], best_points[:, 1], linestyle='', marker='*', color='blue', label='best fval in it')
+        plt.plot(0.5385829601790, 0.4856783722067, label='global opt', marker='8', color='magenta', linestyle='')
+        
+        plt.legend()
         plt.show()
         
     def search(self):
         if self.par.a == 0: return None
         wn_range = [0, 1]
         pr_range = [0, 1]
-        raster_size = 21
-        raster_start_size = 101
-        iter = 10
+        raster_size = 1
+        raster_start_size = 201
+        iter = 1
         self.caller_info = []
         sol_tuple = ImprovedGridSearch2D.maximize(self._grid_search_func,
             self.par, wn_range, pr_range, raster_size, iter, raster_start_size=raster_start_size, caller_info=self.caller_info)
@@ -547,7 +585,7 @@ class ModelTwoQuadGridTester:
         return sol
         
     def _grid_search_func(self, par, wn, pr):
-        ret_dec = ModelTwoQuadGridSearch._retailer_decision(par, wn, pr)
+        ret_dec = ModelTwoGridSearch._retailer_decision(par, wn, pr)
         if ret_dec is not None:
             pn, rho, qn, qr, ret_prof = ret_dec
             man_profit = qn*(wn*(1-self.par.tau/rho)-par.cn) + qr*(pr-self.par.cr)+((self.par.tau/rho)*qn - qr)*self.par.s
@@ -558,24 +596,74 @@ class ModelTwoQuadGridTester:
             return None, None
         
         
-
-class ModelTwoQuadGridSearch:
+        
+        
+        
+class ModelTwoQuadSolver:
+    """ This class solves Model Two Quad by first using the GridSearch - then a local search algorithm (nelder-mead) """
+    
     @staticmethod
-    def _retailer_decision(par, wn, pr):
+    def solve(par):
+        if par.a == 0: return None
+        case_solutions = []
+        # we have to check both cases:
+        for case in (_CASE_ONE, _CASE_TWO):
+            startP = ModelTwoQuadGridSearch.search(par, iter=1, raster_size=51, case=case)
+            if startP is None:
+                print('warning at point', par, ' in case', case, ',startP is None')
+                continue
+            start_vec = [startP.dec.wn, startP.dec.pr]
+            # improve wn, pr
+            result = minimize(ModelTwoQuadSolver._minimize_func, args={'par': par, 'case': case}, x0=start_vec,
+                              method='Nelder-Mead', options={'xatol': 0.00000000000000001, 'fatol': 0.00000000000000001})
+            # build a new solution using wn, pr
+            sol = ModelTwoQuadSolver.getSolution(par, float(result.x[0]), float(result.x[1]))
+            # assert that wn/pr combination lies really in case `case`
+            assert sol.case == case
+            case_solutions.append(sol)
+
+        if len(case_solutions) >= 1:
+            return max(case_solutions, key=lambda k: k.profit_man)
+        else: return None
+        
+    @staticmethod
+    def _minimize_func(x, args):
+        wn, pr = float(x[0]), float(x[1])
+        par = args['par']
+        case = args['case']
+        man_profit, data = ModelTwoQuadSolver.profit(par, wn, pr, case)
+        if man_profit is None:
+            return sys.maxsize
+        return -man_profit
+        
+    @staticmethod
+    def getSolution(par, wn, pr, case=_UNDEFINED_CASE):
+        man_profit, sol_tuple = ModelTwoQuadSolver.profit(par, wn, pr, case)
+        if sol_tuple is None: return None
+        dec = DecisionVariables(MODEL_2_QUAD, pn=sol_tuple[2], pr=sol_tuple[1],
+            wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4], qr=sol_tuple[5])
+        case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
+        sol = Solution(dec, sol_tuple[6], sol_tuple[7], case)
+        return sol
+        
+    @staticmethod
+    def _retailer_decision(par, wn, pr, case=_UNDEFINED_CASE):
+        assert type(wn) == float and type(pr) == float
         tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
         #rho_1 = (8*2**(1/3)*a**2*(-1 + delta)**2 + 4*a*(-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3) * sqrt(-a**4 *(-1 + delta)**4 *tau *(-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) + (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 6 * sqrt(3) * sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(   2/3))/(12 * a * (-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3)* sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         rho_1 = (-16 * (-2)**(1/3) * a**2 * (-1 + delta)**2 +  8 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3) *sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) +  1j * (1j + sqrt( 3)) * (2 * a**2 * (-1 + delta)**2 * (16 *a *(-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  6 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**( 2/3))/(24 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4*  tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         #rho_1 = (8 * 1j *2**(1/3) * (1j + sqrt(3)) * a**2 * (-1 + delta)**2 +   8 * a * (-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 *tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  1/3) + (-1 -   1j * sqrt(3)) * (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   6 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  2/3))/(24 * a *(-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
         pn_1  = .5 * (1+wn-delta+pr)
-        
         rho_2 = 1
         pn_2 = .5 * (1+wn-delta+pr)
         valids = []
+
         if type(rho_1) == complex or type(rho_1) == np.complex128:
             if rho_1.imag < .000001 and rho_1.real > 1:
                 rho_1 = rho_1.real
             else:
                 rho_1 = -1
+          
         for pn, rho in ((pn_1, rho_1), (pn_2, rho_2)):
             qn = 1 - (pn - pr)/(1-delta)
             qr = (pn-pr)/(1-delta) - pr/delta
@@ -584,19 +672,40 @@ class ModelTwoQuadGridSearch:
             if (0 <= qr <= (par.tau/rho)*qn) and rho >= 1 and ret_profit >= 0:
                 valids.append([pn, rho, qn, qr, ret_profit])
         if len(valids) > 0:
-            return max(valids, key=lambda k: k[4])
+             best_valid = max(valids, key=lambda k: k[4])
+             # only return solution if retailer decision is in case `case`
+             best_rho = best_valid[1]
+             if case == _CASE_ONE:
+                return best_valid if best_rho > 1 else None
+             if case == _CASE_TWO:
+                return best_valid if best_rho == 1 else None
+             if case == _UNDEFINED_CASE:
+                return best_valid
         else:
             return None
-                
-    def search(self, par):
+        
+    @staticmethod
+    def profit(par, wn, pr, case=_UNDEFINED_CASE):
+        ret_dec = ModelTwoQuadSolver._retailer_decision(par, wn, pr, case=case)
+        if ret_dec is None: return None, None
+        pn, rho, qn, qr, ret_prof = ret_dec
+        man_profit = qn*(wn*(1-par.tau/rho)-par.cn) + qr*(pr-par.cr)+((par.tau/rho)*qn - qr)*par.s
+        return man_profit, (wn, pr, pn, rho, qn, qr, man_profit, ret_prof)
+        
+class ModelTwoQuadGridSearch: 
+    @staticmethod
+    def search(par, iter=1, raster_size=51, case=_UNDEFINED_CASE):
         if par.a == 0: return None
-        wn_range = [0, 1]
-        pr_range = [0, 1]
-        raster_size = 21
-        raster_start_size = 101
-        iter = 10
+        wn_range = [0.53, 0.55]
+        pr_range = [0.48, 0.49]
+        raster_size = 100
+        if case == _CASE_TWO: return None
+        #wn_range = [0, 1]
+        #pr_range = [0, 1]
+        #raster_start_size = 3200
+        raster_start_size = raster_size
         sol_tuple = ImprovedGridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
-            par, wn_range, pr_range, raster_size, iter, raster_start_size=raster_start_size)
+            {'par': par, 'case': case}, wn_range, pr_range, raster_size, iter, raster_start_size=raster_start_size)
         if sol_tuple is None: return None
         dec = DecisionVariables(MODEL_2_QUAD, pn=sol_tuple[2], pr=sol_tuple[1],
             wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4], qr=sol_tuple[5])
@@ -605,13 +714,15 @@ class ModelTwoQuadGridSearch:
         return sol
     
     @staticmethod
-    def _grid_search_func(par, wn, pr):
-        ret_dec = ModelTwoQuadGridSearch._retailer_decision(par, wn, pr)
-        if ret_dec is None: return None, None
-        pn, rho, qn, qr, ret_prof = ret_dec
-        man_profit = qn*(wn*(1-par.tau/rho)-par.cn) + qr*(pr-par.cr)+((par.tau/rho)*qn - qr)*par.s
-        return man_profit, (wn, pr, pn, rho, qn, qr, man_profit, ret_prof)
-
+    def _grid_search_func(options, wn, pr):
+        par, case = options['par'], options['case']
+        return ModelTwoQuadSolver.profit(par, wn, pr, case)        
+        
+        
+        
+        
+        
+        
 class ModelOneQuadGridSearch:
     @staticmethod
     def _retailer_decision(par, wn):
@@ -685,6 +796,8 @@ class ModelOneQuadGridSearch:
             return sol
         else:
             return None
+            
+            
 
 class ModelNBGridSearch:
     @staticmethod
@@ -755,6 +868,8 @@ class ModelNBGridSearch:
         case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
         sol = Solution(dec, sol_tuple[5], sol_tuple[6], case)
         return sol
+        
+
   
 class GridSearch2D:
     """
@@ -861,21 +976,21 @@ class ImprovedGridSearch2D:
             f_val, f_obj, f_x, f_y = ImprovedGridSearch2D._search_raster(
                         func, func_arg, x_range, y_range, raster_it_size)
             if f_val is None: return best_f_obj
-            
             # update best values if found
             if best_f_val is None or f_val > best_f_val:
                 best_f_val, best_f_obj, best_x, best_y = f_val, f_obj, f_x, f_y
                 
             # update new search ranges
-            x_range, y_range = ImprovedGridSearch2D._range((best_x, best_y), (x_range, y_range), raster_it_size, (x_lim[0], y_lim[0]), (x_lim[1], y_lim[1]))
-            #y_range = ImprovedGridSearch2D._range(best_y, y_range, raster_it_size, y_lim[0], y_lim[1])
+            x_range, y_range = ImprovedGridSearch2D._range((best_x, best_y), (x_range, y_range), raster_it_size, (x_lim[0], y_lim[0]), (x_lim[1], y_lim[1]), func_arg)
+            if x_range[0] == x_range[1] and y_range[0] == y_range[1]:
+                break
             
             # log some info for debugging purpose
             caller_info.append({'best_x': best_x, 'best_y' : best_y})
         return best_f_obj
         
     @staticmethod
-    def _range(point, old_range, raster_size, limit_low, limit_up):
+    def _range(point, old_range, raster_size, limit_low, limit_up, func_arg):
         """ Returns a new 1-dimensional search range for deeper search
             
         Args:
@@ -893,15 +1008,13 @@ class ImprovedGridSearch2D:
         old_distance_of_one_raster = (old_range[0][1] - old_range[0][0]) / (raster_size-1)
         # are we at the edge? if yes - do not zoom in!
         if point[0] == old_range[0][0] or point[0] == old_range[0][1] or point[1] == old_range[1][0] or point[1] == old_range[1][1]:
-            print('edge in point', point)
-            #print('old range was', old_range)
             new_low_x = max(point[0] - old_distance_of_one_raster*(raster_size-1), limit_low[0])
             new_up_x = min(point[0] + old_distance_of_one_raster*(raster_size-1), limit_up[0])
             new_low_y = max(point[1] - old_distance_of_one_raster*(raster_size-1), limit_low[1])
             new_up_y = min(point[1] + old_distance_of_one_raster*(raster_size-1), limit_up[1])
         else:
             # zoom in
-            new_distance = old_distance_of_one_raster * 2
+            new_distance = old_distance_of_one_raster * 4
             # we must not exceed global limits
             new_low_x = max(point[0] - new_distance/2, limit_low[0])
             new_up_x = min(point[0] + new_distance/2, limit_up[0])
@@ -917,9 +1030,13 @@ class ImprovedGridSearch2D:
             both returned best values and corresponding x and y val
         """
         best_f_val, best_f_obj, best_x, best_y = None, None, None, None
+        i = 0
         y_num = raster_size if y_range[0] != y_range[1] else 1
         for x in np.linspace(x_range[0], x_range[1], num=raster_size):
             for y in np.linspace(y_range[0], y_range[1], num=y_num):
+                #if i == 0:
+                    #x, y = 0.5385829601789829, 0.4856783722066769
+                i += 1
                 x, y = float(x), float(y)
                 # call our function
                 f_val, f_obj = func(func_arg, x, y)
@@ -937,6 +1054,7 @@ class SolverProxy:
         self.model_1_quad_search = ModelOneQuadGridSearch()
         self.model_2_quad_search = ModelTwoQuadGridSearch()
         self.model_nb_search = ModelNBGridSearch()
+        #self.model_2_test = ModelTwoGridSearch()
         
     def read_calculation(self, par):
         """ Reads a calculation from database. Raises a CalculationNotFoundError if not found. """
@@ -962,8 +1080,11 @@ class SolverProxy:
             sol = self.model_1_solver.optimize(par)
         elif par.model == MODEL_2:
             sol = self.model_2_solver.optimize(par)
+            #sol = self.model_2_test.search(par)
         elif par.model == MODEL_2_QUAD:
-            sol = self.model_2_quad_search.search(par)
+            #sol = self.model_2_quad_search.search(par)
+            #sol = self.model_2_test.search(par)
+            sol = ModelTwoQuadSolver.solve(par)
         elif par.model == MODEL_1_QUAD:
             sol = self.model_1_quad_search.search(par)
         elif par.model == MODEL_NB:
@@ -1077,11 +1198,13 @@ class Database:
         self.conn.execute('''
             DELETE FROM calculation
             WHERE comment = ?''', (comment, ))
-        self.commit()        
+        self.commit()
+
         
 if __name__ == '__main__':
     #sys.exit('You cannot call this file directly')
-    par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.002142857142857143, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
-    blub = ModelTwoQuadGridTester(par)
+    par = Parameter(MODEL_2_QUAD, tau=0.09, a=.0008163265306122449, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+    blub = ModelTwoGridTester(par)
     blub.plot()
-     
+    #blub.plot_profit_surface()
+      

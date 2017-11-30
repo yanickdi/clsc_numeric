@@ -1,0 +1,97 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{multirow}
+\usepackage{rotating}
+\newcommand\tabrotate[1]{\begin{turn}{90}\rlap{#1}\end{turn}} 
+
+\usepackage{geometry}
+\geometry{verbose,a4paper,tmargin=25mm,bmargin=25mm,lmargin=15mm,rmargin=20mm}
+
+\begin{document}
+
+\begin{table}[htp]
+\begin{center}
+\begin{small}
+\begin{tabular}{cccccccccccccc}
+   &&&&&&\multicolumn{8}{c}{$c_n$}\\
+&&&&&&\multicolumn{4}{c}{low}&\multicolumn{4}{c}{high}\\
+   \hline
+&&&&&&\multicolumn{4}{c}{$\delta$}&\multicolumn{4}{c}{$\delta$}\\
+&&&&&&\multicolumn{2}{c}{low}&\multicolumn{2}{c}{high}&\multicolumn{2}{c}{low}&\multicolumn{2}{c}{high}\\
+   \hline
+&&&&&&\multicolumn{2}{c}{$\tau$}&\multicolumn{2}{c}{$\tau$}&\multicolumn{2}{c}{$\tau$}&\multicolumn{2}{c}{$\tau$}\\
+&&&&&&low&high&low&high&low&high&low&high\\
+   \hline
+  \multirow{8}{*}{\tabrotate{s}} &\multirow{4}{*}{\tabrotate{low}} &\multirow{4}{*}{\tabrotate{$c_r$}}&\multirow{2}{*}{\tabrotate{low}}&\multirow{2}{*}{\tabrotate{a}}&low&&&&&&&\\
+  & &&&&high&&&&&&&\\
+&&&\multirow{2}{*}{\tabrotate{high}}&\multirow{2}{*}{\tabrotate{a}}&low&&&&&&&\\
+&&&&&high&&&&&&&\\
+&\multirow{4}{*}{\tabrotate{high}}&\multirow{4}{*}{\tabrotate{$c_r$}}&\multirow{2}{*}{\tabrotate{low}}&\multirow{2}{*}{\tabrotate{a}}&low&&&&&&&\\
+&&&&&high&&&&&&&\\
+&&&\multirow{2}{*}{\tabrotate{high}}&\multirow{2}{*}{\tabrotate{a}}&low&&&&&&&\\
+&&&&&high&&&&&&&
+  \end{tabular}
+  \caption{Full factorial analysis}
+  \label{table_solutions_model2}
+  \end{small}
+\end{center}
+\end{table}
+
+
+
+\begin{table}[htp]
+	\begin{center}
+		\begin{small}
+			\begin{tabular}{cc|cccccc}
+				&&case&relative $\Pi_M$&relative $\rho$&relative $p_n$&relative $w_n$&$p_r$\\
+				\hline
+				\multirow{4}{*}{\tabrotate{$\delta$}} &0.5&&&&&\\
+				&0.6&&&&&&\\
+				&0.7&&&&&&\\
+				&0.8&&&&&&\\
+				&0.9&&&&&&\\
+			\end{tabular}
+			\caption{Analysis of parameter $\delta$}
+			\label{table_fullfactorial}
+		\end{small}
+	\end{center}
+\end{table}
+
+\section{Analysis of Parameter}
+\begin{table}[htp]
+	\begin{center}
+		\begin{small}
+			\begin{tabular}{cc|cccccc}
+				&&case&relative $\Pi_M$&relative $\rho$&relative $p_n$&relative $w_n$&$p_r$\\
+				\hline
+				\multirow{4}{*}{\tabrotate{$\tau$}} &0.05&&&&&\\
+				&0.15&&&&&&\\
+				&0.25&&&&&&\\
+				&0.35&&&&&&\\
+			\end{tabular}
+			\caption{Analysis of parameter $\tau$}
+			\label{table_fullfactorial}
+		\end{small}
+	\end{center}
+\end{table}
+
+\begin{table}[htp]
+	\begin{center}
+		\begin{small}
+			\begin{tabular}{cc|cccccc}
+				&&case&relative $\Pi_M$&relative $\rho$&relative $p_n$&relative $w_n$&$p_r$\\
+				\hline
+				\multirow{4}{*}{\tabrotate{$c_n$}} &0.1&&&&&\\
+				&0.2&&&&&&\\
+				&0.3&&&&&&\\
+				&0.4&&&&&&\\
+				&0.5&&&&&&\\
+			\end{tabular}
+			\caption{Analysis of parameter $c_n$}
+			\label{table_fullfactorial}
+		\end{small}
+	\end{center}
+\end{table} 
+
+
+
+\end{document}

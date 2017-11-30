@@ -194,7 +194,7 @@ def __parser_file(string):
 
 if __name__ == '__main__':
     # parse the command line
-    parser = argparse.ArgumentParser(description='Numeric solver for Andrea\'s Model')
+    parser = argparse.ArgumentParser(description='Numeric solver')
     parser.add_argument('-model', type=__parser_model_one_or_two, nargs=1, required=True)
     parser.add_argument('-output', type=__parser_file, nargs=1, required=True)
     parser.add_argument('--german-comma', action='store_true')

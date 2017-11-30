@@ -9,6 +9,8 @@ from clsc_numeric.solver import ModelOneNumericalSolver, ModelTwoNumericalSolver
     Parameter, DecisionVariables, MODEL_1, MODEL_2, MODEL_1_QUAD, MODEL_2_QUAD, _CASE_TWO_C, \
     Database, SolverProxy, ModelNBGridSearch, MODEL_NB, ModelOneQuadGridSearch, \
     ModelTwoQuadGridSearch
+    
+from clsc_numeric.history import ModelTwoGridSearch
 from clsc_numeric.generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
@@ -400,21 +402,47 @@ class TestModelOneQuadGridSearch(unittest.TestCase):
         self.assertAlmostEqual(sol.profit_man, 0.019402335105988777)
         
 class TestModelTwoQuadGridSearch(unittest.TestCase):
-    def test_another(self):
-        #par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0024489795918367346, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
-        #proxy = SolverProxy()
-        #sol = proxy.read_or_calc_and_write(par)
-        #print(sol)
-        pass
-
     def test_something(self):
-        search = ModelTwoQuadGridSearch()
+        search = ModelTwoGridSearch()
         #par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
-        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0004, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0008163265306122449, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         sol = search.search(par)
         print(sol.profit_man, sol.dec.wn, sol.dec.pr)
         self.assertIsNotNone(sol)
         #self.assertAlmostEqual(sol.profit_man, 0.15633558093176322)
         
+class TestHillClimber(unittest.TestCase):
+    @unittest.skip('')  
+    def test_hill_climber_on_exp_func(self):
+        from math import exp
+        from solver import HillClimber
+        def _my_func(passthrough, x):
+            assert passthrough == 'passthrough object'
+            return exp(-(x[0]**2 + x[1]**2)), None
+            
+        sol = HillClimber.climb(_my_func, 'passthrough object', [2,2])
+        self.assertTrue(round(_my_func('passthrough object', sol)[0], 5), 1)
+        
+    def test_something(self):
+        from solver import ModelTwoSolver
+        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0008163265306122449, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+        ModelTwoSolver.solve(par)
+        
+class TestModelTwoSolver(unittest.TestCase):
+    def test_something(self):
+        from solver import ModelTwoSolver
+        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0020408163265306124, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+        sol = ModelTwoSolver.solve(par)
+        print(sol)
+        print(ModelTwoSolver.solve_analytical(par))
+        
+class TestModelTwoQuadSolver(unittest.TestCase):
+    def test_something(self):
+        from solver import ModelTwoQuadSolver
+        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0020408163265306124, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+        print(ModelTwoQuadSolver.profit(par, 0.5429821819318537, 0.48640200062519534, 1))
+        #sol = ModelTwoQuadSolver.solve(par)
+        #print(sol)
+    
 if __name__ == '__main__':
     unittest.main()
