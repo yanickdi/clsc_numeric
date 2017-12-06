@@ -335,7 +335,6 @@ class ModelOneNumericalSolver:
         
     def _is_valid(self, par, sol):
         """ Tests whether a given solution is feasible regarding to all model subjects """
-        #TODO: assert all decision vars are positive in case of valid solution
         # check all variables positive
         for var in (sol.dec.pn, sol.dec.qn):
             if var < -10**-DECIMALS_ALLOW_NN:
@@ -603,12 +602,25 @@ class ModelTwoQuadSolver:
     """ This class solves Model Two Quad by first using the GridSearch - then a local search algorithm (nelder-mead) """
     
     @staticmethod
-    def solve(par):
+    def solve(par, resolution='high'):
         if par.a == 0: return None
         case_solutions = []
+        if resolution == 'very-high':
+            raster_size = 2000
+            wn_range = [0.53, 0.55]
+            pr_range = [0.48, 0.49]
+            #search_cases = (_CASE_ONE, _CASE_TWO)
+            # only case one interesting
+            search_cases = (_CASE_ONE, )
+            do_local_search = True
+        elif resolution == 'low':
+            raster_size = 51
+            search_cases = (_UNDEFINED_CASE,) # all cases once
+            do_local_search = False
+            wn_range, pr_range = [0,1], [0,1]
         # we have to check both cases:
-        for case in (_CASE_ONE, _CASE_TWO):
-            startP = ModelTwoQuadGridSearch.search(par, iter=1, raster_size=51, case=case)
+        for case in search_cases:
+            startP = ModelTwoQuadGridSearch.search(par, iter=1, raster_size=raster_size, case=case, wn_range=wn_range, pr_range=pr_range)
             if startP is None:
                 print('warning at point', par, ' in case', case, ',startP is None')
                 continue
@@ -619,7 +631,6 @@ class ModelTwoQuadSolver:
             # build a new solution using wn, pr
             sol = ModelTwoQuadSolver.getSolution(par, float(result.x[0]), float(result.x[1]))
             # assert that wn/pr combination lies really in case `case`
-            assert sol.case == case
             case_solutions.append(sol)
 
         if len(case_solutions) >= 1:
@@ -694,15 +705,9 @@ class ModelTwoQuadSolver:
         
 class ModelTwoQuadGridSearch: 
     @staticmethod
-    def search(par, iter=1, raster_size=51, case=_UNDEFINED_CASE):
+    def search(par, iter=1, raster_size=51, case=_UNDEFINED_CASE, wn_range=[0, 1], pr_range=[0, 1]):
         if par.a == 0: return None
-        wn_range = [0.53, 0.55]
-        pr_range = [0.48, 0.49]
-        raster_size = 100
-        if case == _CASE_TWO: return None
-        #wn_range = [0, 1]
-        #pr_range = [0, 1]
-        #raster_start_size = 3200
+        print('search point', par.a)
         raster_start_size = raster_size
         sol_tuple = ImprovedGridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
             {'par': par, 'case': case}, wn_range, pr_range, raster_size, iter, raster_start_size=raster_start_size)
@@ -757,7 +762,7 @@ class ModelOneQuadGridSearch:
         man_profit = qn*(wn*(1-par.tau/rho))- par.cn + (par.tau/rho) * par.s
         return man_profit, (wn, pn, rho, qn, man_profit, ret_prof)
         
-    def search(self, par):
+    def search(self, par, resolution='high'):
         if par.a == 0: return None
         wn_range = [0, 1]
         y_range = [0, 0] #not there
@@ -1063,18 +1068,18 @@ class SolverProxy:
             raise CalculationNotFoundError()
         return sol
         
-    def read_or_calc_and_write(self, par, comment=None):
+    def read_or_calc_and_write(self, par, comment=None, resolution='high'):
         """ doesn't commit after write! """
         state, sol = self.db.read_calculation(par)
         if state == Database.NOT_IN_DB:
-            sol = self.calculate(par)
+            sol = self.calculate(par, resolution)
             self.db.write_calculation(par, sol, comment)
         return sol
         
     def commit(self):
         self.db.commit()
     
-    def calculate(self, par):
+    def calculate(self, par, resolution='high'):
         """ Tries to find a solution for problem of type par"""
         if par.model == MODEL_1:
             sol = self.model_1_solver.optimize(par)
@@ -1084,9 +1089,9 @@ class SolverProxy:
         elif par.model == MODEL_2_QUAD:
             #sol = self.model_2_quad_search.search(par)
             #sol = self.model_2_test.search(par)
-            sol = ModelTwoQuadSolver.solve(par)
+            sol = ModelTwoQuadSolver.solve(par, resolution)
         elif par.model == MODEL_1_QUAD:
-            sol = self.model_1_quad_search.search(par)
+            sol = self.model_1_quad_search.search(par, resolution)
         elif par.model == MODEL_NB:
             sol = self.model_nb_search.search(par)
         return sol

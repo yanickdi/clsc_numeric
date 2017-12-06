@@ -3,7 +3,7 @@
 \usepackage{rotating}
 \usepackage{float}
 
-\newcommand\tabrotate[1]{\begin{turn}{90}\rlap{ {% raw %}#{% endraw %}1}\end{turn}} 
+\newcommand\tabrotate[1]{\begin{turn}{90}\rlap{{'{#'}}1}\end{turn}} 
 
 \usepackage{geometry}
 \geometry{verbose,a4paper,tmargin=25mm,bmargin=25mm,lmargin=15mm,rmargin=20mm}
@@ -35,6 +35,7 @@
     &&&&&high&{{ft(table,7,0)}}&{{ft(table,7,1)}}&{{ft(table,7,2)}}&{{ft(table,7,3)}}&{{ft(table,7,4)}}&{{ft(table,7,5)}}&{{ft(table,7,6)}}&{{ft(table,7,7)}}\\
       \end{tabular}
       \caption{Full factorial analysis: {{esc(table)}}}
+      \label{full_factorial_{{table}}{{ '}' }}
       \end{small}
     \end{center}
     \end{table}
@@ -51,7 +52,7 @@
         'cn'    : [0.1, 0.2, 0.3, 0.4, 0.5],
         'a'     : [0.001, 0.01, 0.05, 0.1]}
 %}
-{% set table_left = {'delta': '$\\delta$', 'tau':'tau', 'cn': 'cn', 'a':'a'} %}
+{% set table_left = {'delta': '$\\delta$', 'tau':'$\\tau$', 'cn': '$c_n$', 'a':'a'} %}
 
 {% for table in tables %}
     {% set pars = table_par[table] %}
@@ -61,12 +62,13 @@
                 \begin{tabular}{cc|ccccc}
                     &&relative $\Pi_M$&relative $\rho$&relative $p_n$&relative $w_n$&$p_r$\\
                     \hline
-                    \multirow{ {{pars|length}} }{*}{\tabrotate{ {{table_left[table]}} }}
-                    {% for par in pars %}
+                    \multirow{ {{pars|length + 1}} }{*}{\tabrotate{ {{table_left[table]}} }}
+                    {% for par in pars -%}
                         &{{par}}&{{at(table, par)}}\\
                     {% endfor %}
                 \end{tabular}
                 \caption{Analysis of parameter {{table_left[table]}} }
+                \label{analysis_{{table}}{{ '}' }}
             \end{small}
         \end{center}
     \end{table}

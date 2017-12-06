@@ -71,7 +71,7 @@ def test_db_and_plot():
             continue
         par = Parameter(MODEL_2_QUAD, tau=0.09, a=act_a, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         #solP = ModelTwoQuadSolver.solve(par)
-        solP = proxy.read_or_calc_and_write(par, comment='hello')
+        solP = proxy.calculate(par, resolution='very-high')
         x[i] = solP.dec.wn
         y[i] = solP.profit_ret
         # plot actual a on x[i]
@@ -80,7 +80,8 @@ def test_db_and_plot():
     plt.plot(a, x, label='x', marker='o')
     plt.plot(a, y, label='y')
     plt.legend()
-    plt.savefig('figure_quad.pdf')
+    #plt.savefig('figure_quad.pdf')
+    plt.show()
 
 
 #main()

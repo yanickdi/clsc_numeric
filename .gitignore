@@ -118,3 +118,4 @@ output.tex
 *.db
 *.db.*
 latex.bat
+figures

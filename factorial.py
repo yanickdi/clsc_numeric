@@ -201,13 +201,14 @@ def main():
         template = Template(f.read())
 
     # open output file
-    with open('output.tex', 'w') as f:
-        f.write(template.render({
+    with open('output.tex', 'w', newline='\n') as f:
+        renderedString  = template.render({
             'full': fullFactorial,
             'ft' : fullFactorial.getTableValue,
             'at' : fullFactorial.getAnalysisLine,
             'esc' : escape_tex
-        }))
+        })
+        f.write(renderedString)
 
 
 

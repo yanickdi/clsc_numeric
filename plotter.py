@@ -21,6 +21,21 @@ BLUE_DARK = '#0d0548'
 BLUE_MEDIUM = '#1b51a6'
 BLUE_LIGHT = '#1b51a6'
 
+BLACK_DARK = '#101010'
+BLACK_MEDIUM = '#4c4c4c'
+GREY_DARK = '#999999'
+GREY_MEDIUM = '#cccccc'
+
+MARKEVERY = 3
+NUM_A = 48+2
+
+#MARKEVERY = 3 * 2
+#NUM_A = (48*2) + 2
+
+MARKEVERY_ANAL = 3*16
+NUM_A_ANAL = (48)*16+2
+
+
 PLOT_PROFIT_DIFFERENCE_MAN = 'profit-difference-man'
 PLOT_PROFIT_DIFFERENCE_RET = 'profit-difference-ret'
 PLOT_RHO_DIFFERENCE = 'rho-difference'
@@ -31,10 +46,17 @@ PLOT_FIXED_PLOT = 'fixed-plot'
 PLOT_SPONT_PLOT = 'spont-plot'
 ALLOWED_PLOTS = PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO_DIFFERENCE, PLOT_CASES_MODEL_ONE, PLOT_CASES_MODEL_TWO, PLOT_COMPARE_CASES, PLOT_FIXED_PLOT, PLOT_SPONT_PLOT
 AUTOMATED_PLOTS = 'automated-plots'
+SHOW_FIGURE = True
 
 _ALL_CASES_MODEL_1 = [solver._CASE_ONE, solver._CASE_TWO]
 _ALL_CASES_MODEL_2 = [solver._CASE_ONE_A, solver._CASE_ONE_B, solver._CASE_ONE_C,
                        solver._CASE_TWO_A, solver._CASE_TWO_B, solver._CASE_TWO_C]
+                       
+def pltShowAndSave(filename):
+    # save figure first
+    plt.savefig('figures/' + filename)
+    if SHOW_FIGURE:
+        plt.show()
 
 class CountourPlotter:
     def __init__(self, type, params):
@@ -289,8 +311,10 @@ class FixedPlot:
     def __init__(self, filename=None):
         self.proxy = SolverProxy()
         self.filename = filename
-        self.all_a = [float(a) for a in np.linspace(0.0, 0.01, num=48+2)]
+        self.all_a = [float(a) for a in np.linspace(0.0, 0.01, num=NUM_A)]
+        self.all_a_anal = [float(a) for a in np.linspace(0.0, 0.01, num=NUM_A_ANAL)]
         self.nr_elements = len(self.all_a)
+        self.nr_elements_anal = len(self.all_a_anal)
         self.calc_model_nb()
         self.calc_model_o()
         self.calc_model_n()
@@ -311,7 +335,7 @@ class FixedPlot:
         cn = 0.1
         for i, a in enumerate(self.all_a):
             par_oq = Parameter(MODEL_2_QUAD, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
-            sol_oq = self.proxy.read_or_calc_and_write(par_oq)
+            sol_oq = self.proxy.read_or_calc_and_write(par_oq, resolution='low')
             if sol_oq == None or a == 0:
                 self.oq_profit_ret[i] = None
                 self.oq_profit_man[i] = None
@@ -365,17 +389,17 @@ class FixedPlot:
         
     def calc_model_o(self):
         # vectors for 'with online shop':
-        self.on_profit_man = np.zeros(self.nr_elements)
-        self.on_profit_ret = np.zeros(self.nr_elements)
-        self.on_rho = np.zeros(self.nr_elements)
-        self.on_qn = np.zeros(self.nr_elements)
-        self.on_qr = np.zeros(self.nr_elements)
-        self.on_pn = np.zeros(self.nr_elements)
-        self.on_pr = np.zeros(self.nr_elements)
-        self.on_wn = np.zeros(self.nr_elements)
+        self.on_profit_man = np.zeros(self.nr_elements_anal)
+        self.on_profit_ret = np.zeros(self.nr_elements_anal)
+        self.on_rho = np.zeros(self.nr_elements_anal)
+        self.on_qn = np.zeros(self.nr_elements_anal)
+        self.on_qr = np.zeros(self.nr_elements_anal)
+        self.on_pn = np.zeros(self.nr_elements_anal)
+        self.on_pr = np.zeros(self.nr_elements_anal)
+        self.on_wn = np.zeros(self.nr_elements_anal)
         self.proxy.beginWrite()
         cn = 0.1
-        for i, a in enumerate(self.all_a):
+        for i, a in enumerate(self.all_a_anal):
             par_o = Parameter(MODEL_2, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
             sol_o = self.proxy.read_or_calc_and_write(par_o)
             if sol_o == None or a == 0:
@@ -401,16 +425,16 @@ class FixedPlot:
 
     def calc_model_n(self):
         # vectors for 'without online shop':
-        self.no_profit_man = np.zeros(self.nr_elements)
-        self.no_profit_ret = np.zeros(self.nr_elements)
-        self.no_rho = np.zeros(self.nr_elements)
-        self.no_qn = np.zeros(self.nr_elements)
-        self.no_qr = np.zeros(self.nr_elements)
-        self.no_pn = np.zeros(self.nr_elements)
-        self.no_wn = np.zeros(self.nr_elements)
+        self.no_profit_man = np.zeros(self.nr_elements_anal)
+        self.no_profit_ret = np.zeros(self.nr_elements_anal)
+        self.no_rho = np.zeros(self.nr_elements_anal)
+        self.no_qn = np.zeros(self.nr_elements_anal)
+        self.no_qr = np.zeros(self.nr_elements_anal)
+        self.no_pn = np.zeros(self.nr_elements_anal)
+        self.no_wn = np.zeros(self.nr_elements_anal)
         cn = 0.1
         self.proxy.beginWrite()
-        for i, a in enumerate(self.all_a):
+        for i, a in enumerate(self.all_a_anal):
             par_n = Parameter(MODEL_1, tau=.09, a=a, s=0.4*cn, cn=cn)
             sol_n = self.proxy.read_or_calc_and_write(par_n)
             if sol_n == None or a == 0:
@@ -465,25 +489,25 @@ class FixedPlot:
     def plot(self):
         ## ORIGINAL MODELS:
         #self.plot_profits(relative=True)
-        #self.plot_rhos()
-        #self.plot_quantities()
         #self.plot_prices()
+        #self.plot_quantities()
+        #self.plot_rhos()
         
         #test some shit
         #self.plot_profits_o_vs_oq()
         #self.plot_quantities_o_vs_oq()
         
         ## MODEL NB VS O:
-        #self.plot_profits_nb_vs_o()
-        #self.plot_rhos_nb_vs_o()
-        #self.plot_prices_nb_vs_o()
-        #self.plot_quantities_nb_vs_o()
+        self.plot_profits_nb_vs_o()
+        self.plot_prices_nb_vs_o()
+        self.plot_quantities_nb_vs_o()
+        self.plot_rhos_nb_vs_o()
         
         ## QUADRATIC MODEL:
-        self.plot_profits_nq_vs_oq()
-        #self.plot_rhos_nq_vs_oq()
+        #self.plot_profits_nq_vs_oq(relative=True)
         #self.plot_prices_nq_vs_oq()
         #self.plot_quantities_nq_vs_oq()
+        #self.plot_rhos_nq_vs_oq()
         pass
 
     def plot_profits_nb_vs_o(self):
@@ -492,90 +516,99 @@ class FixedPlot:
         o_profit_man, o_profit_ret, nb_profit_ret, nb_profit_man = self.on_profit_man, self.on_profit_ret, self.nb_profit_ret, self.nb_profit_man
         
         # with online store:
-        pl1,  = ax.plot(self.all_a, o_profit_ret, color=RED_DARK)
-        ax.text(self.all_a[-1], o_profit_ret[-1]*1.2, r'$\pi_{R}^{O}$', color=RED_DARK)
-        pl2, = ax.plot(self.all_a, o_profit_man, color=RED_MEDIUM)
-        ax.text(self.all_a[-1], o_profit_man[-1], r'$\pi_{M}^{O}$', color=RED_MEDIUM)
+        ax.plot(self.all_a_anal, o_profit_ret, color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1]*.95, o_profit_ret[-1]+.005, r'$\pi_{R}^{O}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, o_profit_man, color=BLACK_DARK,
+            marker='^', markevery=MARKEVERY_ANAL, markersize=4)
+        ax.text(self.all_a_anal[-1]*.95, o_profit_man[-1]+.005, r'$\pi_{M}^{O}$', color=BLACK_DARK)
         
         # with model nb:
-        ax.plot(self.all_a, nb_profit_ret, color=BLUE_DARK)
-        ax.text(self.all_a[-1], nb_profit_ret[-1], r'$\pi_{R}^{NB}$', color=BLUE_DARK)
-        ax.plot(self.all_a, nb_profit_man, color=BLUE_MEDIUM)
-        ax.text(self.all_a[-1], nb_profit_man[-1], r'$\pi_{M}^{NB}$', color=BLUE_MEDIUM)
+        ax.plot(self.all_a, nb_profit_ret, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a[-1]*.95, nb_profit_ret[-1]+.005, r'$\pi_{R}^{NB}$', color=GREY_DARK)
+        ax.plot(self.all_a, nb_profit_man, color=GREY_DARK, linestyle='--',
+            marker='^', markevery=MARKEVERY, markersize=4)
+        ax.text(self.all_a[-1]*.95, nb_profit_man[-1]+.005, r'$\pi_{M}^{NB}$', color=GREY_DARK)
         
         # with model n:
-        ax.plot(self.all_a, self.no_profit_ret, color=BLUE_DARK, linestyle='dashed')
-        ax.text(self.all_a[-1]*.95, self.no_profit_ret[-1]+.003, r'$\pi_{R}^{N}$', color=BLUE_DARK)
-        ax.plot(self.all_a, self.no_profit_man, color=BLUE_MEDIUM, linestyle='dashed')
-        ax.text(self.all_a[-1]*.95, self.no_profit_man[-1]-.01, r'$\pi_{M}^{N}$', color=BLUE_MEDIUM)
+        #ax.plot(self.all_a, self.no_profit_ret, color=BLUE_DARK, linestyle='dashed')
+        #ax.text(self.all_a[-1]*.95, self.no_profit_ret[-1]+.003, r'$\pi_{R}^{N}$', color=BLUE_DARK)
+        #ax.plot(self.all_a, self.no_profit_man, color=BLUE_MEDIUM, linestyle='dashed')
+        #ax.text(self.all_a[-1]*.95, self.no_profit_man[-1]-.01, r'$\pi_{M}^{N}$', color=BLUE_MEDIUM)
         ax.set_xlabel('a')
-        ax.set_xlim([0, 0.011])
-        plt.show()
+        pltShowAndSave('nb-profits.pdf')
 
     def plot_rhos_nb_vs_o(self):
         fig, ax = plt.subplots()
         
         # with online store:
-        ax.plot(self.all_a, self.on_rho, color=RED_DARK, label=r'$\rho_{*}^{O}$')
-        #ax.text(self.all_a[-1], self.on_rho[-1]*1.2, r'$\rho_{*}^{O}$', color=RED_DARK)
+        ax.plot(self.all_a_anal, self.on_rho, color=BLACK_DARK, label=r'$\rho_{*}^{O}$')
+        ax.text(self.all_a_anal[-1], self.on_rho[-1]*.8, r'$\rho_{*}^{O}$', color=BLACK_DARK)
         
         # with model nb:
-        ax.plot(self.all_a, self.nb_rho, color=BLUE_DARK, label=r'$\rho_{*}^{NB}$')
-        #ax.text(self.all_a[-1], self.nb_rho[-1], r'$\rho_{*}^{NB}$', color=BLUE_DARK)
-        
-        # with model n:
-        ax.plot(self.all_a, self.no_rho, color=BLUE_DARK, linestyle='dashed', label=r'$\rho_{*}^{N}$')
-        #ax.text(self.all_a[-1]*.95, self.no_rho[-1]+.003, r'$\rho_{*}^{N}$', color=BLUE_DARK)
-        ax.set_xlabel('a')
-        ax.set_ylabel(r'Effort ($\rho$)')
-        ax.legend()
-        plt.show()
-        
-    def plot_prices_nb_vs_o(self):
-        fig, ax = plt.subplots()
-        
-        # with online store:
-        ax.plot(self.all_a, self.on_pn, color=RED_DARK, label=r'$pn_{*}^{O}$')
-        ax.text(self.all_a[-1], self.on_pn[-1], r'$pn_{*}^{O}$', color=RED_DARK)
-        
-        ax.plot(self.all_a, self.on_wn, color=RED_LIGHT, label=r'$wn_{*}^{O}$')
-        ax.text(self.all_a[-1], self.on_wn[-1], r'$wn_{*}^{O}$', color=RED_LIGHT)
-        
-        
-        # with model nb:
-        ax.plot(self.all_a, self.nb_pn, color=BLUE_DARK, label=r'$pn_{*}^{NB}$')
-        ax.text(self.all_a[-1], self.nb_pn[-1], r'$pn_{*}^{NB}$', color=BLUE_DARK)
-        
-        ax.plot(self.all_a, self.nb_b, color=BLUE_MEDIUM, label=r'$b_{*}^{NB}$')
-        ax.text(self.all_a[-1], self.nb_b[-1], r'$b_{*}^{NB}$', color=BLUE_MEDIUM)
-        
-        ax.plot(self.all_a, self.nb_wn, color=BLUE_LIGHT, label=r'$wn_{*}^{NB}$')
-        ax.text(self.all_a[-1], self.nb_wn[-1], r'$wn_{*}^{NB}$', color=BLUE_LIGHT)
+        ax.plot(self.all_a, self.nb_rho, color=GREY_DARK, label=r'$\rho_{*}^{NB}$',
+            linestyle='--')
+        ax.text(self.all_a[-1], self.nb_rho[-1]*1.2, r'$\rho_{*}^{NB}$', color=GREY_DARK)
         
         # with model n:
         #ax.plot(self.all_a, self.no_rho, color=BLUE_DARK, linestyle='dashed', label=r'$\rho_{*}^{N}$')
         #ax.text(self.all_a[-1]*.95, self.no_rho[-1]+.003, r'$\rho_{*}^{N}$', color=BLUE_DARK)
         ax.set_xlabel('a')
-        ax.set_xlim([0, 0.011])
+        ax.set_ylabel(r'Effort ($\rho$)')
+        ax.set_ylim([0, 5])
+        ax.legend()
+        pltShowAndSave('nb-rhos.pdf')
+        
+    def plot_prices_nb_vs_o(self):
+        fig, ax = plt.subplots()
+        
+        # with online store:
+        ax.plot(self.all_a_anal, self.on_pn, color=BLACK_DARK, label=r'$pn_{*}^{O}$',
+            marker='^', markevery=MARKEVERY_ANAL, markersize=4)
+        ax.text(self.all_a_anal[-1]*.95, self.on_pn[-1]+.02, r'$pn_{*}^{O}$', color=BLACK_DARK)
+        
+        ax.plot(self.all_a_anal, self.on_wn, color=BLACK_DARK, label=r'$wn_{*}^{O}$')
+        ax.text(self.all_a_anal[-1]*.95, self.on_wn[-1]+.015, r'$wn_{*}^{O}$', color=BLACK_DARK)
+        
+        
+        # with model nb:
+        ax.plot(self.all_a, self.nb_pn, color=GREY_DARK, label=r'$pn_{*}^{NB}$',
+            linestyle='--', marker='^', markevery=MARKEVERY, markersize=4)
+        ax.text(self.all_a[-1]*.95, self.nb_pn[-1]+.02, r'$pn_{*}^{NB}$', color=GREY_DARK)
+        
+        ax.plot(self.all_a, self.nb_b, color=GREY_DARK, label=r'$b_{*}^{NB}$',
+            linestyle='--', marker='s', markevery=MARKEVERY, markersize=3)
+        ax.text(self.all_a[-1]*.95, self.nb_b[-1]+.02, r'$b_{*}^{NB}$', color=GREY_DARK)
+        
+        ax.plot(self.all_a, self.nb_wn, color=GREY_DARK, label=r'$wn_{*}^{NB}$',
+            linestyle='--')
+        ax.text(self.all_a[-1]*.95, self.nb_wn[-1]-.04, r'$wn_{*}^{NB}$', color=GREY_DARK)
+        
+        # with model n:
+        #ax.plot(self.all_a, self.no_rho, color=BLUE_DARK, linestyle='dashed', label=r'$\rho_{*}^{N}$')
+        #ax.text(self.all_a[-1]*.95, self.no_rho[-1]+.003, r'$\rho_{*}^{N}$', color=BLUE_DARK)
+        ax.set_xlabel('a')
+        ax.set_ylim([-0.05, 0.85])
+        #ax.set_xlim([0, 0.011])
         #ax.legend()
-        plt.show()
+        pltShowAndSave('nb-prices.pdf')
         
     def plot_quantities_nb_vs_o(self):
         fig, ax = plt.subplots()
         # with online store normal:
-        ax.plot(self.all_a, self.on_qn, color=RED_DARK)
-        ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=RED_DARK)
-        ax.plot(self.all_a, self.on_qr, color=RED_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=RED_MEDIUM)
-        ax.plot(self.all_a[::4], self.on_max_qr[::4], linestyle='', marker='h', alpha=.4, \
-            color='black', label='returns of primary market')
+        ax.plot(self.all_a_anal, self.on_qn, color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, self.on_qr, color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, self.on_max_qr, linestyle='', alpha=.4,
+            color='black', label='returns of primary market',
+            marker='s', markevery=MARKEVERY_ANAL, markersize=4)
         ax.legend(loc='lower right', fontsize=6)
         
         # with model nb:
-        ax.plot(self.all_a, self.nb_qn, color=BLUE_DARK)
-        ax.text(self.all_a[-1]*.95, self.nb_qn[-1]+.01, r'$qn_{NB}^{*}$', color=BLUE_DARK)
+        ax.plot(self.all_a, self.nb_qn, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a[-1]*.95, self.nb_qn[-1]+.01, r'$qn_{NB}^{*}$', color=GREY_DARK)
         ax.set_xlabel('a')
-        plt.show()
+        pltShowAndSave('nb-quantities.pdf')
         
     def plot_profits_o_vs_oq(self):
         fig, ax = plt.subplots()
@@ -583,16 +616,16 @@ class FixedPlot:
         oq_profit_man, oq_profit_ret, on_profit_ret, on_profit_man = self.oq_profit_man, self.oq_profit_ret, self.on_profit_ret, self.on_profit_man
         
         # with online store normal:
-        ax.plot(self.all_a, on_profit_ret, color=RED_DARK)
-        ax.text(self.all_a[-1], on_profit_ret[-1]*1.2, r'$\pi_{R}^{O}$', color=RED_DARK)
-        ax.plot(self.all_a, on_profit_man, color=RED_LIGHT)
-        ax.text(self.all_a[-1], on_profit_man[-1], r'$\pi_{M}^{O}$', color=RED_LIGHT)
+        ax.plot(self.all_a, on_profit_ret, color=BLACK_DARK)
+        ax.text(self.all_a[-1], on_profit_ret[-1]*1.2, r'$\pi_{R}^{O}$', color=BLACK_DARK)
+        ax.plot(self.all_a, on_profit_man, color=BLACK_DARK)
+        ax.text(self.all_a[-1], on_profit_man[-1], r'$\pi_{M}^{O}$', color=BLACK_DARK)
         
         # online store quadr:
-        ax.plot(self.all_a, oq_profit_ret, color=BLUE_DARK)
-        ax.text(self.all_a[-1], oq_profit_ret[-1], r'$\pi_{R}^{OQ}$', color=BLUE_DARK)
-        ax.plot(self.all_a, oq_profit_man, color=BLUE_LIGHT)
-        ax.text(self.all_a[-1], oq_profit_man[-1], r'$\pi_{M}^{OQ}$', color=BLUE_LIGHT)
+        ax.plot(self.all_a, oq_profit_ret, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a[-1], oq_profit_ret[-1], r'$\pi_{R}^{OQ}$', color=GREY_DARK)
+        ax.plot(self.all_a, oq_profit_man, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a[-1], oq_profit_man[-1], r'$\pi_{M}^{OQ}$', color=GREY_DARK)
         #pl6, = ax.plot(self.all_a, no_profit_sc, color='#a70000')
         #ax.text(self.all_a[-1], no_profit_sc[-1], r'$\pi_{SC}^{N}$', color=pl6.get_c())
         ax.set_xlabel('a')
@@ -605,8 +638,9 @@ class FixedPlot:
         ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=RED_DARK)
         ax.plot(self.all_a, self.on_qr, color=RED_MEDIUM)
         ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=RED_MEDIUM)
-        ax.plot(self.all_a[::4], self.on_max_qr[::4], linestyle='', marker='h', alpha=.4, \
-            color='black', label='returns of primary market')
+        ax.plot(self.all_a, self.on_max_qr, linestyle='', alpha=.4,
+            color='black', label='returns of primary market',
+            marker='s', markevery=MARKEVERY, markersize=4)
         ax.legend(loc='lower right', fontsize=6)
         
         # online store quadr:
@@ -620,6 +654,7 @@ class FixedPlot:
         
     def plot_profits(self, relative=False):
         fig, ax = plt.subplots()
+        
         on_profit_sc = self.on_profit_man + self.on_profit_ret
         no_profit_sc = self.no_profit_man + self.no_profit_ret
         
@@ -628,122 +663,136 @@ class FixedPlot:
             no_profit_ret = self.no_profit_ret / self.no_profit_man
             on_profit_ret = self.on_profit_ret / self.no_profit_man
             on_profit_man = self.on_profit_man / self.no_profit_man
+            strRel = 'relative'
         else:
             no_profit_man, no_profit_ret, on_profit_ret, on_profit_man = self.no_profit_man, self.no_profit_ret, self.on_profit_ret, self.on_profit_man
+            strRel = 'abs'
         
         # with online store:
-        ax.plot(self.all_a, on_profit_ret, color=RED_DARK)
-        ax.text(self.all_a[-1], on_profit_ret[-1]*1.2, r'$\pi_{R}^{O}$', color=RED_DARK)
-        ax.plot(self.all_a, on_profit_man, color=RED_LIGHT)
-        ax.text(self.all_a[-1], on_profit_man[-1], r'$\pi_{M}^{O}$', color=RED_LIGHT)
+        ax.plot(self.all_a_anal, on_profit_ret, color=BLACK_DARK, linestyle='solid')
+        ax.text(self.all_a_anal[-1], on_profit_ret[-1]*1.2, r'$\pi_{R}^{O}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, on_profit_man, color=BLACK_DARK, linestyle='solid',
+            marker='^', markevery=MARKEVERY_ANAL, markersize=4)
+        ax.text(self.all_a_anal[-1], on_profit_man[-1], r'$\pi_{M}^{O}$', color=BLACK_DARK,)
         
         # without online store:
-        ax.plot(self.all_a, no_profit_ret, color=BLUE_DARK)
-        ax.text(self.all_a[-1], no_profit_ret[-1], r'$\pi_{R}^{N}$', color=BLUE_DARK)
-        ax.plot(self.all_a, no_profit_man, color=BLUE_LIGHT)
-        ax.text(self.all_a[-1], no_profit_man[-1], r'$\pi_{M}^{N}$', color=BLUE_LIGHT)
-        #pl6, = ax.plot(self.all_a, no_profit_sc, color='#a70000')
-        #ax.text(self.all_a[-1], no_profit_sc[-1], r'$\pi_{SC}^{N}$', color=pl6.get_c())
+        ax.plot(self.all_a_anal, no_profit_ret, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a_anal[-1], no_profit_ret[-1], r'$\pi_{R}^{N}$', color=GREY_DARK)
+        ax.plot(self.all_a_anal, no_profit_man, color=GREY_DARK, linestyle='--', marker='^',
+            markevery=MARKEVERY_ANAL, markersize=4)
+        ax.text(self.all_a_anal[-1], no_profit_man[-1], r'$\pi_{M}^{N}$', color=GREY_DARK,)
         ax.set_xlabel('a')
         if relative: ax.set_ylabel(r'ratio of profit to $\pi_{M}^{N}$')
-        plt.show()
+        
+        pltShowAndSave('on-profits-'+strRel+'.pdf')
         
     def plot_prices(self):
         fig, ax = plt.subplots()
         # with online store:
-        ax.plot(self.all_a, self.on_pn, color=BLUE_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.on_pn[-1]+.01, r'$pn_{O}^{*}$', color=BLUE_MEDIUM)
-        ax.plot(self.all_a, self.on_pr, color=BLUE_LIGHT)
-        ax.text(self.all_a[-1]*.95, self.on_pr[-1]-.015, r'$pr_{O}^{*}$', color=BLUE_LIGHT)
+        ax.plot(self.all_a_anal, self.on_pn, color=BLACK_DARK,
+            marker='^', markevery=MARKEVERY_ANAL, markersize=4)
+        ax.text(self.all_a_anal[-1]*.95, self.on_pn[-1]+.01, r'$pn_{O}^{*}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, self.on_pr, color=BLACK_DARK,
+            marker='s', markevery=MARKEVERY_ANAL, markersize=3)
+        ax.text(self.all_a_anal[-1]*.95, self.on_pr[-1]-.015, r'$pr_{O}^{*}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, self.on_wn, color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1]*.95, self.on_wn[-1]-.018, r'$wn_{O}^{*}$', color=BLACK_DARK)
+        
         # without online store:
-        ax.plot(self.all_a, self.no_pn, color=RED_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.no_pn[-1]-.015, r'$pn_{N}^{*}$', color=RED_MEDIUM)
-        #plot wholesale prices:
-        ax.plot(self.all_a, self.on_wn, color=RED_DARK)
-        ax.text(self.all_a[-1]*.95, self.on_wn[-1]+.01, r'$wn_{O}^{*}$', color=RED_DARK)
-        ax.plot(self.all_a, self.no_wn, color=BLUE_DARK)
-        ax.text(self.all_a[-1]*.95, self.no_wn[-1]+.015, r'$wn_{N}^{*}$', color=BLUE_DARK)
+        ax.plot(self.all_a_anal, self.no_pn, color=GREY_DARK, linestyle='--',
+            marker='^', markevery=MARKEVERY_ANAL, markersize=4)
+        ax.text(self.all_a_anal[-1]*.95, self.no_pn[-1]-.015, r'$pn_{N}^{*}$', color=GREY_DARK)
+        ax.plot(self.all_a_anal, self.no_wn, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a_anal[-1]*.95, self.no_wn[-1]+.01, r'$wn_{N}^{*}$', color=GREY_DARK)
         ax.set_xlabel('a')
-        plt.show()
+        pltShowAndSave('on-prices.pdf')
         
     def plot_quantities(self):
         fig, ax = plt.subplots()
         # with online store:
-        pl1,  = ax.plot(self.all_a, self.on_qn, color='#1b51a6')
-        ax.text(self.all_a[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=pl1.get_c())
-        pl2, = ax.plot(self.all_a, self.on_qr, color='#1b51a6')
-        ax.text(self.all_a[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=pl2.get_c())
-        ax.plot(self.all_a[::20], self.on_max_qr[::20], linestyle='', marker='h', alpha=.4, \
-            color='black', label='returns of primary market')
+        ax.plot(self.all_a_anal, self.on_qn, color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, self.on_qr, color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, self.on_max_qr, linestyle='', alpha=.4,
+            color='black', label='returns of primary market',
+            marker='s', markevery=MARKEVERY_ANAL, markersize=4)
         ax.legend(loc='lower right', fontsize=6)
         
         # without online store:
-        pl3, = ax.plot(self.all_a, self.no_qn, color='#ec5300')
-        ax.text(self.all_a[-1]*.95, self.no_qn[-1]+.01, r'$qn_{N}^{*}$', color=pl3.get_c())
+        ax.plot(self.all_a_anal, self.no_qn, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a_anal[-1]*.95, self.no_qn[-1]+.01, r'$qn_{N}^{*}$', color=GREY_DARK)
         ax.set_xlabel('a')
-        plt.show()
+        pltShowAndSave('on-quantities.pdf')
         
     def plot_rhos(self):
         fig, ax = plt.subplots()
-        pl1,  = ax.plot(self.all_a, self.on_rho, color='#1b51a6')
-        ax.text(self.all_a[-1], self.on_rho[-1]*.7,  r'$\rho_{O}^{*}$', color=pl1.get_c())
-        pl2, = ax.plot(self.all_a, self.no_rho, color='#a70000')
-        ax.text(self.all_a[-1], self.no_rho[-1]*1.3, r'$\rho_{N}^{*}$', color=pl2.get_c())
+        #with online store:
+        ax.plot(self.all_a_anal, self.on_rho, color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1], self.on_rho[-1]*.7,  r'$\rho_{O}^{*}$', color=BLACK_DARK)
+        
+        #without online store
+        ax.plot(self.all_a_anal, self.no_rho, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a_anal[-1], self.no_rho[-1]*1.3, r'$\rho_{N}^{*}$', color=GREY_DARK)
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
         ax.set_ylabel(r'Effort ($\rho$)')
-        plt.show()
+        pltShowAndSave('on-rhos.pdf')
         
     def plot_rhos_nq_vs_oq(self):
         """ no onlineshop quadratic vs. onlineshop quadratic """
         fig, ax = plt.subplots()
-        pl1,  = ax.plot(self.all_a, self.oq_rho, color='#1b51a6')
-        ax.text(self.all_a[-1], self.oq_rho[-1]*.7,  r'$\rho_{OQ}^{*}$', color=pl1.get_c())
+        ax.plot(self.all_a, self.oq_rho, color=BLACK_DARK)
+        ax.text(self.all_a[-1]*.99, self.oq_rho[-1]*.7,  r'$\rho_{OQ}^{*}$', color=BLACK_DARK)
         
-        pl2, = ax.plot(self.all_a, self.nq_rho, color='#a70000')
-        ax.text(self.all_a[-1], self.nq_rho[-1]*1.3, r'$\rho_{NQ}^{*}$', color=pl2.get_c())
+        ax.plot(self.all_a, self.nq_rho, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a[-1]*.99, self.nq_rho[-1]*1.3, r'$\rho_{NQ}^{*}$', color=GREY_DARK)
         ax.set_ylim([0, 5])
         ax.set_xlabel('a')
         ax.set_ylabel(r'Effort ($\rho$)')
-        ax.set_xlim([0, 0.011])
-        plt.show()
+        pltShowAndSave('oq-rhos.pdf')
         
     def plot_prices_nq_vs_oq(self):
         fig, ax = plt.subplots()
         # with online store:
-        ax.plot(self.all_a, self.oq_pn, color=BLUE_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.oq_pn[-1]+.01, r'$pn_{OQ}^{*}$', color=BLUE_MEDIUM)
-        ax.plot(self.all_a, self.oq_pr, color=BLUE_LIGHT)
-        ax.text(self.all_a[-1]*.95, self.oq_pr[-1]-.015, r'$pr_{OQ}^{*}$', color=BLUE_LIGHT)
+        ax.plot(self.all_a, self.oq_pn, color=BLACK_DARK,
+            marker='^', markevery=MARKEVERY, markersize=4)
+        ax.text(self.all_a[-1]*.95, self.oq_pn[-1]+.01, r'$pn_{OQ}^{*}$', color=BLACK_DARK)
+        ax.plot(self.all_a, self.oq_pr, color=BLACK_DARK,
+            marker='s', markevery=MARKEVERY, markersize=3)
+        ax.text(self.all_a[-1]*.95, self.oq_pr[-1]-.015, r'$pr_{OQ}^{*}$', color=BLACK_DARK)
+        ax.plot(self.all_a, self.oq_wn, color=BLACK_DARK)
+        ax.text(self.all_a[-1]*.95, self.oq_wn[-1]*1.01, r'$wn_{OQ}^{*}$', color=BLACK_DARK)
+        
         # without online store:
-        ax.plot(self.all_a, self.nq_pn, color=RED_MEDIUM)
-        ax.text(self.all_a[-1]*.95, self.nq_pn[-1]-.015, r'$pn_{NQ}^{*}$', color=RED_MEDIUM)
-        #plot wholesale prices:
-        ax.plot(self.all_a, self.oq_wn, color=RED_DARK)
-        ax.text(self.all_a[-1]*.95, self.oq_wn[-1]*1.01, r'$wn_{OQ}^{*}$', color=RED_DARK)
-        ax.plot(self.all_a, self.nq_wn, color=BLUE_DARK)
-        ax.text(self.all_a[-1]*.95, self.nq_wn[-1]*1.02, r'$wn_{NQ}^{*}$', color=BLUE_DARK)
+        ax.plot(self.all_a, self.nq_pn, color=GREY_DARK, linestyle='--',
+            marker='^', markevery=MARKEVERY, markersize=4)
+        ax.text(self.all_a[-1]*.95, self.nq_pn[-1]-.015, r'$pn_{NQ}^{*}$', color=GREY_DARK)
+        ax.plot(self.all_a, self.nq_wn, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a[-1]*.95, self.nq_wn[-1]*1.02, r'$wn_{NQ}^{*}$', color=GREY_DARK)
         ax.set_xlabel('a')
-        plt.show()
+        ax.set_ylim([0.45, .8])
+        pltShowAndSave('oq-prices.pdf')
         
     def plot_quantities_nq_vs_oq(self):
         fig, ax = plt.subplots()
         # with online store quadratic:
-        ax.plot(self.all_a, self.oq_qn, color=RED_DARK)
-        ax.text(self.all_a[-1]*.95, self.oq_qn[-1]+.01, r'$qn_{OQ}^{*}$', color=RED_DARK)
+        ax.plot(self.all_a, self.oq_qn, color=BLACK_DARK)
+        ax.text(self.all_a[-1]*.95, self.oq_qn[-1]+.01, r'$qn_{OQ}^{*}$', color=BLACK_DARK)
         
-        ax.plot(self.all_a, self.oq_qr, color=RED_LIGHT)
-        ax.text(self.all_a[-1]*.95, self.oq_qr[-1]+.01, r'$qr_{OQ}^{*}$', color=RED_LIGHT)
+        ax.plot(self.all_a, self.oq_qr, color=BLACK_DARK)
+        ax.text(self.all_a[-1]*.95, self.oq_qr[-1]+.01, r'$qr_{OQ}^{*}$', color=BLACK_DARK)
         
-        ax.plot(self.all_a[::4], self.oq_max_qr[::4], linestyle='', marker='h', alpha=.4, \
-            color='black', label='returns of primary market')
+        ax.plot(self.all_a, self.oq_max_qr, linestyle='', alpha=.4,
+            color='black', label='returns of primary market',
+            marker='s', markevery=MARKEVERY, markersize=4)
         ax.legend(loc='lower right', fontsize=6)
         
         # without online store quadratic:
-        ax.plot(self.all_a, self.nq_qn, color=BLUE_DARK)
-        ax.text(self.all_a[-1]*.95, self.nq_qn[-1]+.01, r'$qn_{NQ}^{*}$', color=BLUE_DARK)
+        ax.plot(self.all_a, self.nq_qn, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a[-1]*.95, self.nq_qn[-1]+.01, r'$qn_{NQ}^{*}$', color=GREY_DARK)
         ax.set_xlabel('a')
-        plt.show()
+        pltShowAndSave('oq-quantities.pdf')
         
     def plot_profits_nq_vs_oq(self, relative=False):
         fig, ax = plt.subplots()
@@ -753,24 +802,28 @@ class FixedPlot:
             nq_profit_ret = self.nq_profit_ret / self.nq_profit_man
             oq_profit_ret = self.oq_profit_ret / self.nq_profit_man
             oq_profit_man = self.oq_profit_man / self.nq_profit_man
+            strRel = 'relative'
         else:
             nq_profit_man, nq_profit_ret, oq_profit_ret, oq_profit_man = self.nq_profit_man, self.nq_profit_ret, self.oq_profit_ret, self.oq_profit_man
+            strRel = 'abs'
         
         # with online store:
-        ax.plot(self.all_a, oq_profit_ret, color=RED_DARK)
-        ax.text(self.all_a[-1], oq_profit_ret[-1]*1.2, r'$\pi_{R}^{OQ}$', color=RED_DARK)
-        ax.plot(self.all_a, oq_profit_man, color=RED_LIGHT)
-        ax.text(self.all_a[-1], oq_profit_man[-1], r'$\pi_{M}^{OQ}$', color=RED_LIGHT)
+        ax.plot(self.all_a, oq_profit_ret, color=BLACK_DARK)
+        ax.text(self.all_a[-1], oq_profit_ret[-1]*1.2, r'$\pi_{R}^{OQ}$', color=BLACK_DARK)
+        ax.plot(self.all_a, oq_profit_man, color=BLACK_DARK,
+            marker='^', markevery=MARKEVERY, markersize=4)
+        ax.text(self.all_a[-1], oq_profit_man[-1], r'$\pi_{M}^{OQ}$', color=BLACK_DARK)
         
         # without online store:
-        ax.plot(self.all_a, nq_profit_ret, color=BLUE_DARK)
-        ax.text(self.all_a[-1], nq_profit_ret[-1], r'$\pi_{R}^{N}$', color=BLUE_DARK)
-        ax.plot(self.all_a, nq_profit_man, color=BLUE_LIGHT)
-        ax.text(self.all_a[-1], nq_profit_man[-1], r'$\pi_{M}^{N}$', color=BLUE_LIGHT)
+        ax.plot(self.all_a, nq_profit_ret, color=GREY_DARK, linestyle='--')
+        ax.text(self.all_a[-1], nq_profit_ret[-1], r'$\pi_{R}^{N}$', color=GREY_DARK)
+        ax.plot(self.all_a, nq_profit_man, color=GREY_DARK, linestyle='--',
+            marker='^', markevery=MARKEVERY, markersize=4)
+        ax.text(self.all_a[-1], nq_profit_man[-1], r'$\pi_{M}^{N}$', color=GREY_DARK)
         
         ax.set_xlabel('a')
-        #plt.show()
-        plt.savefig('plot_profits_nq_vs_oq.pdf')
+        if relative: ax.set_ylabel(r'ratio of profit to $\pi_{M}^{N}$')
+        pltShowAndSave('oq-profits-'+strRel+'.pdf')
         
 class SpontPlot:
     def plot(self):
