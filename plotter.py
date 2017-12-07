@@ -92,6 +92,7 @@ class CountourPlotter:
             #if self.cr == 'delta*cn/2':
             #    return self.delta * cn / 2
             if self.cr == '0.4*cn':
+                #return ((self.delta / (2-self.delta)) * cn)* .5 #todo hier aendern, sonst stimmts nicht mehr
                 return 0.4 * cn
             else:
                 return self.cr
@@ -130,15 +131,16 @@ class CountourPlotter:
             if par_model_1.a == .0:
                 sol_model_1, sol_model_2 = None, None
             else:
-                #sol_model_1 = solver_m1.optimize(par_model_1)
-                #sol_model_2 = solver_m2.optimize(par_model_2)
-                sol_model_1 = self.proxy.read_or_calc_and_write(par_model_1)
-                sol_model_2 = self.proxy.read_or_calc_and_write(par_model_2)
+                sol_model_1 = solver_m1.optimize(par_model_1)
+                sol_model_2 = solver_m2.optimize(par_model_2)
+                #sol_model_1 = self.proxy.read_or_calc_and_write(par_model_1)
+                #sol_model_2 = self.proxy.read_or_calc_and_write(par_model_2)
                 if i % 1000 == 0:
                     self.proxy.commit()
                     print(i)
             self.matrix[line, col] = self._calc_func(sol_model_1, sol_model_2, par_model_2)
             i += 1
+            self.proxy.commit()
         #self.proxy.endWrite()
         
     def __rho_calc_func(self, sol_model_1, sol_model_2, par):
@@ -939,8 +941,17 @@ if __name__ == '__main__':
         else:
             output = None
          
+        #plotter = CountourPlotter(args.plot[0], params={
+        #    'tau': .09, 's': '0.4*cn', 'cr': '0.4*cn', 'delta' : .7956,
+        #    'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
+        #    'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
+        #    'absolute' : absolute,
+        #    'gray'   : gray,
+        #    'nolegend': True,
+        #    'output' : output
+        #})
         plotter = CountourPlotter(args.plot[0], params={
-            'tau': .09, 's': '0.4*cn', 'cr': '0.4*cn', 'delta' : .7956,
+            'tau': .2, 's': .1, 'cr': '0.4*cn', 'delta' : .22,
             'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
             'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
             'absolute' : absolute,

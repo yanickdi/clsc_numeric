@@ -618,6 +618,11 @@ class ModelTwoQuadSolver:
             search_cases = (_UNDEFINED_CASE,) # all cases once
             do_local_search = False
             wn_range, pr_range = [0,1], [0,1]
+        elif resolution == 'high':
+            raster_size = 51
+            search_cases = (_CASE_ONE, _CASE_TWO)  # all cases sepearte
+            do_local_search = True
+            wn_range, pr_range = [0, 1], [0, 1]
         # we have to check both cases:
         for case in search_cases:
             startP = ModelTwoQuadGridSearch.search(par, iter=1, raster_size=raster_size, case=case, wn_range=wn_range, pr_range=pr_range)
@@ -656,6 +661,21 @@ class ModelTwoQuadSolver:
         case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
         sol = Solution(dec, sol_tuple[6], sol_tuple[7], case)
         return sol
+
+    @staticmethod
+    def retailer_profit(par, wn, pr, rho, sign=1.0):
+        if rho < 1.0:
+            return -sys.maxsize * sign
+        tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
+        pn = .5 * (1+wn-delta+pr)
+        qn = 1 - (pn - pr) / (1 - delta)
+        qr = (pn - pr) / (1 - delta) - pr / delta
+        ret_profit = qn * (pn - wn) * (1 - par.tau / rho) - par.a * (rho - 1) ** 2
+        # is valid?
+        if (0 <= qr <= (par.tau / rho) * qn) and ret_profit >= 0:
+            return ret_profit * sign
+        else:
+            return -sys.maxsize * sign
         
     @staticmethod
     def _retailer_decision(par, wn, pr, case=_UNDEFINED_CASE):

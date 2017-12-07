@@ -5,13 +5,12 @@ if __name__ == '__main__': sys.path.append(os.path.abspath('..'))
 import unittest
 from math import sqrt
 
-from clsc_numeric.solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, \
+from solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, \
     Parameter, DecisionVariables, MODEL_1, MODEL_2, MODEL_1_QUAD, MODEL_2_QUAD, _CASE_TWO_C, \
     Database, SolverProxy, ModelNBGridSearch, MODEL_NB, ModelOneQuadGridSearch, \
     ModelTwoQuadGridSearch
-    
-from clsc_numeric.history import ModelTwoGridSearch
-from clsc_numeric.generator import Generator, MemoryOutputFile
+
+from generator import Generator, MemoryOutputFile
 
 class TestModelOneNumericalSolver(unittest.TestCase):
     def test_case_1a(self):
@@ -437,10 +436,12 @@ class TestModelTwoSolver(unittest.TestCase):
         print(ModelTwoSolver.solve_analytical(par))
         
 class TestModelTwoQuadSolver(unittest.TestCase):
-    def test_something(self):
+    def test_always_case_one(self):
         from solver import ModelTwoQuadSolver
-        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0020408163265306124, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
-        print(ModelTwoQuadSolver.profit(par, 0.5429821819318537, 0.48640200062519534, 1))
+        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.7, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
+        sol = ModelTwoQuadSolver.solve(par, resolution='high')
+        #print(ModelTwoQuadSolver.profit(par, 0.5429821819318537, 0.48640200062519534))
+        print(sol, sol.dec.rho)
         #sol = ModelTwoQuadSolver.solve(par)
         #print(sol)
     
