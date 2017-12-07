@@ -664,6 +664,7 @@ class ModelTwoQuadSolver:
 
     @staticmethod
     def retailer_profit(par, wn, pr, rho, sign=1.0):
+        """ (noch) nicht in verwendung """
         if rho < 1.0:
             return -sys.maxsize * sign
         tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
@@ -673,6 +674,7 @@ class ModelTwoQuadSolver:
         ret_profit = qn * (pn - wn) * (1 - par.tau / rho) - par.a * (rho - 1) ** 2
         # is valid?
         if (0 <= qr <= (par.tau / rho) * qn) and ret_profit >= 0:
+            print(qr)
             return ret_profit * sign
         else:
             return -sys.maxsize * sign
@@ -690,7 +692,7 @@ class ModelTwoQuadSolver:
         valids = []
 
         if type(rho_1) == complex or type(rho_1) == np.complex128:
-            if rho_1.imag < .000001 and rho_1.real > 1:
+            if abs(rho_1.imag) < .000001 and rho_1.real > 1:
                 rho_1 = rho_1.real
             else:
                 rho_1 = -1
