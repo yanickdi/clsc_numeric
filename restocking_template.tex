@@ -1,0 +1,95 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{float}
+
+\newcommand\tabrotate[1]{\begin{turn}{90}\rlap{{'{#'}}1}\end{turn}} 
+
+\usepackage{geometry}
+\geometry{verbose,a4paper,tmargin=25mm,bmargin=25mm,lmargin=15mm,rmargin=20mm}
+{% set tables = ['case', 'profits', 'retailerprof', 'rho', 'price_new', 'wholesale_price', 'restocking_price'] %}
+{% set table_names = {
+        'case' : 'cases',
+        'profits'   : 'manufacturer\'s profit',
+        'retailerprof' : 'retailer\'s profit',
+        'rho'    : 'effort',
+        'price_new'     : 'price of new products',
+        'wholesale_price' : 'wholesale price',
+        'restocking_price' : 'restocking price'}
+%}
+\begin{document}
+\section{Full factorial analysis tables}
+    \begin{table}[htp]
+        \begin{center}
+        \begin{small}
+        \begin{tabular}{cccccc|cccccccc}
+           &&&&&& \multicolumn{8}{c}{$c_n$} \\
+        &&&&&& \multicolumn{4}{c}{low}&\multicolumn{4}{c}{high} \\
+           \hline
+        &&&&&& \multicolumn{4}{c}{$\delta$}&\multicolumn{4}{c}{$\delta$} \\
+        &&&&&& \multicolumn{2}{c}{low}&\multicolumn{2}{c}{high}&\multicolumn{2}{c}{low}&\multicolumn{2}{c}{high} \\
+           \hline
+        &&&&&& \multicolumn{2}{c}{$\tau$}&\multicolumn{2}{c}{$\tau$}&\multicolumn{2}{c}{$\tau$}&\multicolumn{2}{c}{$\tau$}\\
+    &&&&&&low&high&low&high&low&high&low&high\\
+    
+    {% for table in tables %}
+        {% set table_name = table_names[table] %}
+           \hline
+            \multicolumn{6}{c}{{'{' + table_name + '}' }}\\
+            \hline
+      \multirow{8}{*}{\tabrotate{s}} &\multirow{4}{*}{\tabrotate{low}} &\multirow{4}{*}{\tabrotate{$c_r$}}&\multirow{2}{*}{\tabrotate{low}}&\multirow{2}{*}{\tabrotate{a}}&low&{{ft(table,0,0)}}&{{ft(table,0,1)}}&{{ft(table,0,2)}}&{{ft(table,0,3)}}&{{ft(table,0,4)}}&{{ft(table,0,5)}}&{{ft(table,0,6)}}&{{ft(table,0,7)}}\\
+      & &&&&high&{{ft(table,1,0)}}&{{ft(table,1,1)}}&{{ft(table,1,2)}}&{{ft(table,1,3)}}&{{ft(table,1,4)}}&{{ft(table,1,5)}}&{{ft(table,1,6)}}&{{ft(table,1,7)}}\\
+    &&&\multirow{2}{*}{\tabrotate{high}}&\multirow{2}{*}{\tabrotate{a}}&low&{{ft(table,2,0)}}&{{ft(table,2,1)}}&{{ft(table,2,2)}}&{{ft(table,2,3)}}&{{ft(table,2,4)}}&{{ft(table,2,5)}}&{{ft(table,2,6)}}&{{ft(table,2,7)}}\\
+    &&&&&high&{{ft(table,3,0)}}&{{ft(table,3,1)}}&{{ft(table,3,2)}}&{{ft(table,3,3)}}&{{ft(table,3,4)}}&{{ft(table,3,5)}}&{{ft(table,3,6)}}&{{ft(table,3,7)}}\\
+    &\multirow{4}{*}{\tabrotate{high}}&\multirow{4}{*}{\tabrotate{$c_r$}}&\multirow{2}{*}{\tabrotate{low}}&\multirow{2}{*}{\tabrotate{a}}&low&{{ft(table,4,0)}}&{{ft(table,4,1)}}&{{ft(table,4,2)}}&{{ft(table,4,3)}}&{{ft(table,4,4)}}&{{ft(table,4,5)}}&{{ft(table,4,6)}}&{{ft(table,4,7)}}\\
+    &&&&&high&{{ft(table,5,0)}}&{{ft(table,5,1)}}&{{ft(table,5,2)}}&{{ft(table,5,3)}}&{{ft(table,5,4)}}&{{ft(table,5,5)}}&{{ft(table,5,6)}}&{{ft(table,5,7)}}\\
+    &&&\multirow{2}{*}{\tabrotate{high}}&\multirow{2}{*}{\tabrotate{a}}&low&{{ft(table,6,0)}}&{{ft(table,6,1)}}&{{ft(table,6,2)}}&{{ft(table,6,3)}}&{{ft(table,6,4)}}&{{ft(table,6,5)}}&{{ft(table,6,6)}}&{{ft(table,6,7)}}\\
+    &&&&&high&{{ft(table,7,0)}}&{{ft(table,7,1)}}&{{ft(table,7,2)}}&{{ft(table,7,3)}}&{{ft(table,7,4)}}&{{ft(table,7,5)}}&{{ft(table,7,6)}}&{{ft(table,7,7)}}\\
+    {% endfor %}
+    \end{tabular}
+      \caption{Full factorial analysis to compare the cases, manufacturer's profits, efforts, prices of new products and wholesale prices of Model O with Model N (percentages refer to the values of Model O compared to the values of Model N)}
+      \label{full_factorial}
+      \end{small}
+    \end{center}
+    \end{table}
+    
+    
+{#
+
+\subsection{Detailed analysis of every parameter}
+Table \ref{analysis_parameters} show the influence of the change of one parameter if all the other parameters are fixed to the values in Table \ref{table_setting}. For each parameter 4 or 5 differnt values are assumed.
+
+
+
+{% set tables = ['delta', 'tau', 'cn', 'a'] %}
+{% set table_par = {
+        'delta' : [0.5, 0.6, 0.7, 0.8, 0.9],
+        'tau'   : [0.05, 0.15, 0.25, 0.35],
+        'cn'    : [0.1, 0.2, 0.3, 0.4, 0.5],
+        'a'     : [0.001, 0.01, 0.05, 0.1]}
+%}
+{% set table_left = {'delta': '$\\delta$', 'tau':'$\\tau$', 'cn': '$c_n$', 'a':'a'} %}
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{small}
+            \begin{tabular}{cc|ccccc}
+                &&relative $\Pi_M$&relative $\rho$&relative $p_n$&relative $w_n$&$p_r$\\
+                {% for table in tables -%}
+                    {% set pars = table_par[table] -%}
+                    \hline
+                    \multirow{ {{pars|length + 1}} }{*}{\tabrotate{ {{table_left[table]}} }}
+                    {% for par in pars -%}
+                        &{{par}}&{{at(table, par)}}\\
+                    {% endfor %}{% if table != tables|last %}\hline{% endif %}
+                {% endfor %}
+            \end{tabular}
+            \caption{Analysis of the influences of a change in parameters $\delta$, $\tau$, $c_n$ and $a$}
+            \label{analysis_parameters}
+        \end{small}
+    \end{center}
+\end{table}
+
+#}
+
+\end{document}

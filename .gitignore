@@ -115,7 +115,7 @@ ENV/
 *.pdf
 output.tex
 *.synctex.gz
-*.db
+*.db*
 *.db.*
 latex.bat
 figures

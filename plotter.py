@@ -500,16 +500,16 @@ class FixedPlot:
         #self.plot_quantities_o_vs_oq()
         
         ## MODEL NB VS O:
-        self.plot_profits_nb_vs_o()
-        self.plot_prices_nb_vs_o()
-        self.plot_quantities_nb_vs_o()
-        self.plot_rhos_nb_vs_o()
+        #self.plot_profits_nb_vs_o()
+        #self.plot_prices_nb_vs_o()
+        #self.plot_quantities_nb_vs_o()
+        #self.plot_rhos_nb_vs_o()
         
         ## QUADRATIC MODEL:
         #self.plot_profits_nq_vs_oq(relative=True)
         #self.plot_prices_nq_vs_oq()
         #self.plot_quantities_nq_vs_oq()
-        #self.plot_rhos_nq_vs_oq()
+        self.plot_rhos_nq_vs_oq()
         pass
 
     def plot_profits_nb_vs_o(self):

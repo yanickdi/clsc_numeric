@@ -84,13 +84,13 @@ class CountourPlotter:
         if self.s == '0.4*cn' and self.cr == '0.4*cn':
             for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
                 for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
-                    par_model_1 = Parameter(MODEL_1_QUAD, tau=self.tau, a=a, s=0.4 * cn, cn=cn)
+                    par_model_1 = Parameter(MODEL_NB, tau=self.tau, a=a, s=0.4 * cn, cn=cn)
                     par_model_2 = Parameter(MODEL_2_QUAD, tau=self.tau, a=a, s=0.4 * cn,  cr=0.4 * cn, cn=cn, delta=self.delta)
                     yield (line, col, par_model_1, par_model_2)
         else:
             for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
                 for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
-                    par_model_1 = Parameter(MODEL_1_QUAD, tau=self.tau, a=a, s=__s(cn), cn=cn)
+                    par_model_1 = Parameter(MODEL_NB, tau=self.tau, a=a, s=__s(cn), cn=cn)
                     par_model_2 = Parameter(MODEL_2_QUAD, tau=self.tau, a=a, s=__s(cn),  cr=__cr(cn), cn=cn, delta=self.delta)
                     yield (line, col, par_model_1, par_model_2)
     
@@ -111,10 +111,10 @@ class CountourPlotter:
                 #sol_model_1 = solver_m1.optimize(par_model_1)
                 #sol_model_2 = solver_m2.optimize(par_model_2)
                 #sol_model_1 = self.proxy.read_or_calc_and_write(par_model_1, resolution='low')
-                sol_model_1 = None #todo hier fuer model 1 aufschalten
+                sol_model_1 = self.proxy.calculate(par_model_1, resolution='low')
                 #sol_model_2 = self.proxy.read_or_calc_and_write(par_model_2, resolution='low')
-                sol_model_2 = self.proxy.calculate(par_model_2, resolution='low')
-            self.matrix[line, col] = self._calc_func(sol_model_1, sol_model_2, par_model_2)
+                #sol_model_2 = self.proxy.calculate(par_model_2, resolution='low')
+            self.matrix[line, col] = self._calc_func(sol_model_1, None, par_model_2)
             if i % 100 == 0:
                 self.proxy.commit()
                 print('{} ({:.2f} %)    at {}'.format(i, (i/numall)*100, str(datetime.datetime.now())))
@@ -191,7 +191,11 @@ class CountourPlotter:
         if sol_model_1 == None:
             return np.nan
         else:
-            return _ALL_CASES_MODEL_1.index(sol_model_1.case) + 1
+            if sol_model_1.dec.rho > 1:
+                return 1
+            else:
+                return 2
+            #return _ALL_CASES_MODEL_1.index(sol_model_1.case) + 1
             
     def __case_calc_func_model_two(self, sol_model_1, sol_model_2, par):
         if sol_model_2 == None:
@@ -388,8 +392,8 @@ if __name__ == '__main__':
         step_size_a = .001
         step_size_cn = .001
     elif quality == 'low':
-        step_size_a = .1
-        step_size_cn = .1
+        step_size_a = .0002
+        step_size_cn = .009
     gray = args.gray
     
     plot = args.plot[0]
@@ -420,7 +424,7 @@ if __name__ == '__main__':
 
         plotter = CountourPlotter(args.plot[0], params={
             'tau': .09, 's': 0.1, 'cr': 0.2, 'delta' : 0.4,
-            'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : 1,
+            'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : 0.02,
             'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
             'absolute' : absolute,
             'gray'   : gray,

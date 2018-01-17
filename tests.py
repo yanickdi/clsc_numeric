@@ -8,7 +8,7 @@ from math import sqrt
 from solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, \
     Parameter, DecisionVariables, MODEL_1, MODEL_2, MODEL_1_QUAD, MODEL_2_QUAD, _CASE_TWO_C, \
     Database, SolverProxy, ModelNBGridSearch, MODEL_NB, ModelOneQuadGridSearch, \
-    ModelTwoQuadGridSearch
+    ModelTwoQuadGridSearch, ModelNBSolver
 
 from generator import Generator, MemoryOutputFile
 
@@ -380,18 +380,26 @@ class AnalyticalSolver:
 class TestModelNb(unittest.TestCase):
     def test_something(self):
         proxy = SolverProxy()
-        #par_nb = Parameter(MODEL_NB, tau=0.09, a=0.0069387755102040816, s=0.04000000000000001, cn=0.1)
-        par_nb = Parameter(MODEL_NB, tau=0.09, a=0.0069387755102040816, s=0.04000000000000001, cn=0.1)
-        par_n = Parameter(MODEL_1, tau=0.09, a=0.0069387755102040816, s=0.04000000000000001, cn=0.1)
-        sol_nb = proxy.calculate(par_nb)
-        sol_n = proxy.calculate(par_n)
+        tau = 0.35
+        delta = 0.85
+        a = 0.001
+        s = 0
+        cr = 0.2125
+        cn = 0.5
+        par_nb = Parameter(MODEL_NB, tau=tau, a=a, s=s, cn=cn)
+        sol_nb = ModelNBSolver.solve(par_nb, 'high')
+        print('wn = {}, b={}, rho={}, pn={}'.format(sol_nb.dec.wn, sol_nb.dec.b, sol_nb.dec.rho, sol_nb.dec.pn))
         print(sol_nb.profit_man)
-        self.assertTrue(sol_nb.profit_man > sol_n.profit_man)
-        #self.assertAlmostEqual(sol.dec.b, 0)
-        #self.assertAlmostEqual(sol.dec.wn, 0.5401615607376925)
-        #self.assertAlmostEqual(sol.dec.rho, 5.578679582408612)
-        #self.assertTrue(sol.profit_man - 0.09939780698178023 > 0)
-        #self.assertAlmostEqual(sol.profit_ret, 0.04771325551393344)
+        print(sol_nb.profit_ret)
+
+        par_o = Parameter(MODEL_2, tau=tau, a=a, s=s, cr=cr, cn=cn, delta=delta)
+        sol_o = proxy.calculate(par_o)
+        print(sol_o.profit_man)
+        #par_n = Parameter(MODEL_1, tau=0.09, a=0.0069387755102040816, s=0.04000000000000001, cn=0.1)
+        #sol_nb = proxy.calculate(par_nb)
+        #sol_n = proxy.calculate(par_n)
+        #print(sol_nb.profit_man)
+        #self.assertTrue(sol_nb.profit_man > sol_n.profit_man)
 
 class TestModelOneQuadGridSearch(unittest.TestCase):
     def test_something(self):

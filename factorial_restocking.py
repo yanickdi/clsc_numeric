@@ -2,7 +2,7 @@ import sys, os.path, re
 from statistics import mean
 
 from jinja2 import Template
-from solver import SolverProxy, Parameter, MODEL_2, MODEL_1
+from solver import SolverProxy, Parameter, MODEL_2, MODEL_NB, ModelNBSolver
 
 LATEX_SUBS = (
     (re.compile(r'\\'), r'\\textbackslash'),
@@ -53,7 +53,7 @@ class Factorial:
         self.__fullFactorialTable()
 
     def __key(self, model, tau, a, s, cr, cn, delta):
-        assert model in (MODEL_1, MODEL_2)
+        assert model in (MODEL_2, MODEL_NB)
         for val in (tau, a, s, cr, cn): assert val in (Factorial.LOW, Factorial.HIGH)
         return '{},tau={},a={},s={},cr={},cn={},delta={}'.format(model, tau, a, s, cr, cn,delta)
 
@@ -68,33 +68,36 @@ class Factorial:
         p = Factorial
         iter = self.__state_iter
         proxy = SolverProxy()
-
+        num = 0
         for tau, tau_state in iter([p.tau_lo(), p.tau_hi()]):
             for delta, delta_state in iter([p.delta_lo(), p.delta_hi()]):
                 for cn, cn_state in iter([p.cn_lo(), p.cn_hi()]):
                     for cr, cr_state in iter([p.cr_lo(), p.cr_hi(cn, delta)]):
                         for s, s_state in iter([p.s_lo(), p.s_hi(cn)]):
                             for a, a_state in iter([p.a_lo(), p.a_hi()]):
-                                # calculate model one
-                                par_n = Parameter(MODEL_1, tau=tau, a=a, s=s, cn=cn)
-                                sol_n = proxy.calculate(par_n)
-                                key_n = self.__key(MODEL_1, tau_state, a_state, s_state, cr_state, cn_state, delta_state)
-                                self._add(key_n, par_n, sol_n)
+                                # calculate model with restocking_fee
+                                par_nb = Parameter(MODEL_NB, tau=tau, a=a, s=s, cn=cn)
+                                sol_nb = proxy.read_or_calc_and_write(par_nb, resolution='high')
+                                num += 1; print(num)
+                                #sol_nb = ModelNBSolver.solve(par_nb, 'low')
+                                key_n = self.__key(MODEL_NB, tau_state, a_state, s_state, cr_state, cn_state, delta_state)
+                                self._add(key_n, par_nb, sol_nb)
 
                                 # calculate model two
                                 par_o = Parameter(MODEL_2, tau=tau, a=a, s=s, cr=cr, cn=cn, delta=delta)
                                 sol_o = proxy.calculate(par_o)
                                 key_o = self.__key(MODEL_2, tau_state, a_state, s_state, cr_state, cn_state, delta_state)
                                 self._add(key_o, par_o, sol_o)
+        proxy.commit()
                                 
     def __fullFactorialTable(self):
         self.__ff_table = [[None for j in range(8)] for i in range(8)]
         lohi = (Factorial.LOW, Factorial.HIGH)
         for i, (s, cr, a) in enumerate([(s, cr, a) for s in lohi for cr in lohi for a in lohi]):
             for j, (cn, delta, tau) in enumerate([(cn, delta, tau) for cn in lohi for delta in lohi for tau in lohi]):
-                key_n = self.__key(MODEL_1, tau, a, s, cr, cn, delta)
+                key_nb = self.__key(MODEL_NB, tau, a, s, cr, cn, delta)
                 key_o = self.__key(MODEL_2, tau, a, s, cr, cn, delta)
-                val_n = self._get(key_n)
+                val_n = self._get(key_nb)
                 val_o = self._get(key_o)
                 self.__ff_table[i][j] = {'o' : val_o, 'n' : val_n}
                 
@@ -123,66 +126,6 @@ class Factorial:
                     pars.append([tau, a, s, cr, cn, delta])
         assert len(pars) == int(2**5)
         return pars
-
-    def getAnalysisLineAbsoluteMN(self, table, par):
-        pars = self.__anal_line_parameters(table, par)
-        profits, rhos, pns, wns, prs = [], [], [], [], []
-        sol_ids = []
-        # calc all vals
-        for i, par in enumerate(pars):
-            tau, a, s, cr, cn, delta = par
-            sol_n, sol_o = self.__both_solutions(tau, a, s, cr, cn, delta)
-            if sol_o.case in ('1a', '1b', '1c'):
-                sol_ids.append(i)
-                profits.append( sol_o.profit_man  )
-                rhos.append( sol_o.dec.rho )
-                pns.append( sol_o.dec.pn )
-                wns.append( sol_o.dec.wn )
-                prs.append( sol_o.dec.qn )
-
-        if len(profits) == 0:
-            return r'-&-&-&-&-'
-        mean_profits = mean(profits)
-        mean_rhos = mean(rhos)
-        mean_pns = mean(pns)
-        mean_wns = mean(wns)
-        mean_prs = mean(prs)
-        id_string = sum(sol_ids)
-        return r'{:.5f}&{:.5f}&{:.5f}&{:.5f}&{:.5f} (n={},id={})'.format(
-            mean_profits, mean_rhos, mean_pns, mean_wns, mean_prs, len(profits), id_string)
-
-    def getAnalysisLineAbsoluteMO(self, table, par):
-        pars = self.__anal_line_parameters(table, par)
-        profits, rhos, pns, wns, prs, qrs, real_prs = [], [], [], [], [], [], []
-        sol_ids = []
-        # calc all vals
-        for i, par in enumerate(pars):
-            tau, a, s, cr, cn, delta = par
-            sol_n, sol_o = self.__both_solutions(tau, a, s, cr, cn, delta)
-            if sol_o.case in ('2a', '2b', '2c'):
-            #if sol_o.case in ('1c'):
-                sol_ids.append(i)
-                profits.append( sol_o.profit_man  )
-                rhos.append( sol_o.dec.rho )
-                pns.append( sol_o.dec.pn )
-                wns.append( sol_o.dec.wn )
-                prs.append( sol_o.dec.qn )
-                qrs.append (sol_o.dec.qr )
-                real_prs.append( sol_o.dec.pr)
-
-        if len(profits) == 0:
-            return r'-&-&-&-&-'
-        mean_profits = mean(profits)
-        mean_rhos = mean(rhos)
-        mean_pns = mean(pns)
-        mean_wns = mean(wns)
-        mean_prs = mean(prs)
-        mean_qrs = mean(qrs)
-        mean_real_prs = mean(real_prs)
-        mean_real_prs = mean(real_prs)
-        id_string = sum(sol_ids)
-        return r'{:.5f}&{:.5f}&{:.5f}&{:.5f}&{:.5f} qr={:.5f} pr={:.5f}, (n={},id={})'.format(
-            mean_profits, mean_rhos, mean_pns, mean_wns, mean_prs, mean_qrs, mean_real_prs, len(profits), id_string)
                 
     def getAnalysisLine(self, table, par):
         pars = self.__anal_line_parameters(table, par)
@@ -235,8 +178,13 @@ class Factorial:
             price_dec =  (o_val['sol'].dec.pn / n_val['sol'].dec.pn) * 100
             return '{:.2f}\\%'.format(price_dec)
         elif table == 'wholesale_price':
-            wn_dec =  (o_val['sol'].dec.wn / n_val['sol'].dec.wn) * 100
+            #wn_dec =  (o_val['sol'].dec.wn / n_val['sol'].dec.wn) * 100
+            wn_dec = n_val['sol'].dec.wn
             return '{:.2f}\\%'.format(wn_dec)
+        elif table == 'restocking_price':
+            b_rel = n_val['sol'].dec.b
+            #'{:.2f}\\%'.format(b_rel)
+            return '{:.2f}\\%'.format(b_rel)
         elif table.startswith('par'):
             par = table.split('_')[1]
             if par == 'tau':
