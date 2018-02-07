@@ -442,6 +442,8 @@ class Solution:
         self.dec, self.profit_man, self.profit_ret, self.case = dec, profit_man, profit_ret, case
         
     def __str__(self):
+        if self.dec.b is not None:
+            return 'Solution object (wn={}, b={})'.format(self.dec.wn, self.dec.b)
         return 'Solution object (wn={}, pr={})'.format(self.dec.wn, self.dec.pr)
         
 
@@ -825,24 +827,77 @@ class ModelOneQuadGridSearch:
         else:
             return None
 
+class ModelNBZeroSolver:
+    @staticmethod
+    def solve(par, resolution='high'):
+        startP = ModelNBGridSearch.search(par, resolution, b_range=[0, 0])
+        #return startP
+        #try to improve
+        start_vec = [startP.dec.wn]
+        result = minimize(ModelNBSolver._minimize_func_but_set_b_to_zero,
+            args={'par': par},
+            x0=start_vec, method='Nelder-Mead')
+        return ModelNBSolver.getSolution(par, float(result.x[0]), 0)
 
 class ModelNBSolver:
     """ This class solves Model Two Quad by first using the GridSearch - then a local search algorithm (nelder-mead) """
 
     @staticmethod
     def solve(par, resolution='high'):
-        return ModelNBGridSearch.search(par, resolution)
+        solPositiveB = ModelNBSolver.solvePositiveB(par, resolution)
+        solZeroB = ModelNBZeroSolver.solve(par, resolution)
+        
+        if solPositiveB.profit_man > solZeroB.profit_man:
+            diff = solPositiveB.profit_man - solZeroB.profit_man
+            if diff < 0.000001:
+                return solZeroB
+        else:
+            return solZeroB
+    
+    @staticmethod
+    def solvePositiveB(par, resolution='high'):
+        startP = ModelNBGridSearch.search(par, resolution)
+        if resolution == 'middle':
+            # also try to improve:
+            start_vec = [startP.dec.wn, startP.dec.b]
+            result = minimize(ModelNBSolver._minimize_func,
+                args={'par': par},
+                x0=start_vec, method='Nelder-Mead')
+            sol = ModelNBSolver.getSolution(par, float(result.x[0]), float(result.x[1]))
+            return sol
+        return startP
 
     @staticmethod
     def _minimize_func(x, args):
-        raise NotImplementedError
+        wn, b  = float(x[0]), float(x[1])
+        par = args['par']
+        man_profit, data = ModelNBSolver.profit(par, wn, b)
+        if man_profit is None:
+            return sys.maxsize
+        return -man_profit
+        
+    @staticmethod
+    def _minimize_func_but_set_b_to_zero(x, args):
+        wn, b  = float(x[0]), 0
+        par = args['par']
+        man_profit, data = ModelNBSolver.profit(par, wn, b)
+        if man_profit is None:
+            return sys.maxsize
+        return -man_profit
 
     @staticmethod
-    def getSolution(par, wn, pr, case=_UNDEFINED_CASE):
-        raise NotImplementedError
+    def getSolution(par, wn, b):
+        man_profit, sol_tuple = ModelNBSolver.profit(par, wn, b)
+        if sol_tuple is None: return None
+        if sol_tuple is None: return None
+        dec = DecisionVariables(MODEL_NB, pn=sol_tuple[2], b=sol_tuple[1],
+            wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4])
+        case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
+        sol = Solution(dec, sol_tuple[5], sol_tuple[6], case)
+        return sol
 
     @staticmethod
-    def retailer_profit(par, wn, pr, rho, sign=1.0):
+    def retailer_profit(par, wn, b, rho, sign=1.0):
         raise NotImplementedError
 
 
@@ -863,7 +918,7 @@ class ModelNBSolver:
 
     @staticmethod
     def profit(par, wn, b, case=_UNDEFINED_CASE):
-        if b > wn: return None, None
+        if b > wn or b < 0: return None, None
         ret_dec = ModelNBSolver._retailer_decision(par, wn, b)
         if ret_dec is None: return None, None
         pn, rho, qn, ret_prof = ret_dec
@@ -872,19 +927,23 @@ class ModelNBSolver:
 
 class ModelNBGridSearch:
     @staticmethod
-    def search(par, resolution='high'):
+    def search(par, resolution='high', b_range=[0,1]):
         if par.a == 0: return None
         wn_range = [0, 1]
-        b_range =  [0, 1]
         raster_size = 20
         iter = 5 #high auf 10?
         if resolution == 'low':
-            print('cheasey')
             raster_size = 10
             iter = 1
+        elif resolution == 'very high':
+            raster_size = 30
+            iter = 10
+        elif resolution == 'middle':
+            raster_size = 50
+            iter = 3
         
         grid_search_func = ModelNBSolver.profit
-        sol_tuple = GridSearch2D.maximize(grid_search_func,
+        sol_tuple = ImprovedGridSearch2D.maximize(grid_search_func,
             par, wn_range, b_range, raster_size, iter)
         if sol_tuple is None: return None
         dec = DecisionVariables(MODEL_NB, pn=sol_tuple[2], b=sol_tuple[1],
@@ -999,6 +1058,7 @@ class ImprovedGridSearch2D:
             raster_it_size = raster_size if iter >= 1 else raster_start_size
             f_val, f_obj, f_x, f_y = ImprovedGridSearch2D._search_raster(
                         func, func_arg, x_range, y_range, raster_it_size)
+            print('new f_val: {}, wn={}, b={}'.format(f_val, f_x, f_y))
             if f_val is None: return best_f_obj
             # update best values if found
             if best_f_val is None or f_val > best_f_val:
@@ -1069,6 +1129,13 @@ class ImprovedGridSearch2D:
                     best_f_val, best_f_obj = f_val, f_obj
                     best_x, best_y = x, y
         return best_f_val, best_f_obj, best_x, best_y
+        
+class ModelTwoSolver:
+    solver = ModelTwoNumericalSolver()
+    
+    @staticmethod
+    def solve(par):
+        return ModelTwoSolver.solver.optimize(par)
 
 class SolverProxy:
     def __init__(self):

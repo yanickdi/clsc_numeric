@@ -380,6 +380,7 @@ class AnalyticalSolver:
 class TestModelNb(unittest.TestCase):
     def test_something(self):
         proxy = SolverProxy()
+        proxy.read_or_calc_and_write()
         tau = 0.35
         delta = 0.85
         a = 0.001
@@ -387,7 +388,7 @@ class TestModelNb(unittest.TestCase):
         cr = 0.2125
         cn = 0.5
         par_nb = Parameter(MODEL_NB, tau=tau, a=a, s=s, cn=cn)
-        sol_nb = ModelNBSolver.solve(par_nb, 'high')
+        sol_nb = ModelNBSolver.solve(par_nb, 'very high')
         print('wn = {}, b={}, rho={}, pn={}'.format(sol_nb.dec.wn, sol_nb.dec.b, sol_nb.dec.rho, sol_nb.dec.pn))
         print(sol_nb.profit_man)
         print(sol_nb.profit_ret)
@@ -452,6 +453,24 @@ class TestModelTwoQuadSolver(unittest.TestCase):
         print(sol, sol.dec.rho)
         #sol = ModelTwoQuadSolver.solve(par)
         #print(sol)
+        
+class TestSomeStuff(unittest.TestCase):
+    def test_blub(self):
+        from solver import ModelTwoSolver, ModelNBSolver
+        #par_o = Parameter(MODEL_2, tau=0.5, a=0.01, s=0, cn=0.5, cr=0.1*0.5, delta=0.85)
+        par_nb = Parameter(MODEL_NB, tau=0.05, a=0.007, s=0, cn=0.5)
+        #sol_o = ModelTwoSolver.solve(par_o)
+        sol_nb = ModelNBSolver.solve(par_nb, resolution='middle')
+        #print(round(sol_nb.profit_ret, 7))
+        print(sol_nb, sol_nb.dec.rho, sol_nb.profit_man, sol_nb.profit_ret)
+        
+    @unittest.skip
+    def test_different_solver(self):
+        print(); print()
+        from solver import ModelNBZeroSolver
+        par_nb = Parameter(MODEL_NB, tau=0.05, a=0.007, s=0, cn=0.5)
+        sol_nb = ModelNBZeroSolver.solve(par_nb, resolution='middle')
+        print(sol_nb, sol_nb.dec.rho, sol_nb.profit_man, sol_nb.profit_ret)
     
 if __name__ == '__main__':
     unittest.main()

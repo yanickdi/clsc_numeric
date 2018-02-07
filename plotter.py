@@ -93,7 +93,7 @@ class CountourPlotter:
             #    return self.delta * cn / 2
             if self.cr == '0.4*cn':
                 #return ((self.delta / (2-self.delta)) * cn)* .5 #todo hier aendern, sonst stimmts nicht mehr
-                return 0.4 * cn
+                return 0.50 * cn
             else:
                 return self.cr
                 
@@ -941,8 +941,18 @@ if __name__ == '__main__':
         else:
             output = None
          
+        plotter = CountourPlotter(args.plot[0], params={
+            'tau': .3, 's': .07, 'cr': '0.4*cn', 'delta' : .4,
+            'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
+            'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : 1,
+            'absolute' : absolute,
+            'gray'   : gray,
+            'nolegend': True,
+            'output' : output
+        })
+        
         #plotter = CountourPlotter(args.plot[0], params={
-        #    'tau': .09, 's': '0.4*cn', 'cr': '0.4*cn', 'delta' : .7956,
+        #    'tau': .2, 's': .1, 'cr': '0.4*cn', 'delta' : .22,
         #    'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
         #    'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
         #    'absolute' : absolute,
@@ -950,14 +960,5 @@ if __name__ == '__main__':
         #    'nolegend': True,
         #    'output' : output
         #})
-        plotter = CountourPlotter(args.plot[0], params={
-            'tau': .2, 's': .1, 'cr': '0.4*cn', 'delta' : .22,
-            'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
-            'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
-            'absolute' : absolute,
-            'gray'   : gray,
-            'nolegend': True,
-            'output' : output
-        })
         plotter.calc()
         plotter.plot()

@@ -20,29 +20,12 @@ def escape_tex(value):
     return newval
 
 class Factorial:
-    tau_lo   = lambda : .005
-    tau_hi   = lambda : 0.35
-    tau_lh   = lambda : (.005, .35)
-    
-    s_lo     = lambda : 0
-    s_hi     = lambda cn: cn/2
+    tau_lh   = lambda : (.15, .5)
     s_lh     = lambda cn: (0, cn/2)
-    
-    cr_lo    = lambda : .1
-    cr_hi    = lambda cn, delta : delta*(cn/2)
-    cr_lh    = lambda cn, delta : (.1, delta*(cn/2))
-    
-    delta_lo = lambda : .5
-    delta_hi = lambda : .85
+    cr_lh    = lambda cn, delta : (.1*cn, .4*cn)
     delta_lh = lambda : (.5, .85)
-    
-    cn_lo    = lambda : .1
-    cn_hi    = lambda : .5
     cn_lh    = lambda : (.1, .5)
-    
-    a_lo     = lambda : .001
-    a_hi     = lambda : .1
-    a_lh     = lambda : (.001, .1)
+    a_lh     = lambda : (.001, .01) 
 
     LOW, HIGH = 'LOW', 'HIGH'
 
@@ -69,12 +52,12 @@ class Factorial:
         iter = self.__state_iter
         proxy = SolverProxy()
 
-        for tau, tau_state in iter([p.tau_lo(), p.tau_hi()]):
-            for delta, delta_state in iter([p.delta_lo(), p.delta_hi()]):
-                for cn, cn_state in iter([p.cn_lo(), p.cn_hi()]):
-                    for cr, cr_state in iter([p.cr_lo(), p.cr_hi(cn, delta)]):
-                        for s, s_state in iter([p.s_lo(), p.s_hi(cn)]):
-                            for a, a_state in iter([p.a_lo(), p.a_hi()]):
+        for tau, tau_state in iter(p.tau_lh()):
+            for delta, delta_state in iter(p.delta_lh()):
+                for cn, cn_state in iter(p.cn_lh()):
+                    for cr, cr_state in iter(p.cr_lh(cn, delta)):
+                        for s, s_state in iter(p.s_lh(cn)):
+                            for a, a_state in iter(p.a_lh()):
                                 # calculate model one
                                 par_n = Parameter(MODEL_1, tau=tau, a=a, s=s, cn=cn)
                                 sol_n = proxy.calculate(par_n)
@@ -220,9 +203,14 @@ class Factorial:
     def getTableValue(self, table, i, j):
         o_val, n_val = self.__ff_table[i][j]['o'], self.__ff_table[i][j]['n']
         o_sol, n_sol = o_val['sol'], n_val['sol']
+        
         if table == 'case':
-            return '{}/{}'.format(n_sol.case, o_sol.case)
-        elif table == 'profits':
+            o_case = '-' if o_sol is None else o_sol.case
+            n_case = '-' if n_sol is None else n_sol.case
+            return '{}/{}'.format(o_case, n_case)
+        
+        if None in (o_sol, n_sol): return '-'
+        if table == 'profits':
             prof = (o_val['sol'].profit_man / n_val['sol'].profit_man)*100
             return '{:.2f}\\%'.format(prof)
         elif table == 'retailerprof':
@@ -264,7 +252,8 @@ def main():
         template = Template(f.read())
 
     # open output file
-    with open('output.tex', 'w', newline='\n') as f:
+    output_file = 'output.tex' if tplfile.endswith('.tex') else 'output.csv'
+    with open(output_file, 'w', newline='\n') as f:
         renderedString  = template.render({
             'full': fullFactorial,
             'ft' : fullFactorial.getTableValue,
