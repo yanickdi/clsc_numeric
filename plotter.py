@@ -317,7 +317,7 @@ class FixedPlot:
         self.all_a_anal = [float(a) for a in np.linspace(0.0, 0.01, num=NUM_A_ANAL)]
         self.nr_elements = len(self.all_a)
         self.nr_elements_anal = len(self.all_a_anal)
-        self.calc_model_nb()
+        #self.calc_model_nb()
         self.calc_model_o()
         self.calc_model_n()
         self.calc_model_oq()

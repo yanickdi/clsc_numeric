@@ -757,21 +757,18 @@ class ModelOneQuadGridSearch:
     @staticmethod
     def _retailer_decision(par, wn):
         tau, a, s, cn = par.tau, par.a, par.s, par.cn
-        rho_1 = (4 * a + (8 * 2**(1/3) * \
-               a**2)/(16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
-               3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
-             1/3) + 2**( \
-              2/3) * (16 * a**3 + 27 * a**2 * tau * (-1 + wn)**2 + \
-                3 * sqrt(3) * sqrt(a**4 * tau * (32 * a + 27 * tau * (-1 + wn)**2) * (-1 + wn)**2))**( \
-              1/3))/(12 * a)
+        #rho_1 = (par.tau**(1/3) * (-1 + wn)**(2/3))/(2 *par.a**(1/3))
+        rho_1 = -(((-1)**(1/3) * par.tau**(1/3) * (-1 + wn)**(2/3))/(2 *par.a**(1/3)))
+        #rho_1 = ((-1)**(2/3) * par.tau**(1/3) *(-1 + wn)**(2/3))/(2 * a**(1/3))
         pn_1  = (1+wn)/2
         rho_2 = 1
         pn_2 = (1+wn)/2
         valids = []
         for pn, rho in ((pn_1, rho_1), (pn_2, rho_2)):
             qn = 1 - pn
+            if type(rho) == complex and round(rho.imag, 10) == 0: rho = rho.real
             if rho == 0: continue
-            ret_profit = qn*(pn-wn)*(1-tau/rho)-a*(rho-1)**2
+            ret_profit = qn*(pn-wn)*(1-tau/rho)-a*(rho**2-1)
             if (rho >= 1 and ret_profit >= 0):
                 valids.append([pn, rho, qn, ret_profit])
         if len(valids) > 0:
@@ -833,6 +830,7 @@ class ModelNBZeroSolver:
         startP = ModelNBGridSearch.search(par, resolution, b_range=[0, 0])
         #return startP
         #try to improve
+        if startP is None: return None
         start_vec = [startP.dec.wn]
         result = minimize(ModelNBSolver._minimize_func_but_set_b_to_zero,
             args={'par': par},
@@ -847,8 +845,9 @@ class ModelNBSolver:
         solPositiveB = ModelNBSolver.solvePositiveB(par, resolution)
         solZeroB = ModelNBZeroSolver.solve(par, resolution)
         
-        if solPositiveB.profit_man > solZeroB.profit_man:
+        if solPositiveB is not None and solPositiveB.profit_man > solZeroB.profit_man:
             diff = solPositiveB.profit_man - solZeroB.profit_man
+            print('difference is', diff)
             if diff < 0.000001:
                 return solZeroB
         else:

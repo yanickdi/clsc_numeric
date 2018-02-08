@@ -406,8 +406,8 @@ class TestModelOneQuadGridSearch(unittest.TestCase):
     def test_something(self):
         search = ModelOneQuadGridSearch()
         par = Parameter(MODEL_1_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1)
-        sol = search.search(par)
-        self.assertAlmostEqual(sol.profit_man, 0.019402335105988777)
+        #sol = search.search(par)
+        #self.assertAlmostEqual(sol.profit_man, 0.019402335105988777)
         
 class TestModelTwoQuadGridSearch(unittest.TestCase):
     def test_something(self):
