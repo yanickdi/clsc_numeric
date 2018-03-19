@@ -1,0 +1,16 @@
+{%- set tables = ['case', 'profits', 'retailerprof', 'rho', 'price_new', 'wholesale_price', 'restocking_price'] -%}
+{%- set table_names = {
+        'case' : 'cases',
+        'profits'   : 'manufacturer\'s profit',
+        'retailerprof' : 'retailer\'s profit',
+        'rho'    : 'effort',
+        'price_new'     : 'price of new products',
+        'wholesale_price' : 'wholesale price',
+        'restocking_price' : 'restocking price $\\frac{b-s}{w_n-s}$'}
+-%}
+{% extends "template_table_base.tex" %}
+{% block caption %}
+Full factorial analysis to compare the cases, manufacturer's profits, efforts, prices
+of new products and wholesale prices of Model O with Model NB (percentages refer to the
+values of Model O compared to the values of Model NB)
+{% endblock %}

@@ -7,7 +7,7 @@ from solver import ImprovedGridSearch2D, ModelNBSolver, Parameter, MODEL_NB, _UN
 X=[]; Y=[]; Z=[]
 
 def middleware_profit(par, wn, b, case=_UNDEFINED_CASE):
-    man_profit, sol_tuple = ModelNBSolver.profit(par, wn, b, case)
+    man_profit, sol_tuple = ModelNBSolver.profit(par, wn, b)
     if man_profit is not None and man_profit > 0.025:
         X.append(wn); Y.append(b); Z.append(man_profit)
     return man_profit, sol_tuple

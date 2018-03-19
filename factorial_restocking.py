@@ -20,12 +20,12 @@ def escape_tex(value):
     return newval
 
 class Factorial:
-    tau_lh   = lambda : (.05, .5)
+    tau_lh   = lambda : (.15, .5)
     s_lh     = lambda cn: (0, cn/2)
     cr_lh    = lambda cn, delta : (.1*cn, .4*cn)
     delta_lh = lambda : (.5, .85)
     cn_lh    = lambda : (.1, .5)
-    a_lh     = lambda : (.003, .007)
+    a_lh     = lambda : (.001, .01) 
     
     LOW, HIGH = 'LOW', 'HIGH'
 
@@ -126,6 +126,7 @@ class Factorial:
         o_val, n_val = self.__ff_table[i][j]['o'], self.__ff_table[i][j]['n']
         o_sol, n_sol = o_val['sol'], n_val['sol']
         if table == 'case':
+            print(n_sol)
             return '{}/{}'.format(o_sol.case, n_sol.case)
         elif table == 'profits':
             prof = (o_val['sol'].profit_man / n_val['sol'].profit_man)*100
@@ -144,9 +145,10 @@ class Factorial:
             #wn_dec = n_val['sol'].dec.wn
             return '{:.2f}\\%'.format(wn_dec)
         elif table == 'restocking_price':
-            b_rel = n_val['sol'].dec.b
+            #b_rel = n_val['sol'].dec.b
+            b_rel = (n_sol.dec.b - n_val['par'].s) / (n_sol.dec.wn - n_val['par'].s)
             #'{:.2f}\\%'.format(b_rel)
-            return '{:.3f}'.format(b_rel)
+            return '{:.2f}\\%'.format(b_rel)
         elif table.startswith('par'):
             par = table.split('_')[1]
             if par == 'tau':

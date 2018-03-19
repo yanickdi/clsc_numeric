@@ -8,7 +8,7 @@ from math import sqrt
 from solver import ModelOneNumericalSolver, ModelTwoNumericalSolver, is_prof_pos, \
     Parameter, DecisionVariables, MODEL_1, MODEL_2, MODEL_1_QUAD, MODEL_2_QUAD, _CASE_TWO_C, \
     Database, SolverProxy, ModelNBGridSearch, MODEL_NB, ModelOneQuadGridSearch, \
-    ModelTwoQuadGridSearch, ModelNBSolver
+    ModelTwoQuadGridSearch, ModelNBSolver, Solution
 
 from generator import Generator, MemoryOutputFile
 
@@ -89,6 +89,22 @@ class TestModelOneNumericalSolver(unittest.TestCase):
         
     def __input_is_in_case_2(self, par):
         return par.cn >= 1 - par.tau*(1-par.s) - 4*(1-par.tau) * sqrt(par.a/par.tau)
+        
+        
+class SomeTest(unittest.TestCase):
+    def test_instance_a(self):
+        solver = ModelTwoNumericalSolver()
+        par = Parameter(MODEL_2, tau=0.15, a=0.0013471502590673575, s=0.05, cr=0.01, cn=0.1, delta=0.85)
+        dec = solver._optimize_case_one_c(par)
+        profit_man,profit_ret = solver.calc_profits(par, dec)
+        sol = Solution(dec, profit_man, profit_ret, '1c')
+        print(dec.qr - (par.tau/dec.rho)*dec.qn)
+        print(solver._is_valid(par, sol))
+        print(profit_man)
+        
+        #sol = solver.optimize(par)
+        #print(sol.profit_man, sol.case)
+        #self.assertAlmostEqual(sol.profit_man, 0.162403738)
 
 class TestModelTwoNumericalSolver(unittest.TestCase):
     def test_case_one_a(self):
@@ -405,14 +421,22 @@ class TestModelNb(unittest.TestCase):
 class TestModelOneQuadGridSearch(unittest.TestCase):
     def test_something(self):
         search = ModelOneQuadGridSearch()
-        par = Parameter(MODEL_1_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1)
-        #sol = search.search(par)
-        #self.assertAlmostEqual(sol.profit_man, 0.019402335105988777)
+        par = Parameter(MODEL_1_QUAD, tau=0.3, a=0.0005, s=0.07, cn=0.68)
+        sol = search.search(par)
+        print(sol.profit_man, sol.profit_ret)
+        print(sol)
+        
+class TestModelTwoQuadSolver(unittest.TestCase):
+    def test_always_case_one(self):
+        from solver import ModelTwoQuadSolver
+        par = Parameter(MODEL_2_QUAD, tau=0.3, a=0.0005, s=0.07, cn=0.67, cr=0.1, delta=0.3)
+        sol = ModelTwoQuadSolver.solve(par, resolution='super high')
+        print(sol.profit_man, sol.profit_ret)
+        print(sol)
         
 class TestModelTwoQuadGridSearch(unittest.TestCase):
     def test_something(self):
         search = ModelTwoGridSearch()
-        #par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.004141414141414141, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.0008163265306122449, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
         sol = search.search(par)
         print(sol.profit_man, sol.dec.wn, sol.dec.pr)
@@ -444,33 +468,29 @@ class TestModelTwoSolver(unittest.TestCase):
         print(sol)
         print(ModelTwoSolver.solve_analytical(par))
         
-class TestModelTwoQuadSolver(unittest.TestCase):
-    def test_always_case_one(self):
-        from solver import ModelTwoQuadSolver
-        par = Parameter(MODEL_2_QUAD, tau=0.09, a=0.7, s=0.04000000000000001, cn=0.1, cr=0.04000000000000001, delta=0.7956)
-        sol = ModelTwoQuadSolver.solve(par, resolution='high')
-        #print(ModelTwoQuadSolver.profit(par, 0.5429821819318537, 0.48640200062519534))
-        print(sol, sol.dec.rho)
-        #sol = ModelTwoQuadSolver.solve(par)
-        #print(sol)
+
         
 class TestSomeStuff(unittest.TestCase):
+    @unittest.skip('')  
     def test_blub(self):
         from solver import ModelTwoSolver, ModelNBSolver
-        #par_o = Parameter(MODEL_2, tau=0.5, a=0.01, s=0, cn=0.5, cr=0.1*0.5, delta=0.85)
-        par_nb = Parameter(MODEL_NB, tau=0.05, a=0.007, s=0, cn=0.5)
-        #sol_o = ModelTwoSolver.solve(par_o)
-        sol_nb = ModelNBSolver.solve(par_nb, resolution='middle')
-        #print(round(sol_nb.profit_ret, 7))
-        print(sol_nb, sol_nb.dec.rho, sol_nb.profit_man, sol_nb.profit_ret)
+        import numpy as np
+        np.seterr(all='ignore') 
+        #par_nb = Parameter(MODEL_NB, tau=0.15, a=0.001, s=0, cn=0.1)
+        par_nb = Parameter(MODEL_NB, tau=0.15, cn=0.1, s=0.5*0.1, a=0.024329896907216497)
         
-    @unittest.skip
-    def test_different_solver(self):
-        print(); print()
-        from solver import ModelNBZeroSolver
-        par_nb = Parameter(MODEL_NB, tau=0.05, a=0.007, s=0, cn=0.5)
-        sol_nb = ModelNBZeroSolver.solve(par_nb, resolution='middle')
-        print(sol_nb, sol_nb.dec.rho, sol_nb.profit_man, sol_nb.profit_ret)
+        sol = ModelNBSolver.solve(par_nb, resolution='high')
+        print(sol.profit_man, sol.profit_ret, sol.dec.wn, sol.dec.b, sol.case, sol.dec.rho)
+        #print(round(sol_nb.profit_ret, 7))
+        
+    def test_zwei(self):
+        from solver import ModelTwoSolver, ModelNBSolver
+        import numpy as np
+        np.seterr(all='ignore') 
+        for a in np.linspace(0.024329896907216497, 0.024742268041237116, 10):
+            par_nb = Parameter(MODEL_NB, tau=0.15, cn=0.1, s=0.5*0.1, a=a)
+            sol = ModelNBSolver.solve(par_nb, resolution='case study')
+            print(sol.profit_man, sol.profit_ret, sol.dec.wn, sol.dec.b, sol.case, sol.dec.rho)
     
 if __name__ == '__main__':
     unittest.main()

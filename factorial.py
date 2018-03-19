@@ -1,8 +1,9 @@
-import sys, os.path, re
-from statistics import mean
+import sys, os.path
 
 from jinja2 import Template
+
 from solver import SolverProxy, Parameter, MODEL_2, MODEL_1
+import utils
 
 LATEX_SUBS = (
     (re.compile(r'\\'), r'\\textbackslash'),

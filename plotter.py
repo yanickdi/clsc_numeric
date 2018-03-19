@@ -26,14 +26,17 @@ BLACK_MEDIUM = '#4c4c4c'
 GREY_DARK = '#999999'
 GREY_MEDIUM = '#cccccc'
 
-MARKEVERY = 3
-NUM_A = 48+2
+#MARKEVERY = 3
+#NUM_A = 48+2
 
-#MARKEVERY = 3 * 2
-#NUM_A = (48*2) + 2
+MARKEVERY = 3 * 8 * 4
+NUM_A = (48*2)*8 + 2
 
-MARKEVERY_ANAL = 3*16
-NUM_A_ANAL = (48)*16+2
+FACTOR_NUM_A_ANAL = 1
+MARKEVERY_ANAL = MARKEVERY * FACTOR_NUM_A_ANAL
+NUM_A_ANAL = FACTOR_NUM_A_ANAL * NUM_A
+#NUM_A_ANAL = (48)*16+2
+
 
 
 PLOT_PROFIT_DIFFERENCE_MAN = 'profit-difference-man'
@@ -91,7 +94,7 @@ class CountourPlotter:
         def __cr(cn):
             #if self.cr == 'delta*cn/2':
             #    return self.delta * cn / 2
-            if self.cr == '0.4*cn':
+            if self.cr == '0.5*cn':
                 #return ((self.delta / (2-self.delta)) * cn)* .5 #todo hier aendern, sonst stimmts nicht mehr
                 return 0.50 * cn
             else:
@@ -313,15 +316,15 @@ class FixedPlot:
     def __init__(self, filename=None):
         self.proxy = SolverProxy()
         self.filename = filename
-        self.all_a = [float(a) for a in np.linspace(0.0, 0.01, num=NUM_A)]
-        self.all_a_anal = [float(a) for a in np.linspace(0.0, 0.01, num=NUM_A_ANAL)]
+        self.all_a = [float(a) for a in np.linspace(0.0, 0.04, num=NUM_A)]
+        self.all_a_anal = [float(a) for a in np.linspace(0.0, 0.04, num=NUM_A_ANAL)]
         self.nr_elements = len(self.all_a)
         self.nr_elements_anal = len(self.all_a_anal)
-        #self.calc_model_nb()
+        self.calc_model_nb()
         self.calc_model_o()
         self.calc_model_n()
-        self.calc_model_oq()
-        self.calc_model_nq()
+        #self.calc_model_oq()
+        #self.calc_model_nq()
         
     def calc_model_oq(self):
         # vectors for 'with online shop quadratic':
@@ -336,7 +339,7 @@ class FixedPlot:
         self.proxy.beginWrite()
         cn = 0.1
         for i, a in enumerate(self.all_a):
-            par_oq = Parameter(MODEL_2_QUAD, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
+            par_oq = Parameter(MODEL_2_QUAD, tau=.15, cr=0.1*cn, s=0.5*cn, delta=.85, cn=cn, a=a)
             sol_oq = self.proxy.read_or_calc_and_write(par_oq, resolution='low')
             if sol_oq == None or a == 0:
                 self.oq_profit_ret[i] = None
@@ -357,7 +360,7 @@ class FixedPlot:
                 self.oq_pr[i] = sol_oq.dec.pr
                 self.oq_wn[i] = sol_oq.dec.wn
         self.proxy.endWrite()
-        self.oq_max_qr = self.oq_qn * (0.09/self.oq_rho)
+        self.oq_max_qr = self.oq_qn * (0.15/self.oq_rho)
         
     def calc_model_nq(self):
         # vectors for 'without online shop quadratic':
@@ -371,7 +374,7 @@ class FixedPlot:
         cn = 0.1
         self.proxy.beginWrite()
         for i, a in enumerate(self.all_a):
-            par_nq = Parameter(MODEL_1_QUAD, tau=.09, a=a, s=0.4*cn, cn=cn)
+            par_nq = Parameter(MODEL_1_QUAD, tau=.15, a=a, s=0.5*cn, cn=cn)
             sol_nq = self.proxy.read_or_calc_and_write(par_nq)
             if sol_nq == None or a == 0:
                 self.nq_profit_ret[i] = None
@@ -399,11 +402,10 @@ class FixedPlot:
         self.on_pn = np.zeros(self.nr_elements_anal)
         self.on_pr = np.zeros(self.nr_elements_anal)
         self.on_wn = np.zeros(self.nr_elements_anal)
-        self.proxy.beginWrite()
         cn = 0.1
         for i, a in enumerate(self.all_a_anal):
-            par_o = Parameter(MODEL_2, tau=.09, cr=0.4*cn, s=0.4*cn, delta=.7956, cn=cn, a=a)
-            sol_o = self.proxy.read_or_calc_and_write(par_o)
+            par_o = Parameter(MODEL_2, tau=.15, cr=0.1*cn, s=0.5*cn, delta=.85, cn=cn, a=a)
+            sol_o = self.proxy.calculate(par_o)
             if sol_o == None or a == 0:
                 self.on_profit_ret[i] = None
                 self.on_profit_man[i] = None
@@ -422,8 +424,7 @@ class FixedPlot:
                 self.on_pn[i] = sol_o.dec.pn
                 self.on_pr[i] = sol_o.dec.pr
                 self.on_wn[i] = sol_o.dec.wn
-        self.proxy.endWrite()
-        self.on_max_qr = self.on_qn * (0.09/self.on_rho)
+        self.on_max_qr = self.on_qn * (0.15/self.on_rho)
 
     def calc_model_n(self):
         # vectors for 'without online shop':
@@ -437,7 +438,7 @@ class FixedPlot:
         cn = 0.1
         self.proxy.beginWrite()
         for i, a in enumerate(self.all_a_anal):
-            par_n = Parameter(MODEL_1, tau=.09, a=a, s=0.4*cn, cn=cn)
+            par_n = Parameter(MODEL_1, tau=.15, a=a, s=0.5*cn, cn=cn)
             sol_n = self.proxy.read_or_calc_and_write(par_n)
             if sol_n == None or a == 0:
                 self.no_profit_ret[i] = None
@@ -467,8 +468,9 @@ class FixedPlot:
         cn = 0.1
         self.proxy.beginWrite()
         for i, a in enumerate(self.all_a):
-            par_nb = Parameter(MODEL_NB, tau=.09, a=a, s=0.4*cn, cn=cn)
-            sol_nb = self.proxy.read_or_calc_and_write(par_nb)
+            par_nb = Parameter(MODEL_NB, tau=.15, a=a, s=0.5*cn, cn=cn)
+            sol_nb = self.proxy.read_or_calc_and_write(par_nb, resolution='case study')
+            #sol_nb = self.proxy.calculate(par_nb, resolution='case study')
             if sol_nb == None or a == 0:
                 self.nb_profit_ret[i] = None
                 self.nb_profit_man[i] = None
@@ -500,8 +502,9 @@ class FixedPlot:
         #self.plot_quantities_o_vs_oq()
         
         ## MODEL NB VS O:
-        #self.plot_profits_nb_vs_o()
-        #self.plot_prices_nb_vs_o()
+        #self.plot_profits_nb_vs_o(relative=True)
+        #self.plot_consumer_prices_nb_vs_o()
+        #self.plot_wholesale_prices()
         #self.plot_quantities_nb_vs_o()
         #self.plot_rhos_nb_vs_o()
         
@@ -509,107 +512,138 @@ class FixedPlot:
         #self.plot_profits_nq_vs_oq(relative=True)
         #self.plot_prices_nq_vs_oq()
         #self.plot_quantities_nq_vs_oq()
-        self.plot_rhos_nq_vs_oq()
+        #self.plot_rhos_nq_vs_oq()
         pass
 
-    def plot_profits_nb_vs_o(self):
+    def plot_profits_nb_vs_o(self, relative=False):
         fig, ax = plt.subplots()
         
-        o_profit_man, o_profit_ret, nb_profit_ret, nb_profit_man = self.on_profit_man, self.on_profit_ret, self.nb_profit_ret, self.nb_profit_man
+        if relative:
+            no_profit_man = self.no_profit_man * 0 + 1# / self.no_profit_man
+            no_profit_ret = self.no_profit_ret / self.no_profit_man
+            on_profit_ret = self.on_profit_ret / self.no_profit_man
+            on_profit_man = self.on_profit_man / self.no_profit_man
+            nb_profit_man = self.nb_profit_man / self.no_profit_man[::FACTOR_NUM_A_ANAL]
+            nb_profit_ret = self.nb_profit_ret / self.no_profit_man[::FACTOR_NUM_A_ANAL]
+            strRel = 'relative'
+        else:
+            no_profit_man, no_profit_ret, on_profit_ret, on_profit_man = self.no_profit_man, self.no_profit_ret, self.on_profit_ret, self.on_profit_man
+            nb_profit_man, nb_profit_ret = self.nb_profit_man, self.nb_profit_ret
+            strRel = 'abs'
+        
+        #o_profit_man, o_profit_ret, nb_profit_ret, nb_profit_man = self.on_profit_man, self.on_profit_ret, self.nb_profit_ret, self.nb_profit_man
         
         # with online store:
-        ax.plot(self.all_a_anal, o_profit_ret, color=BLACK_DARK)
-        ax.text(self.all_a_anal[-1]*.95, o_profit_ret[-1]+.005, r'$\pi_{R}^{O}$', color=BLACK_DARK)
-        ax.plot(self.all_a_anal, o_profit_man, color=BLACK_DARK,
-            marker='^', markevery=MARKEVERY_ANAL, markersize=4)
-        ax.text(self.all_a_anal[-1]*.95, o_profit_man[-1]+.005, r'$\pi_{M}^{O}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, on_profit_ret, color=BLACK_DARK, label=r'$\pi_{R}^{O}$')
+        ax.text(self.all_a_anal[-1]*.95, on_profit_ret[-1]+.05, r'${\pi_{R}}^{O*}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, on_profit_man, color=BLACK_DARK,
+            marker='^', markevery=MARKEVERY_ANAL, markersize=4, label=r'${\pi_{M}}^{O}$')
+        ax.text(self.all_a_anal[-1]*.95, on_profit_man[-1]+.05, r'${\pi_{M}}^{O*}$', color=BLACK_DARK)
         
         # with model nb:
-        ax.plot(self.all_a, nb_profit_ret, color=GREY_DARK, linestyle='--')
-        ax.text(self.all_a[-1]*.95, nb_profit_ret[-1]+.005, r'$\pi_{R}^{NB}$', color=GREY_DARK)
+        ax.plot(self.all_a, nb_profit_ret, color=GREY_DARK, linestyle='--', label=r'${\pi_{R}}^{NB*}$')
+        ax.text(0.003, 0.39, r'${\pi_{R}}^{NB*}$', color=GREY_DARK)
         ax.plot(self.all_a, nb_profit_man, color=GREY_DARK, linestyle='--',
-            marker='^', markevery=MARKEVERY, markersize=4)
-        ax.text(self.all_a[-1]*.95, nb_profit_man[-1]+.005, r'$\pi_{M}^{NB}$', color=GREY_DARK)
+            marker='^', markevery=MARKEVERY, markersize=4, label=r'${\pi_{M}}^{NB*}$')
+        ax.text(0.003, 1.13, r'${\pi_{M}}^{NB*}$', color=GREY_DARK)
         
         # with model n:
-        #ax.plot(self.all_a, self.no_profit_ret, color=BLUE_DARK, linestyle='dashed')
-        #ax.text(self.all_a[-1]*.95, self.no_profit_ret[-1]+.003, r'$\pi_{R}^{N}$', color=BLUE_DARK)
-        #ax.plot(self.all_a, self.no_profit_man, color=BLUE_MEDIUM, linestyle='dashed')
-        #ax.text(self.all_a[-1]*.95, self.no_profit_man[-1]-.01, r'$\pi_{M}^{N}$', color=BLUE_MEDIUM)
+        ax.plot(self.all_a_anal, no_profit_ret, color=BLACK_DARK, linestyle='dashed', label=r'${\pi_{R}}^{N}$')
+        ax.text(self.all_a_anal[-1]*.95, no_profit_ret[-1]+.05, r'${\pi_{R}}^{N*}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, no_profit_man, color=BLACK_DARK, linestyle='dashed', label=r'${\pi_{M}}^{N}$')
+        ax.text(self.all_a_anal[-1]*.95, no_profit_man[-1]-.12, r'${\pi_{M}}^{N*}$', color=BLACK_DARK)
         ax.set_xlabel('a')
+        #ax.set_ylim([])
+        ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1]*1.1)
         pltShowAndSave('nb-profits.pdf')
 
     def plot_rhos_nb_vs_o(self):
         fig, ax = plt.subplots()
         
         # with online store:
-        ax.plot(self.all_a_anal, self.on_rho, color=BLACK_DARK, label=r'$\rho_{*}^{O}$')
-        ax.text(self.all_a_anal[-1], self.on_rho[-1]*.8, r'$\rho_{*}^{O}$', color=BLACK_DARK)
-        
-        # with model nb:
-        ax.plot(self.all_a, self.nb_rho, color=GREY_DARK, label=r'$\rho_{*}^{NB}$',
-            linestyle='--')
-        ax.text(self.all_a[-1], self.nb_rho[-1]*1.2, r'$\rho_{*}^{NB}$', color=GREY_DARK)
+        ax.plot(self.all_a_anal, self.on_rho, color=BLACK_DARK, label=r'$\rho^{O*}$')
+        #ax.text(self.all_a_anal[-1], self.on_rho[-1]*.8, r'$\rho_{*}^{O}$', color=BLACK_DARK)
         
         # with model n:
-        #ax.plot(self.all_a, self.no_rho, color=BLUE_DARK, linestyle='dashed', label=r'$\rho_{*}^{N}$')
-        #ax.text(self.all_a[-1]*.95, self.no_rho[-1]+.003, r'$\rho_{*}^{N}$', color=BLUE_DARK)
+        ax.plot(self.all_a_anal, self.no_rho, color=BLACK_DARK, linestyle='dashed', label=r'$\rho^{N*}$')
+        #ax.text(self.all_a[-1]*.95, self.no_rho[-1]+.003, r'$\rho_{*}^{N}$', color=BLUE_MEDIUM)
+        
+        # with model nb:
+        ax.plot(self.all_a, self.nb_rho, color=GREY_DARK, label=r'$\rho^{NB*}$', linestyle='dashed',
+            marker='^', markevery=MARKEVERY)
+        #ax.text(self.all_a[-1], self.nb_rho[-1]*1.2, r'$\rho_{*}^{NB}$', color=GREY_DARK)
+        
         ax.set_xlabel('a')
-        ax.set_ylabel(r'Effort ($\rho$)')
         ax.set_ylim([0, 5])
         ax.legend()
         pltShowAndSave('nb-rhos.pdf')
         
-    def plot_prices_nb_vs_o(self):
+    def plot_consumer_prices_nb_vs_o(self):
         fig, ax = plt.subplots()
         
         # with online store:
-        ax.plot(self.all_a_anal, self.on_pn, color=BLACK_DARK, label=r'$pn_{*}^{O}$',
-            marker='^', markevery=MARKEVERY_ANAL, markersize=4)
-        ax.text(self.all_a_anal[-1]*.95, self.on_pn[-1]+.02, r'$pn_{*}^{O}$', color=BLACK_DARK)
+        ax.plot(self.all_a_anal, self.on_pn, color=BLACK_DARK, label=r'$p_{n}^{O*}$')
+        ax.text(self.all_a_anal[-1]*.95, self.on_pn[-1]+.01, r'${p_{n}}^{O*}$', color=BLACK_DARK)
         
-        ax.plot(self.all_a_anal, self.on_wn, color=BLACK_DARK, label=r'$wn_{*}^{O}$')
-        ax.text(self.all_a_anal[-1]*.95, self.on_wn[-1]+.015, r'$wn_{*}^{O}$', color=BLACK_DARK)
-        
+        ax.plot(self.all_a_anal, self.on_pr, color=BLACK_DARK, label=r'${p_{r}}^{O*}$')
+        ax.text(self.all_a_anal[-1]*.95, self.on_pr[-1]+.01, r'${p_{r}}^{O*}$', color=BLACK_DARK)
         
         # with model nb:
-        ax.plot(self.all_a, self.nb_pn, color=GREY_DARK, label=r'$pn_{*}^{NB}$',
-            linestyle='--', marker='^', markevery=MARKEVERY, markersize=4)
-        ax.text(self.all_a[-1]*.95, self.nb_pn[-1]+.02, r'$pn_{*}^{NB}$', color=GREY_DARK)
+        ax.plot(self.all_a, self.nb_pn, color=GREY_DARK, label=r'${p_{n}}^{NB*}$',
+            linestyle='solid', marker='^', markevery=MARKEVERY, markersize=4)
+        ax.text(0.0038, 0.78, r'${p_{n}}^{NB*}$', color=GREY_DARK)
         
-        ax.plot(self.all_a, self.nb_b, color=GREY_DARK, label=r'$b_{*}^{NB}$',
-            linestyle='--', marker='s', markevery=MARKEVERY, markersize=3)
-        ax.text(self.all_a[-1]*.95, self.nb_b[-1]+.02, r'$b_{*}^{NB}$', color=GREY_DARK)
-        
-        ax.plot(self.all_a, self.nb_wn, color=GREY_DARK, label=r'$wn_{*}^{NB}$',
-            linestyle='--')
-        ax.text(self.all_a[-1]*.95, self.nb_wn[-1]-.04, r'$wn_{*}^{NB}$', color=GREY_DARK)
-        
-        # with model n:
-        #ax.plot(self.all_a, self.no_rho, color=BLUE_DARK, linestyle='dashed', label=r'$\rho_{*}^{N}$')
-        #ax.text(self.all_a[-1]*.95, self.no_rho[-1]+.003, r'$\rho_{*}^{N}$', color=BLUE_DARK)
+        # model n:
+        ax.plot(self.all_a_anal, self.no_pn, color=BLACK_DARK, linestyle='dashed', label=r'${p_{n}}^{N*}$')
+        ax.text(0.0072, 0.74, r'${p_{n}}^{N*}$', color=BLACK_DARK)
+        ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1]*1.05)
         ax.set_xlabel('a')
-        ax.set_ylim([-0.05, 0.85])
-        #ax.set_xlim([0, 0.011])
+        #ax.set_ylim([-0.05, 0.85])
+        #ax.set_ylim([0.5, 0.85])
         #ax.legend()
-        pltShowAndSave('nb-prices.pdf')
+        pltShowAndSave('nb-consumer-prices.pdf')
+        
+    def plot_wholesale_prices(self):
+        fig, ax = plt.subplots()
+        
+        # with online store:
+        ax.plot(self.all_a_anal, self.on_wn, color=BLACK_DARK, label=r'${w_{n}}^{O*}$')
+        
+        # no online store:
+        ax.plot(self.all_a_anal, self.no_wn, color=GREY_DARK, label=r'${w_{n}}^{N*}$', linestyle='--')
+        
+        # buy back fee model:
+        ax.plot(self.all_a, self.nb_wn, color=GREY_DARK, label=r'${w_{n}}^{NB*}$',
+            marker='^', fillstyle='none', markevery=MARKEVERY, markersize=4)
+        
+        ax.plot(self.all_a[int(MARKEVERY/2):], self.nb_b[int(MARKEVERY/2):], color=GREY_DARK, label=r'${b^{NB*}}$',
+            marker='v', fillstyle='none', markevery=MARKEVERY, markersize=4)
+        ax.plot(self.all_a, self.nb_b, color=GREY_DARK)
+        
+        ax.legend()
+        ax.set_xlabel('a')
+        pltShowAndSave('nb-wholesale-prices-and-buyback-fee.pdf')
         
     def plot_quantities_nb_vs_o(self):
         fig, ax = plt.subplots()
-        # with online store normal:
+        # with online store:
         ax.plot(self.all_a_anal, self.on_qn, color=BLACK_DARK)
-        ax.text(self.all_a_anal[-1]*.95, self.on_qn[-1]+.01, r'$qn_{O}^{*}$', color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1]*.95, self.on_qn[-1]+.01, r'${q_{n}}^{O*}$', color=BLACK_DARK)
         ax.plot(self.all_a_anal, self.on_qr, color=BLACK_DARK)
-        ax.text(self.all_a_anal[-1]*.95, self.on_qr[-1]+.01, r'$qr_{O}^{*}$', color=BLACK_DARK)
+        ax.text(self.all_a_anal[-1]*.95, self.on_qr[-1]+.01, r'${q_{r}}^{O*}$', color=BLACK_DARK)
         ax.plot(self.all_a_anal, self.on_max_qr, linestyle='', alpha=.4,
             color='black', label='returns of primary market',
             marker='s', markevery=MARKEVERY_ANAL, markersize=4)
         ax.legend(loc='lower right', fontsize=6)
         
-        # with model nb:
-        ax.plot(self.all_a, self.nb_qn, color=GREY_DARK, linestyle='--')
-        ax.text(self.all_a[-1]*.95, self.nb_qn[-1]+.01, r'$qn_{NB}^{*}$', color=GREY_DARK)
+        # model nb:
+        ax.plot(self.all_a, self.nb_qn, color=GREY_DARK, linestyle='solid')
+        ax.text(self.all_a_anal[60]*.95, self.nb_qn[10]*.90, r'${q_{n}}^{NB*}$', color=GREY_DARK)
         ax.set_xlabel('a')
+        
+        # no online store:
+        ax.plot(self.all_a_anal, self.no_qn, color=BLACK_DARK, linestyle='--')
+        ax.text(self.all_a_anal[60]*.95, self.no_qn[60]*1.05, r'${q_{n}}^{N*}$', color=BLACK_DARK)
         pltShowAndSave('nb-quantities.pdf')
         
     def plot_profits_o_vs_oq(self):
@@ -818,13 +852,13 @@ class FixedPlot:
         
         # without online store:
         ax.plot(self.all_a, nq_profit_ret, color=GREY_DARK, linestyle='--')
-        ax.text(self.all_a[-1], nq_profit_ret[-1], r'$\pi_{R}^{N}$', color=GREY_DARK)
+        ax.text(self.all_a[-1], nq_profit_ret[-1], r'$\pi_{R}^{NQ}$', color=GREY_DARK)
         ax.plot(self.all_a, nq_profit_man, color=GREY_DARK, linestyle='--',
             marker='^', markevery=MARKEVERY, markersize=4)
-        ax.text(self.all_a[-1], nq_profit_man[-1], r'$\pi_{M}^{N}$', color=GREY_DARK)
+        ax.text(self.all_a[-1], nq_profit_man[-1], r'$\pi_{M}^{NQ}$', color=GREY_DARK)
         
         ax.set_xlabel('a')
-        if relative: ax.set_ylabel(r'ratio of profit to $\pi_{M}^{N}$')
+        if relative: ax.set_ylabel(r'ratio of profit to $\pi_{M}^{NQ}$')
         pltShowAndSave('oq-profits-'+strRel+'.pdf')
         
 class SpontPlot:
@@ -942,23 +976,13 @@ if __name__ == '__main__':
             output = None
          
         plotter = CountourPlotter(args.plot[0], params={
-            'tau': .3, 's': .07, 'cr': '0.4*cn', 'delta' : .4,
+            'tau': .3, 's': 0.07, 'cr': 0.1, 'delta' : .3,
             'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
-            'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : 1,
+            'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
             'absolute' : absolute,
             'gray'   : gray,
             'nolegend': True,
             'output' : output
         })
-        
-        #plotter = CountourPlotter(args.plot[0], params={
-        #    'tau': .2, 's': .1, 'cr': '0.4*cn', 'delta' : .22,
-        #    'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
-        #    'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
-        #    'absolute' : absolute,
-        #    'gray'   : gray,
-        #    'nolegend': True,
-        #    'output' : output
-        #})
         plotter.calc()
         plotter.plot()

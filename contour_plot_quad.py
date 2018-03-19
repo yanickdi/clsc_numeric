@@ -34,23 +34,18 @@ ALLOWED_PLOTS = PLOT_PROFIT_DIFFERENCE_MAN, PLOT_PROFIT_DIFFERENCE_RET, PLOT_RHO
 AUTOMATED_PLOTS = 'automated-plots'
 
 _ALL_CASES_MODEL_1 = [solver._CASE_ONE, solver._CASE_TWO]
-#_ALL_CASES_MODEL_2 = [solver._CASE_ONE_A, solver._CASE_ONE_B, solver._CASE_ONE_C,
-#                       solver._CASE_TWO_A, solver._CASE_TWO_B, solver._CASE_TWO_C]
+_ALL_CASES_MODEL_2 = [solver._CASE_ONE_A, solver._CASE_ONE_B, solver._CASE_ONE_C,
+                       solver._CASE_TWO_A, solver._CASE_TWO_B, solver._CASE_TWO_C]
 
 class CountourPlotter:
     def __init__(self, type, params):
         self.proxy = SolverProxy()
         self.type = type
         self.tau, self.s, self.cr, self.delta = params['tau'], params['s'], params['cr'], params['delta']
-        self.step_size_a, self.lower_bound_a, self.upper_bound_a = params['step_size_a'], params['lower_bound_a'], params['upper_bound_a']
-        self.step_size_cn, self.lower_bound_cn, self.upper_bound_cn = params['step_size_cn'], params['lower_bound_cn'], params['upper_bound_cn']
+        self.count_a, self.lower_bound_a, self.upper_bound_a = params['count_a'], params['lower_bound_a'], params['upper_bound_a']
+        self.count_cn, self.lower_bound_cn, self.upper_bound_cn = params['count_cn'], params['lower_bound_cn'], params['upper_bound_cn']
         self._calc_func = {
-            PLOT_RHO_DIFFERENCE : self.__rho_calc_func,
-            PLOT_PROFIT_DIFFERENCE_MAN : self.__profit_calc_func_man,
-            PLOT_PROFIT_DIFFERENCE_RET : self.__profit_calc_func_ret,
-            PLOT_CASES_MODEL_ONE : self.__case_calc_func_model_one,
-            PLOT_CASES_MODEL_TWO : self.__case_calc_func_model_two,
-            PLOT_COMPARE_CASES : self.__cases_compare_calc_func
+            PLOT_CASES_MODEL_TWO : self.__case_calc_func_model_two
         }[type]
         self.absolute = params['absolute']
         self.gray = params['gray']
@@ -70,8 +65,8 @@ class CountourPlotter:
         def __cr(cn):
             #if self.cr == 'delta*cn/2':
             #    return self.delta * cn / 2
-            if self.cr == '0.4*cn':
-                return 0.4 * cn
+            if self.cr == '0.5*cn':
+                return 0.5 * cn
             else:
                 return self.cr
                 
@@ -81,31 +76,24 @@ class CountourPlotter:
             else:
                 return self.s
         
-        if self.s == '0.4*cn' and self.cr == '0.4*cn':
-            for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
-                for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
-                    par_model_1 = Parameter(MODEL_1_QUAD, tau=self.tau, a=a, s=0.4 * cn, cn=cn)
-                    par_model_2 = Parameter(MODEL_2_QUAD, tau=self.tau, a=a, s=0.4 * cn,  cr=0.4 * cn, cn=cn, delta=self.delta)
-                    yield (line, col, par_model_1, par_model_2)
-        else:
-            for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
-                for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
-                    par_model_1 = Parameter(MODEL_1_QUAD, tau=self.tau, a=a, s=__s(cn), cn=cn)
-                    par_model_2 = Parameter(MODEL_2_QUAD, tau=self.tau, a=a, s=__s(cn),  cr=__cr(cn), cn=cn, delta=self.delta)
-                    yield (line, col, par_model_1, par_model_2)
+        for line, cn in enumerate(np.linspace(self.lower_bound_cn, self.upper_bound_cn, self.count_cn)):
+            for col, a in enumerate(np.linspace(self.lower_bound_a, self.upper_bound_a, self.count_a)):
+                cn, a = float(cn), float(a)
+                par_model_1 = None
+                par_model_2 = Parameter(MODEL_2_QUAD, tau=self.tau, a=a, s=__s(cn),  cr=__cr(cn), cn=cn, delta=self.delta)
+                yield (line, col, par_model_1, par_model_2)
     
     def calc(self):
-        self.nr_cols = int((self.upper_bound_a-self.lower_bound_a)/self.step_size_a) + 1
-        self.nr_lines = int((self.upper_bound_cn-self.lower_bound_cn)/self.step_size_cn) + 1
+        self.nr_cols = self.count_a
+        self.nr_lines = self.count_cn
         self.matrix = np.zeros([self.nr_lines, self.nr_cols])
-        solver_m1, solver_m2 = ModelOneNumericalSolver(), ModelTwoNumericalSolver()
         i = 0
         numall = self.nr_cols * self.nr_lines
         print(numall)
         #self.proxy.beginWrite()
         for line, col, par_model_1, par_model_2 in self._a_cn_generator():
             # calc solutions
-            if par_model_1.a == .0:
+            if par_model_2.a == .0:
                 sol_model_1, sol_model_2 = None, None
             else:
                 #sol_model_1 = solver_m1.optimize(par_model_1)
@@ -113,47 +101,14 @@ class CountourPlotter:
                 #sol_model_1 = self.proxy.read_or_calc_and_write(par_model_1, resolution='low')
                 sol_model_1 = None #todo hier fuer model 1 aufschalten
                 #sol_model_2 = self.proxy.read_or_calc_and_write(par_model_2, resolution='low')
-                sol_model_2 = self.proxy.calculate(par_model_2, resolution='low')
+                sol_model_2 = self.proxy.calculate(par_model_2, resolution=RESOLUTION)
             self.matrix[line, col] = self._calc_func(sol_model_1, sol_model_2, par_model_2)
             if i % 100 == 0:
-                self.proxy.commit()
+                #self.proxy.commit()
                 print('{} ({:.2f} %)    at {}'.format(i, (i/numall)*100, str(datetime.datetime.now())))
             i += 1
         self.proxy.commit()
         #self.proxy.endWrite()
-        
-    def __rho_calc_func(self, sol_model_1, sol_model_2, par):
-        if sol_model_1 is None or sol_model_2 is None:
-            return np.nan
-        return (sol_model_2.dec.rho - sol_model_1.dec.rho) / sol_model_1.dec.rho
-        
-    def __rho_calc_func_absolute(self, sol_model_1, sol_model_2, par):
-        if sol_model_1 is None or sol_model_2 is None:
-            return np.nan
-        return (sol_model_2.dec.rho - sol_model_1.dec.rho)
-        
-        
-    def __cases_compare_calc_func(self, sol_model_1, sol_model_2, par):
-        #0 equal cases
-        #1 model 1 case 1, model 2 case 2
-        #2 model 1 case 2, model 2 case 1
-        #3 solution in 1, not in 2
-        #4 solution in 2, not in 1
-        if sol_model_1 is None or sol_model_2 is None:
-            if sol_model_1:
-                return 3
-            elif sol_model_2:
-                return 4
-            else:
-                return np.nan
-        case_1, case_2 = sol_model_1.case, sol_model_2.case
-        switch = 0
-        if case_1 == solver._CASE_ONE and _ALL_CASES_MODEL_2.index(case_2) not in [0, 1, 2]:
-            switch = 1
-        elif case_1 == solver._CASE_TWO and _ALL_CASES_MODEL_2.index(case_2) not in [3,4,5]:
-            switch = 2
-        
-        return switch
         
     def __profit_calc_func_man(self, sol_model_1, sol_model_2, par):
         if sol_model_1 is None or sol_model_2 is None:
@@ -188,10 +143,7 @@ class CountourPlotter:
         return rel
         
     def __case_calc_func_model_one(self, sol_model_1, sol_model_2, par):
-        if sol_model_1 == None:
-            return np.nan
-        else:
-            return _ALL_CASES_MODEL_1.index(sol_model_1.case) + 1
+        return NotImplementedError()
             
     def __case_calc_func_model_two(self, sol_model_1, sol_model_2, par):
         if sol_model_2 == None:
@@ -199,20 +151,7 @@ class CountourPlotter:
         #elif round(sol_model_2.profit_man, 1) == 0 or round(sol_model_2.profit_ret, 1) == 0:
         #    return np.nan
         else:
-            if sol_model_2.dec.qr == 0:
-                manufact = 0
-            elif abs(sol_model_2.dec.qr - (par.tau/sol_model_2.dec.rho)*sol_model_2.dec.qn) <= 0.00001:
-                manufact = 2
-            else:
-                manufact = 1
-
-            if sol_model_2.dec.rho >= 1.001 :
-                # case 1 (1,2,3)
-                return 1 + manufact
-            else:
-                # case 2 (4,5,6)
-                return 4 + manufact
-            #return _ALL_CASES_MODEL_2.index(sol_model_2.case) + 1
+            return _ALL_CASES_MODEL_2.index(sol_model_2.case) + 1
         
     def plot_contourf(self):
         cmap = cm.gray if self.gray else None         
@@ -385,47 +324,33 @@ if __name__ == '__main__':
     
     quality = 'low' if args.low_qual else 'high'
     if quality == 'high':
-        step_size_a = .001
-        step_size_cn = .001
+        lower_bound_a = .0
+        upper_bound_a = .025
+        count_x = 400
+        lower_bound_cn = .0
+        upper_bound_cn = .9
+        count_y = 400
+        step_size_cn = (upper_bound_cn - lower_bound_cn) / count_y
+        RESOLUTION = 'super high'
     elif quality == 'low':
-        step_size_a = .1
-        step_size_cn = .1
+        lower_bound_a = .0
+        upper_bound_a = .025
+        count_x = 40
+        lower_bound_cn = .0
+        upper_bound_cn = .9
+        count_y = 40
+        RESOLUTION = 'super high'
     gray = args.gray
     
     plot = args.plot[0]
-    if plot == AUTOMATED_PLOTS:
-        automated_plots(step_size_a, step_size_cn, gray)
-    elif plot == PLOT_FIXED_PLOT:
-        fixedPlot = FixedPlot()
-        fixedPlot.plot()
-    elif plot == PLOT_SPONT_PLOT:
-        spontPlot = SpontPlot()
-        spontPlot.plot()
-    else:
-        absolute = args.absolute
-        if args.output:
-            output = args.output[0]
-        else:
-            output = None
-         
-        #plotter = CountourPlotter(args.plot[0], params={
-        #    'tau': .09, 's': '0.4*cn', 'cr': '0.4*cn', 'delta' : .7956,
-        #    'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
-        #    'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
-        #    'absolute' : absolute,
-        #    'gray'   : gray,
-        #    'nolegend': True,
-        #    'output' : output
-        #})
-
-        plotter = CountourPlotter(args.plot[0], params={
-            'tau': .09, 's': 0.1, 'cr': 0.2, 'delta' : 0.4,
-            'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : 1,
-            'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
-            'absolute' : absolute,
-            'gray'   : gray,
-            'nolegend': True,
-            'output' : output
-        })
-        plotter.calc()
-        plotter.plot()
+    plotter = CountourPlotter(args.plot[0], params={
+        'tau': .3, 's': 0.07, 'cr': 0.1, 'delta' : 0.3,
+        'count_a' : count_x, 'lower_bound_a' : lower_bound_a, 'upper_bound_a' : upper_bound_a,
+        'count_cn' : count_y, 'lower_bound_cn' : lower_bound_cn, 'upper_bound_cn' : upper_bound_cn,
+        'absolute' : False,
+        'gray'   : gray,
+        'nolegend': True,
+        'output' : None
+    })
+    plotter.calc()
+    plotter.plot()

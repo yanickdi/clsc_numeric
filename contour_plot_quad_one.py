@@ -13,6 +13,7 @@ import solver
 from solver import drange, Parameter, MODEL_1, MODEL_2, MODEL_NB,  \
     MODEL_1_QUAD, MODEL_2_QUAD, \
     ModelOneNumericalSolver, ModelTwoNumericalSolver, SolverProxy
+    
 
 # my color palette:
 RED_DARK = '#a70000'
@@ -70,8 +71,8 @@ class CountourPlotter:
         def __cr(cn):
             #if self.cr == 'delta*cn/2':
             #    return self.delta * cn / 2
-            if self.cr == '0.4*cn':
-                return 0.4 * cn
+            if self.cr == '0.1*cn':
+                return 0.1 * cn
             else:
                 return self.cr
                 
@@ -81,24 +82,15 @@ class CountourPlotter:
             else:
                 return self.s
         
-        if self.s == '0.4*cn' and self.cr == '0.4*cn':
-            for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
-                for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
-                    par_model_1 = Parameter(MODEL_1_QUAD, tau=self.tau, a=a, s=0.4 * cn, cn=cn)
-                    par_model_2 = Parameter(MODEL_2_QUAD, tau=self.tau, a=a, s=0.4 * cn,  cr=0.4 * cn, cn=cn, delta=self.delta)
-                    yield (line, col, par_model_1, par_model_2)
-        else:
-            #for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
-            for line, cn in enumerate(np.arange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
-                assert line < 100
-                cn = float(cn)
-                #for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
-                for col, a in enumerate(np.arange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
-                    a = float(a)
-                    assert col < 100
-                    par_model_1 = Parameter(MODEL_1_QUAD, tau=self.tau, a=a, s=__s(cn), cn=cn)
-                    par_model_2 = Parameter(MODEL_2_QUAD, tau=self.tau, a=a, s=__s(cn),  cr=__cr(cn), cn=cn, delta=self.delta)
-                    yield (line, col, par_model_1, par_model_2)
+        #for line, cn in enumerate(drange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
+        for line, cn in enumerate(np.arange(self.lower_bound_cn, self.upper_bound_cn, self.step_size_cn)):
+            cn = float(cn)
+            #for col, a in enumerate(drange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
+            for col, a in enumerate(np.arange(self.lower_bound_a, self.upper_bound_a, self.step_size_a)):
+                a = float(a)
+                par_model_1 = Parameter(MODEL_1_QUAD, tau=self.tau, a=a, s=__s(cn), cn=cn)
+                par_model_2 = Parameter(MODEL_2_QUAD, tau=self.tau, a=a, s=__s(cn),  cr=__cr(cn), cn=cn, delta=self.delta)
+                yield (line, col, par_model_1, par_model_2)
     
     def calc(self):
         self.nr_cols = int((self.upper_bound_a-self.lower_bound_a)/self.step_size_a) + 1
@@ -117,7 +109,7 @@ class CountourPlotter:
                 #sol_model_1 = solver_m1.optimize(par_model_1)
                 #sol_model_2 = solver_m2.optimize(par_model_2)
                 #sol_model_1 = self.proxy.read_or_calc_and_write(par_model_1, resolution='low')
-                sol_model_1 = self.proxy.calculate(par_model_1, resolution='low')
+                sol_model_1 = self.proxy.calculate(par_model_1, resolution=RESOLUTION)
                 #sol_model_2 = self.proxy.read_or_calc_and_write(par_model_2, resolution='low')
                 #sol_model_2 = self.proxy.calculate(par_model_2, resolution='low')
             self.matrix[line, col] = self._calc_func(sol_model_1, None, par_model_2)
@@ -197,10 +189,10 @@ class CountourPlotter:
         if sol_model_1 == None:
             return np.nan
         else:
-            if sol_model_1.dec.rho >= 1.0035:
-                return 2
-            else:
+            if sol_model_1.dec.rho > 1:
                 return 1
+            else:
+                return 2
             #return _ALL_CASES_MODEL_1.index(sol_model_1.case) + 1
             
     def __case_calc_func_model_two(self, sol_model_1, sol_model_2, par):
@@ -395,17 +387,25 @@ if __name__ == '__main__':
     
     quality = 'low' if args.low_qual else 'high'
     if quality == 'high':
-        step_size_a = .001
-        step_size_cn = .001
-    elif quality == 'low':
         lower_bound_a = .0
-        upper_bound_a = 1
-        count_x = 100
+        upper_bound_a = .025
+        count_x = 400
         step_size_a = (upper_bound_a - lower_bound_a) / count_x
         lower_bound_cn = .0
         upper_bound_cn = .9
-        count_y = 100
+        count_y = 400
         step_size_cn = (upper_bound_cn - lower_bound_cn) / count_y
+        RESOLUTION = 'high'
+    elif quality == 'low':
+        lower_bound_a = .0
+        upper_bound_a = .025
+        count_x = 20
+        step_size_a = (upper_bound_a - lower_bound_a) / count_x
+        lower_bound_cn = .0
+        upper_bound_cn = .9
+        count_y = 20
+        step_size_cn = (upper_bound_cn - lower_bound_cn) / count_y
+        RESOLUTION = 'low'
     gray = args.gray
     
     plot = args.plot[0]
@@ -423,19 +423,9 @@ if __name__ == '__main__':
             output = args.output[0]
         else:
             output = None
-         
-        #plotter = CountourPlotter(args.plot[0], params={
-        #    'tau': .09, 's': '0.4*cn', 'cr': '0.4*cn', 'delta' : .7956,
-        #    'step_size_a' : step_size_a, 'lower_bound_a' : .0, 'upper_bound_a' : .025,
-        #    'step_size_cn' : step_size_cn, 'lower_bound_cn' : .0, 'upper_bound_cn' : .9,
-        #    'absolute' : absolute,
-        #    'gray'   : gray,
-        #    'nolegend': True,
-        #    'output' : output
-        #})
 
         plotter = CountourPlotter(args.plot[0], params={
-            'tau': .09, 's': 0.1, 'cr': 0.2, 'delta' : 0.4,
+            'tau': .3, 's': 0.07, 'cr': 0.1, 'delta' : 0.3,
             'step_size_a' : step_size_a, 'lower_bound_a' : lower_bound_a, 'upper_bound_a' : upper_bound_a,
             'step_size_cn' : step_size_cn, 'lower_bound_cn' : lower_bound_cn, 'upper_bound_cn' : upper_bound_cn,
             'absolute' : absolute,

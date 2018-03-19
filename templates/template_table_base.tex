@@ -7,18 +7,7 @@
 
 \usepackage{geometry}
 \geometry{verbose,a4paper,tmargin=25mm,bmargin=25mm,lmargin=15mm,rmargin=20mm}
-{% set tables = ['case', 'profits', 'retailerprof', 'rho', 'price_new', 'wholesale_price', 'restocking_price'] %}
-{% set table_names = {
-        'case' : 'cases',
-        'profits'   : 'manufacturer\'s profit',
-        'retailerprof' : 'retailer\'s profit',
-        'rho'    : 'effort',
-        'price_new'     : 'price of new products',
-        'wholesale_price' : 'wholesale price',
-        'restocking_price' : 'restocking price $\\frac{b-s}{w_n-s}$'}
-%}
 \begin{document}
-\section{Full factorial analysis tables}
     \begin{table}[htp]
         \begin{center}
         \begin{small}
@@ -47,49 +36,10 @@
     &&&&&high&{{ft(table,7,0)}}&{{ft(table,7,1)}}&{{ft(table,7,2)}}&{{ft(table,7,3)}}&{{ft(table,7,4)}}&{{ft(table,7,5)}}&{{ft(table,7,6)}}&{{ft(table,7,7)}}\\
     {% endfor %}
     \end{tabular}
-      \caption{Full factorial analysis to compare the cases, manufacturer's profits, efforts, prices of new products and wholesale prices of Model O with Model N (percentages refer to the values of Model O compared to the values of Model N)}
+      \caption{ {% block caption %}Caption{% endblock %} }
       \label{full_factorial}
       \end{small}
     \end{center}
     \end{table}
-    
-    
-{#
-
-\subsection{Detailed analysis of every parameter}
-Table \ref{analysis_parameters} show the influence of the change of one parameter if all the other parameters are fixed to the values in Table \ref{table_setting}. For each parameter 4 or 5 differnt values are assumed.
-
-
-
-{% set tables = ['delta', 'tau', 'cn', 'a'] %}
-{% set table_par = {
-        'delta' : [0.5, 0.6, 0.7, 0.8, 0.9],
-        'tau'   : [0.05, 0.15, 0.25, 0.35],
-        'cn'    : [0.1, 0.2, 0.3, 0.4, 0.5],
-        'a'     : [0.001, 0.01, 0.05, 0.1]}
-%}
-{% set table_left = {'delta': '$\\delta$', 'tau':'$\\tau$', 'cn': '$c_n$', 'a':'a'} %}
-
-\begin{table}[htp]
-    \begin{center}
-        \begin{small}
-            \begin{tabular}{cc|ccccc}
-                &&relative $\Pi_M$&relative $\rho$&relative $p_n$&relative $w_n$&$p_r$\\
-                {% for table in tables -%}
-                    {% set pars = table_par[table] -%}
-                    \hline
-                    \multirow{ {{pars|length + 1}} }{*}{\tabrotate{ {{table_left[table]}} }}
-                    {% for par in pars -%}
-                        &{{par}}&{{at(table, par)}}\\
-                    {% endfor %}{% if table != tables|last %}\hline{% endif %}
-                {% endfor %}
-            \end{tabular}
-            \caption{Analysis of the influences of a change in parameters $\delta$, $\tau$, $c_n$ and $a$}
-            \label{analysis_parameters}
-        \end{small}
-    \end{center}
-\end{table}
-
-#}
 
 \end{document}

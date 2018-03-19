@@ -13,7 +13,7 @@ _CASE_ONE, _CASE_TWO = '1', '2'
 _UNDEFINED_CASE = '0'
 _CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C = '1a','1b','1c','2a','2b','2c'
 ALL_CASES = [_CASE_ONE_A, _CASE_ONE_B, _CASE_ONE_C, _CASE_TWO_A, _CASE_TWO_B, _CASE_TWO_C]
-DECIMALS_ALLOW_NN = 14
+DECIMALS_ALLOW_NN = 10
 
 def is_prof_pos(prof):
     """ checks whether a given profit is positive - it allows also a -.1*10^14 as positive! """
@@ -180,7 +180,7 @@ class ModelTwoNumericalSolver:
             if not (-10**-DECIMALS_ALLOW_NN <= sol.dec.qr <= ((par.tau/sol.dec.rho) * sol.dec.qn)+10**-DECIMALS_ALLOW_NN):
                 return False
         elif sol.case in (_CASE_ONE_C, _CASE_TWO_C):
-            if not (is_almost_equal(sol.dec.qr - ((par.tau/sol.dec.rho) * sol.dec.qn), 0)):
+            if not (is_almost_equal(sol.dec.qr, ((par.tau/sol.dec.rho) * sol.dec.qn))):
                 return False
                 
         # check profits
@@ -436,6 +436,45 @@ class ModelOneNumericalSolver:
         pn = (1 + wn) / 2
         rho = 1
         return DecisionVariables(MODEL_1, wn=wn, pn=pn, rho=rho, qn=1 - pn)
+        
+    @staticmethod
+    def get_retailer_profit(par, wn, pn, rho):
+        """ returns the the retailer's profit having set wn, pn and rho (i.e. all decision variables are set) """
+        qn = 1 - pn
+        return qn * (pn - wn) * (1-par.tau/rho) - par.a * (rho - 1)
+        
+    @staticmethod
+    def get_manufacturer_profit(par, wn, case=_UNDEFINED_CASE):
+        pn, rho = ModelOneNumericalSolver.get_retailer_decision(par, wn, case=case)
+        if pn is None or rho is None: return None
+        qn = 1 - pn
+        return qn * (wn*(1-par.tau/rho) - par.cn + (par.tau/rho) * par.s)
+        
+    @staticmethod
+    def get_retailer_decision(par, wn, case=_UNDEFINED_CASE):
+        """ Returns a tuple of (pn, rho). Having wn set to a fixed value, retailer optimizes profits """
+        pn_1 = (1/2) * (1+wn)
+        rho_1 = (par.tau**(1/2) * (1-wn)) / (2*par.a**(1/2))
+        pn_2 = (1/2) * (1+wn)
+        rho_2 = 1
+        all = []
+        pn_rhos = ((pn_1, rho_1), (pn_2, rho_2))
+        if case != _UNDEFINED_CASE:
+            if case == _CASE_ONE:   pn_rhos = ((pn_1, rho_1),)
+            elif case == _CASE_TWO: pn_rhos = ((pn_2, rho_2),)
+        for pn, rho in pn_rhos:
+            profit = ModelOneNumericalSolver.get_retailer_profit(par, wn, pn, rho)
+            if 0 <= pn <= 1 and rho >= 1 and profit > 0:
+                all.append([profit, (pn, rho)])
+        if len(all) == 0: return None, None
+        return max(all, key=lambda k: k[0])[1]    
+    
+    singleton = None
+    @staticmethod
+    def solve(par):
+        if ModelOneNumericalSolver.singleton is None: ModelOneNumericalSolver.singleton = ModelOneNumericalSolver()
+        return ModelOneNumericalSolver.singleton.optimize(par)
+    
 
 class Solution:
     def __init__(self, dec, profit_man, profit_ret, case):
@@ -582,7 +621,12 @@ class ModelTwoGridTester:
         if sol_tuple is None: return None
         dec = DecisionVariables(MODEL_2_QUAD, pn=sol_tuple[2], pr=sol_tuple[1],
             wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4], qr=sol_tuple[5])
-        case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
+        # get case:
+        qr_rel = dec.qr / (par.tau / dec.rho)*dec.qn
+        if dec.rho > 1:
+            case = _CASE_ONE
+        else:
+            case = _CASE_TWO
         sol = Solution(dec, sol_tuple[6], sol_tuple[7], case)
         return sol
         
@@ -606,11 +650,11 @@ class ModelTwoQuadSolver:
     
     @staticmethod
     def solve(par, resolution='high'):
-        if par.a == 0: return None
+        if par.a == 0 or par.cn < par.cr: return None
         case_solutions = []
         if resolution == 'very-high':
             raster_size = 2000
-            wn_range = [0.53, 0.55]
+            wn_range = [0.52, 0.55]
             pr_range = [0.48, 0.49]
             #search_cases = (_CASE_ONE, _CASE_TWO)
             # only case one interesting
@@ -620,17 +664,25 @@ class ModelTwoQuadSolver:
             raster_size = 51
             search_cases = (_UNDEFINED_CASE,) # all cases once
             do_local_search = False
-            wn_range, pr_range = [0,1], [0,1]
-        elif resolution == 'high':
+            #wn_range = [0.52, 0.55]
+            #pr_range = [0.48, 0.52]
+            wn_range = [0, 1]
+            pr_range = [0, 1]
+        elif resolution == 'high' or (resolution == 'super high' and par.cn < 0.66):
             raster_size = 51
             search_cases = (_CASE_ONE, _CASE_TWO)  # all cases sepearte
             do_local_search = True
             wn_range, pr_range = [0, 1], [0, 1]
+        elif resolution == 'super high' and par.cn >= 0.66:
+            raster_size = 51
+            search_cases = (_CASE_ONE, _CASE_TWO)  # all cases sepearte
+            do_local_search = True
+            wn_range, pr_range = [0.94, 1], [0, 0.3]
         # we have to check both cases:
         for case in search_cases:
             startP = ModelTwoQuadGridSearch.search(par, iter=1, raster_size=raster_size, case=case, wn_range=wn_range, pr_range=pr_range)
             if startP is None:
-                print('warning at point', par, ' in case', case, ',startP is None')
+                #print('warning at point', par, ' in case', case, ',startP is None')
                 continue
             start_vec = [startP.dec.wn, startP.dec.pr]
             # improve wn, pr
@@ -639,7 +691,8 @@ class ModelTwoQuadSolver:
             # build a new solution using wn, pr
             sol = ModelTwoQuadSolver.getSolution(par, float(result.x[0]), float(result.x[1]))
             # assert that wn/pr combination lies really in case `case`
-            case_solutions.append(sol)
+            if sol is not None:
+                case_solutions.append(sol)
 
         if len(case_solutions) >= 1:
             return max(case_solutions, key=lambda k: k.profit_man)
@@ -658,37 +711,28 @@ class ModelTwoQuadSolver:
     @staticmethod
     def getSolution(par, wn, pr, case=_UNDEFINED_CASE):
         man_profit, sol_tuple = ModelTwoQuadSolver.profit(par, wn, pr, case)
-        if sol_tuple is None: return None
+        if sol_tuple is None or man_profit <= 0 or sol_tuple[7] <= 0: return None
         dec = DecisionVariables(MODEL_2_QUAD, pn=sol_tuple[2], pr=sol_tuple[1],
             wn=sol_tuple[0], rho=sol_tuple[3], qn=sol_tuple[4], qr=sol_tuple[5])
-        case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
+        # get case:
+        qr_rel = dec.qr / ((par.tau / dec.rho)*dec.qn)
+        if dec.rho > 1:
+            if   qr_rel < .01: case = _CASE_ONE_A
+            elif qr_rel > .99: case = _CASE_ONE_C
+            else: case = _CASE_ONE_B
+        else:
+            if   qr_rel < .01: case = _CASE_TWO_A
+            elif qr_rel > .99: case = _CASE_TWO_C
+            else: case = _CASE_TWO_B
+        #case = _CASE_ONE if dec.rho > 1 else _CASE_TWO
         sol = Solution(dec, sol_tuple[6], sol_tuple[7], case)
         return sol
-
-    @staticmethod
-    def retailer_profit(par, wn, pr, rho, sign=1.0):
-        """ (noch) nicht in verwendung """
-        if rho < 1.0:
-            return -sys.maxsize * sign
-        tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
-        pn = .5 * (1+wn-delta+pr)
-        qn = 1 - (pn - pr) / (1 - delta)
-        qr = (pn - pr) / (1 - delta) - pr / delta
-        ret_profit = qn * (pn - wn) * (1 - par.tau / rho) - par.a * (rho - 1) ** 2
-        # is valid?
-        if (0 <= qr <= (par.tau / rho) * qn) and ret_profit >= 0:
-            print(qr)
-            return ret_profit * sign
-        else:
-            return -sys.maxsize * sign
         
     @staticmethod
     def _retailer_decision(par, wn, pr, case=_UNDEFINED_CASE):
         assert type(wn) == float and type(pr) == float
         tau, a, s, cr, cn, delta = par.tau, par.a, par.s, par.cr, par.cn, par.delta
-        #rho_1 = (8*2**(1/3)*a**2*(-1 + delta)**2 + 4*a*(-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3) * sqrt(-a**4 *(-1 + delta)**4 *tau *(-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) + (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 6 * sqrt(3) * sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(   2/3))/(12 * a * (-1 + delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2) + 3 * sqrt(3)* sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr + wn)**2 * (32 * a * (-1 + delta) - 27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
-        rho_1 = (-16 * (-2)**(1/3) * a**2 * (-1 + delta)**2 +  8 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3) *sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3) +  1j * (1j + sqrt( 3)) * (2 * a**2 * (-1 + delta)**2 * (16 *a *(-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  6 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**( 2/3))/(24 * a * (-1 +  delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2) +  3 * sqrt(3)*  sqrt(-a**4 * (-1 + delta)**4*  tau * (-1 + delta - pr +  wn)**2 * (32 * a * (-1 + delta) -  27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
-        #rho_1 = (8 * 1j *2**(1/3) * (1j + sqrt(3)) * a**2 * (-1 + delta)**2 +   8 * a * (-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 *tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  1/3) + (-1 -   1j * sqrt(3)) * (2 * a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   6 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(  2/3))/(24 * a *(-1 +   delta) * (a**2 * (-1 + delta)**2 * (16 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2) +   3 * sqrt(3)*   sqrt(-a**4 * (-1 + delta)**4 * tau * (-1 + delta - pr +   wn)**2 * (32 * a * (-1 + delta) -   27 * tau * (-1 + delta - pr + wn)**2)))**(1/3))
+        rho_1 = -(((-1)**(2/3) * par.tau**(1/3) *(-1 + par.delta - pr + wn)**(2/3))/( 2 *(par.a *(-1 + par.delta))**(1/3)))
         pn_1  = .5 * (1+wn-delta+pr)
         rho_2 = 1
         pn_2 = .5 * (1+wn-delta+pr)
@@ -704,7 +748,7 @@ class ModelTwoQuadSolver:
             qn = 1 - (pn - pr)/(1-delta)
             qr = (pn-pr)/(1-delta) - pr/delta
             if rho == 0: continue
-            ret_profit = qn*(pn-wn)*(1-par.tau/rho)-par.a*(rho-1)**2
+            ret_profit = qn*(pn-wn)*(1-par.tau/rho)-par.a*(rho**2-1)
             if (0 <= qr <= (par.tau/rho)*qn) and rho >= 1 and ret_profit >= 0:
                 valids.append([pn, rho, qn, qr, ret_profit])
         if len(valids) > 0:
@@ -732,7 +776,6 @@ class ModelTwoQuadGridSearch:
     @staticmethod
     def search(par, iter=1, raster_size=51, case=_UNDEFINED_CASE, wn_range=[0, 1], pr_range=[0, 1]):
         if par.a == 0: return None
-        #print('search point', par.a)
         raster_start_size = raster_size
         sol_tuple = ImprovedGridSearch2D.maximize(ModelTwoQuadGridSearch._grid_search_func,
             {'par': par, 'case': case}, wn_range, pr_range, raster_size, iter, raster_start_size=raster_start_size)
@@ -747,9 +790,6 @@ class ModelTwoQuadGridSearch:
     def _grid_search_func(options, wn, pr):
         par, case = options['par'], options['case']
         return ModelTwoQuadSolver.profit(par, wn, pr, case)        
-        
-        
-        
         
         
         
@@ -781,23 +821,25 @@ class ModelOneQuadGridSearch:
         ret_dec = ModelOneQuadGridSearch._retailer_decision(par, wn)
         if ret_dec is None: return None, None
         pn, rho, qn, ret_prof = ret_dec
-        man_profit = qn*(wn*(1-par.tau/rho))- par.cn + (par.tau/rho) * par.s
+        man_profit = qn*(wn*(1-par.tau/rho)- par.cn + (par.tau/rho) * par.s)
         return man_profit, (wn, pn, rho, qn, man_profit, ret_prof)
         
     def search(self, par, resolution='high'):
         if par.a == 0: return None
         wn_range = [0, 1]
         y_range = [0, 0] #not there
-        raster_size = 4
-        iter = 13
+        raster_size = 30
+        iter = 20
         sol_tuple = GridSearch2D.maximize(ModelOneQuadGridSearch._grid_search_func,
             par, wn_range, y_range, raster_size, iter)
-        if sol_tuple is None: return None
+        if sol_tuple is None or sol_tuple[4] <= 0: return None
         dec = DecisionVariables(MODEL_1_QUAD, pn=sol_tuple[1], wn=sol_tuple[0],
                 rho=sol_tuple[2], qn=sol_tuple[3])
         case = _CASE_ONE if sol_tuple[2] > 1 else _CASE_TWO
         sol = Solution(dec, sol_tuple[4], sol_tuple[5], case)
-        return sol
+        if sol is not None and sol.profit_ret > 0.0001:
+            return sol
+        else: return None
     
     def search_old(self, par):
         """ Returns a solution object or None if no solution found """
@@ -838,20 +880,139 @@ class ModelNBZeroSolver:
         return ModelNBSolver.getSolution(par, float(result.x[0]), 0)
 
 class ModelNBSolver:
-    """ This class solves Model Two Quad by first using the GridSearch - then a local search algorithm (nelder-mead) """
-
+    """ This class solves Model NB Quad by first using the GridSearch - then a local search algorithm (nelder-mead) """
+    
     @staticmethod
-    def solve(par, resolution='high'):
+    def solveOld(par, resolution='high'):
+        raise RuntimeError()
         solPositiveB = ModelNBSolver.solvePositiveB(par, resolution)
         solZeroB = ModelNBZeroSolver.solve(par, resolution)
         
         if solPositiveB is not None and solPositiveB.profit_man > solZeroB.profit_man:
             diff = solPositiveB.profit_man - solZeroB.profit_man
-            print('difference is', diff)
             if diff < 0.000001:
                 return solZeroB
         else:
             return solZeroB
+            
+    @staticmethod
+    def solve(par, resolution='high'):
+        if par.a == 0: return None
+        if resolution == 'high':
+            wn_lower_lim = par.cn
+            wn_upper_lim = 1
+            wn_count = 100
+            b_count = 100
+        elif resolution == 'case study':
+            wn_lower_lim = 0.463
+            wn_upper_lim = 0.555
+            wn_count = 1000
+            b_count = 3
+        best_fval = -sys.maxsize
+        best_fobj = None
+        # case 1
+        for wn in np.linspace(wn_lower_lim, wn_upper_lim, wn_count):
+            for b in np.linspace(par.s, wn, b_count):
+                wn, b = float(wn), float(b)
+                # calc manufacturer profit
+                man_prof_tuple = ModelNBSolver._manufacturer_profit(par, wn, b)
+                if man_prof_tuple[0] is not None and man_prof_tuple[0] > best_fval:
+                    # update
+                    best_fval = man_prof_tuple[0]
+                    best_fobj = man_prof_tuple[1]
+        # case 2
+        wn_2 = (-1 - par.cn + par.tau + par.s* par.tau)/(2 *(-1 + par.tau))
+        b_2 = wn_2
+        #b_2 = par.s
+        #wn_2 = (1+par.cn)/2 - (par.tau * (1+par.s) )/2 + b_2 * par.tau
+        pn_2 = (1 - par.tau - b_2 * par.tau + wn_2)/(2 * (1 - par.tau))
+        qn_2 = 1 - pn_2
+        profitr_case_2 = qn_2 * (pn_2*(1 - par.tau/1) - wn_2 + par.tau/ 1 * b_2)
+        man_profit_case_2 = qn_2*(wn_2 - par.cn - (par.tau/1)*b_2 + (par.tau/1)*par.s)
+        # use best solution (case one or two?)
+        if man_profit_case_2 > best_fval and profitr_case_2 >= 0:
+            best_fval = man_profit_case_2
+            best_fobj = (wn_2, b_2, pn_2, 1, qn_2, man_profit_case_2, profitr_case_2)
+        
+        if best_fobj is None: return None
+        wn, b, pn, rho, qn, man_profit, ret_prof = best_fobj
+        dec = DecisionVariables(MODEL_NB, pn=pn, b=b, wn=wn, rho=rho, qn=qn)
+        case = _CASE_ONE if rho > 1 else _CASE_TWO
+        sol = Solution(dec, man_profit, ret_prof, case)
+        
+        #return sol
+        # do not try localsearch
+        #return ModelNBSolver.local_search(par, sol)
+        
+    @staticmethod
+    def local_search(par, sol):
+        start_vec = [sol.dec.wn, sol.dec.b]
+        result = minimize(ModelNBSolver.__local_search_minimize_func,
+            args={'par': par},
+            x0=start_vec, method='Nelder-Mead')
+        
+        wn, b = result.x; wn, b = float(wn), float(b)
+        fval, fobj = ModelNBSolver._manufacturer_profit(par, wn, b)
+        wn, b, pn, rho, qn, man_profit, ret_prof = fobj
+        dec = DecisionVariables(MODEL_NB, pn=pn, b=b, wn=wn, rho=rho, qn=qn)
+        case = _CASE_ONE if rho > 1 else _CASE_TWO
+        sol = Solution(dec, man_profit, ret_prof, case)
+        return sol
+            
+    @staticmethod
+    def __local_search_minimize_func(x, args):
+        wn, b, par = float(x[0]), float(x[1]), args['par']
+        fval, f_obj = ModelNBSolver._manufacturer_profit(par, wn, b)
+        if fval is None:
+            return sys.maxsize
+            
+        return -fval
+                    
+    def _manufacturer_profit(par, wn, b):
+        if b < par.s: return None, None
+        ret_prof_tuple = ModelNBSolver._retailer_profit(par, wn, b)
+        if ret_prof_tuple is None: return None, None
+        ret_prof, pn, rho = ret_prof_tuple
+        qn = 1 - pn
+        man_profit = qn*(wn - par.cn - (par.tau/rho)*b + (par.tau/rho)*par.s)
+        return man_profit, (wn, b, pn, rho, qn, man_profit, ret_prof)
+                
+    @staticmethod
+    def _retailer_profit(par, wn, b):
+        valids = []
+        for case in (1,):
+            if case == 1:
+                pn, rho = utils.model_nb_pn_rho_case_one(par, wn, b)
+            qn = 1 - pn
+            if not(0 <= qn <= 1 and rho >= 1):
+                continue
+            profitr = qn * (pn*(1 - par.tau/rho) - wn + par.tau/ rho * b) - par.a*(rho - 1)
+            if profitr >= 0:
+                valids.append( (profitr, pn, rho) )
+        if len(valids) > 0:
+            return max(valids, key=lambda k: k[0])
+        return None
+    
+    @staticmethod
+    def _pn_rho_case_one(par, wn, b):
+        rho = (1 - b)* (1/((wn - b)**2 + 4*par.a/par.tau))**(1/2)
+        pn = (rho - par.tau - b * par.tau + rho * wn)/(2 * (rho - par.tau))
+        
+        if wn == b:
+            rho_model_n = (par.tau**(1/2) *(1 - wn)) /(2 * par.a**(1/2))
+            pn_model_n = (1 + wn) / 2
+            assert (rho_model_n - rho) < 0.00001 and (pn_model_n - pn) < 0.000001
+        
+        return pn, rho
+        
+    @staticmethod
+    def _pn_rho_case_two(par, wn):
+        pn = (1 - par.tau - wn * par.tau + wn)/(2 * (1 - par.tau))
+        rho = 1
+        pn_model_n = (1+wn)/2
+        
+        assert(pn - pn_model_n < 0.00001)
+        return pn_model_n, rho
     
     @staticmethod
     def solvePositiveB(par, resolution='high'):
@@ -894,10 +1055,6 @@ class ModelNBSolver:
         case = _CASE_ONE if sol_tuple[3] > 1 else _CASE_TWO
         sol = Solution(dec, sol_tuple[5], sol_tuple[6], case)
         return sol
-
-    @staticmethod
-    def retailer_profit(par, wn, b, rho, sign=1.0):
-        raise NotImplementedError
 
 
     @staticmethod
@@ -1057,7 +1214,6 @@ class ImprovedGridSearch2D:
             raster_it_size = raster_size if iter >= 1 else raster_start_size
             f_val, f_obj, f_x, f_y = ImprovedGridSearch2D._search_raster(
                         func, func_arg, x_range, y_range, raster_it_size)
-            print('new f_val: {}, wn={}, b={}'.format(f_val, f_x, f_y))
             if f_val is None: return best_f_obj
             # update best values if found
             if best_f_val is None or f_val > best_f_val:
@@ -1110,16 +1266,12 @@ class ImprovedGridSearch2D:
     def _search_raster(func, func_arg, x_range, y_range, raster_size):
         """
             this helper method creates the raster, calls the func and returns
-            both returned best values and corresponding x and y val
+            four values: (i) best fval (ii) corresp. f_obj (iii) best_x, (iv) best_y
         """
         best_f_val, best_f_obj, best_x, best_y = None, None, None, None
-        i = 0
         y_num = raster_size if y_range[0] != y_range[1] else 1
         for x in np.linspace(x_range[0], x_range[1], num=raster_size):
             for y in np.linspace(y_range[0], y_range[1], num=y_num):
-                #if i == 0:
-                    #x, y = 0.5385829601789829, 0.4856783722066769
-                i += 1
                 x, y = float(x), float(y)
                 # call our function
                 f_val, f_obj = func(func_arg, x, y)
@@ -1170,10 +1322,7 @@ class SolverProxy:
             sol = self.model_1_solver.optimize(par)
         elif par.model == MODEL_2:
             sol = self.model_2_solver.optimize(par)
-            #sol = self.model_2_test.search(par)
         elif par.model == MODEL_2_QUAD:
-            #sol = self.model_2_quad_search.search(par)
-            #sol = self.model_2_test.search(par)
             sol = ModelTwoQuadSolver.solve(par, resolution)
         elif par.model == MODEL_1_QUAD:
             sol = self.model_1_quad_search.search(par, resolution)

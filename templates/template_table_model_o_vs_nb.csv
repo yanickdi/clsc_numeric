@@ -1,0 +1,12 @@
+{%- set tables = ['case', 'profits', 'retailerprof', 'rho', 'price_new', 'wholesale_price', 'restocking_price'] -%}
+{%- set table_names = {
+        'case' : 'cases',
+        'profits'   : 'manufacturer\'s profit',
+        'retailerprof' : 'retailer\'s profit',
+        'rho'    : 'effort',
+        'price_new'     : 'price of new products',
+        'wholesale_price' : 'wholesale price',
+        'restocking_price' : 'restocking price (b-s)/(w_n-s)',
+        'retailerprof2' : 'retailers profit in 2nd model'}
+-%}
+{% extends "template_table_base.csv" %}

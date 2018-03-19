@@ -1,4 +1,59 @@
+import sys, re
 from cmath import sqrt as Sqrt
+from scipy.optimize import root
+
+LATEX_SUBS = (
+    (re.compile(r'\\'), r'\\textbackslash'),
+    (re.compile(r'([{}_#%&$])'), r'\\\1'),
+    (re.compile(r'~'), r'\~{}'),
+    (re.compile(r'\^'), r'\^{}'),
+    (re.compile(r'"'), r"''"),
+    (re.compile(r'\.\.\.+'), r'\\ldots'),
+)
+
+def escape_tex(value):
+    newval = value
+    for pattern, replacement in LATEX_SUBS:
+        newval = pattern.sub(replacement, newval)
+    return newval
+    
+def model_nb_pn_rho_case_one(par, wn, b):
+    x0_pn, x0_rho = model_nb_pn_rho_case_one_alt(par, wn, b)
+    result = root(numpy_find_root, x0=[x0_pn, x0_rho], args=(par, wn, b))
+    pn, rho = result.x[0], result.x[1]
+    if not result.success:
+        pn, rho = model_nb_pn_rho_case_one_alt(par, wn, b)
+    #print(pn, rho)
+    return pn, rho
+    
+def numpy_find_root(x, par, wn, b):
+    tau, s, cn, a = par.tau, par.s, par.cn, par.a
+    pn, rho = x[0], x[1]
+    
+    eq_pn  = pn - ( (rho-tau-b*tau+rho*wn)/(2*(rho-tau)) )
+    eq_rho = rho - ( (tau/a)**(1/2) * ((pn-b)*(1-pn))**(1/2) ) # == 0
+    return [eq_pn, eq_rho]
+    
+def model_nb_pn_rho_case_one_alt(par, wn, b):
+    a, s, tau = par.a, par.s, par.tau
+    if wn == b:
+        rho_model_n = (par.tau**(1/2) *(1 - wn)) /(2 * par.a**(1/2))
+        pn_model_n = (1 + wn) / 2
+        return pn_model_n, rho_model_n
+        
+    pn = (2 + b + wn)/4. + Sqrt((-2 - b - wn)**2/4. + (-5 - 8*b - 4*a*tau - 6*wn - 4*b*wn - wn**2)/4. + (5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)/12. + (1 - 2*b - 4*a*tau + 2*b*wn - wn**2)**2/(6.*2**0.6666666666666666*(2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) + Sqrt(-4*(1 - 4*b + 4*b**2 - 8*a*tau + 16*a*b*tau + 16*a**2*tau**2 + 4*b*wn - 8*b**2*wn - 16*a*b*tau*wn - 2*wn**2 + 4*b*wn**2 + 4*b**2*wn**2 + 8*a*tau*wn**2 - 4*b*wn**3 + wn**4)**3 + (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2))**2))**0.3333333333333333) + (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) + Sqrt(-4*(1 - 4*b + 4*b**2 - 8*a*tau + 16*a*b*tau + 16*a**2*tau**2 + 4*b*wn - 8*b**2*wn - 16*a*b*tau*wn - 2*wn**2 + 4*b*wn**2 + 4*b**2*wn**2 + 8*a*tau*wn**2 - 4*b*wn**3 + wn**4)**3 + (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2))**2))**0.3333333333333333/(12.*2**0.3333333333333333))/2. - Sqrt((-2 - b - wn)**2/2. + (-5 - 8*b - 4*a*tau - 6*wn - 4*b*wn - wn**2)/3. - (1 - 2*b - 4*a*tau + 2*b*wn - wn**2)**2/(6.*2**0.6666666666666666*(2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) + Sqrt(-4*(1 - 4*b + 4*b**2 - 8*a*tau + 16*a*b*tau + 16*a**2*tau**2 + 4*b*wn - 8*b**2*wn - 16*a*b*tau*wn - 2*wn**2 + 4*b*wn**2 + 4*b**2*wn**2 + 8*a*tau*wn**2 - 4*b*wn**3 + wn**4)**3 + (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2))**2))**0.3333333333333333) - (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) + Sqrt(-4*(1 - 4*b + 4*b**2 - 8*a*tau + 16*a*b*tau + 16*a**2*tau**2 + 4*b*wn - 8*b**2*wn - 16*a*b*tau*wn - 2*wn**2 + 4*b*wn**2 + 4*b**2*wn**2 + 8*a*tau*wn**2 - 4*b*wn**3 + wn**4)**3 + (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2))**2))**0.3333333333333333/(12.*2**0.3333333333333333) + (-(-2 - b - wn)**3 + (-2 - b - wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2) - 2*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2))/(4.*Sqrt((-2 - b - wn)**2/4. + (-5 - 8*b - 4*a*tau - 6*wn - 4*b*wn - wn**2)/4. + (5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)/12. + (1 - 2*b - 4*a*tau + 2*b*wn - wn**2)**2/(6.*2**0.6666666666666666*(2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) + Sqrt(-4*(1 - 4*b + 4*b**2 - 8*a*tau + 16*a*b*tau + 16*a**2*tau**2 + 4*b*wn - 8*b**2*wn - 16*a*b*tau*wn - 2*wn**2 + 4*b*wn**2 + 4*b**2*wn**2 + 8*a*tau*wn**2 - 4*b*wn**3 + wn**4)**3 + (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2))**2))**0.3333333333333333) + (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) + Sqrt(-4*(1 - 4*b + 4*b**2 - 8*a*tau + 16*a*b*tau + 16*a**2*tau**2 + 4*b*wn - 8*b**2*wn - 16*a*b*tau*wn - 2*wn**2 + 4*b*wn**2 + 4*b**2*wn**2 + 8*a*tau*wn**2 - 4*b*wn**3 + wn**4)**3 + (2*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)**3 + 36*(2 + b + wn)*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2) + 108*(-1 - 5*b - 4*a*tau - 4*a*b*tau - 2*wn - 6*b*wn - wn**2 - b*wn**2)**2 + 432*(2 + b + wn)**2*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2) - 288*(5 + 8*b + 4*a*tau + 6*wn + 4*b*wn + wn**2)*(b + a*tau + 2*a*b*tau + a*b**2*tau + 2*b*wn + b*wn**2))**2))**0.3333333333333333/(12.*2**0.3333333333333333))))/2.
+    if pn.imag > 0.00001:
+        print('warning: imaginary part?, pn is {}, taking pn={} (wn={}, b={})'.format(pn, pn.real, wn, b))
+        
+        
+    pn = pn.real
+    try:
+        rho = -((b - pn)**(1/2) * (-1 + pn)**(1/2) * (tau)**(1/2))/ (a)**(1/2)
+    except:
+        print(par, wn, b)
+        raise RuntimeError()
+    assert rho.imag < 0.000001
+    return pn, rho.real
 
 def model_nb_pn_rho(wn, b, a, s, tau):
     """ Returns all valid (pn, rho) combinations """

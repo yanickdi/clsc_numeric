@@ -1,0 +1,9 @@
+{% for table in tables -%}
+{%- set table_name = table_names[table] -%}
+{{table_names[table]}}
+{% for i in range(8) -%}
+{% for j in range(8) -%}{{ft(table, i, j)}};{%- endfor %}
+{{''}}
+{%- endfor %}
+{{''}}
+{%- endfor %}
